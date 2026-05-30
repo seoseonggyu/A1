@@ -32,6 +32,11 @@
 		{
 			"Name": "ModularGameplayActors",
 			"Enabled": true
+		},
+		{
+			"Name": "DeveloperTools",
+			"Enabled": true,
+			"Optional": true
 		}
 	]
 }

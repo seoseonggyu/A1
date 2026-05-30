@@ -22,6 +22,7 @@ class COMMONGAME_API ACommonGameStateBase : public AModularGameStateBase
 public:
 	ACommonGameStateBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+
 	/** Experience Manager 컴포넌트 반환 */
 	UExperienceManagerComponent* GetExperienceManagerComponent() const { return ExperienceManagerComponent; }
 

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "CommonGame.h"
+#include "CommonGameModule.h"
+
 
 #define LOCTEXT_NAMESPACE "FCommonGameModule"
 

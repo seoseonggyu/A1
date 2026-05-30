@@ -44,4 +44,70 @@ class COMMONGAME_API UExperienceManagerComponent : public UGameStateComponent
 public:
 	UExperienceManagerComponent(const FObjectInitializer& ObjectInitializer);
 
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	/**
+	* 현재 Experience 설정 (서버 전용)
+	* @param ExperienceId 로드할 Experience의 PrimaryAssetId
+	*/
+	void SetCurrentExperienceAuth(FPrimaryAssetId ExperienceId);
+
+	/** 현재 Experience가 로드되었는지 확인 */
+	bool IsExperienceLoaded() const { return LoadState == EExperienceLoadState::Loaded; }
+
+	/** 현재 로드 상태 반환 */
+	EExperienceLoadState GetLoadState() const { return LoadState; }
+
+	/** 현재 로드된 Experience 반환 (로드 완료 시에만 유효) */
+	const UExperienceDefinition* GetCurrentExperienceChecked() const;
+
+	//-----------------------------------------------------------------------------
+	// Experience 대기 코루틴 (Static)
+	//-----------------------------------------------------------------------------
+
+	/** Experience 로드 완료까지 대기합니다 (높은 우선순위) */
+	static TCoroTask<const UExperienceDefinition*> WaitForExperienceLoaded_HighStaticCoroutine(UObject* WorldContextObject);
+
+	/** Experience 로드 완료까지 대기합니다 (일반 우선순위) */
+	static TCoroTask<const UExperienceDefinition*> WaitForExperienceLoadedStaticCoroutine(UObject* WorldContextObject);
+
+	/** Experience 로드 완료까지 대기합니다 (낮은 우선순위) */
+	static TCoroTask<const UExperienceDefinition*> WaitForExperienceLoaded_LowStaticCoroutine(UObject* WorldContextObject);
+
+
+protected:
+
+	/** 복제된 ExperienceId 수신 시 호출 */
+	UFUNCTION()
+	void OnRep_CurrentExperienceId();
+
+private:
+	/** Experience 로드 완료 대기 내부 구현 */
+	static TCoroTask<const UExperienceDefinition*> WaitForExperienceLoadedInternalCoroutine(UObject* WorldContextObject, int32 Priority);
+
+
+	/** Experience 로드 코루틴 */
+	TCoroTask<void> LoadExperienceCoroutine();
+
+	/** GameFeature 플러그인 로드 코루틴 */
+	TCoroTask<void> LoadGameFeatureCoroutine(FString PluginURL) const;
+
+
+private:
+	/** 현재 Experience ID (복제됨) */
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentExperienceId)
+	FPrimaryAssetId CurrentExperienceId;
+
+	/** 로드된 Experience 에셋 */
+	UPROPERTY()
+	TObjectPtr<const UExperienceDefinition> CurrentExperience;
+
+	/** 현재 로드 상태 */
+	EExperienceLoadState LoadState = EExperienceLoadState::Unloaded;
+
+	/** 활성화된 GameFeature 플러그인 URL 목록 */
+	TArray<FString> GameFeaturePluginURLs;
+
 };
