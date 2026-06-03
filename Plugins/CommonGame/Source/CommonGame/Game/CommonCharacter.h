@@ -6,7 +6,7 @@
 #include "ModularCharacter.h"
 #include "CommonCharacter.generated.h"
 
-class UCameraComponent;
+class UCommonCameraComponent;
 class USkeletalMeshComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(CommonCharacterLog, Log, All);
@@ -31,7 +31,7 @@ public:
 
 
 	/** 카메라 컴포넌트를 반환합니다 */
-	UCameraComponent* GetCameraComponent() const { return CameraComponent; }
+	UCommonCameraComponent* GetCommonCameraComponent() const { return CameraComponent; }
 
 	// TODO: 애니메이션 관련
 
@@ -41,9 +41,6 @@ protected:
 private:
 	/** Top-Down 카메라 컴포넌트 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> CameraComponent;
-
-
-
+	TObjectPtr<UCommonCameraComponent> CameraComponent;
 
 };

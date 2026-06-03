@@ -1,11 +1,14 @@
 #include "CommonCharacter.h"
+#include "Camera/CameraComponent.h"
+#include "Camera/CommonCameraComponent.h"
 
 ACommonCharacter::ACommonCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) // TODO: 이동 속도 관련
 {
 	// TODO: 메시 관련 생성해야함
 
-	// TODO: Top-Down 카메라 생성해야함
+	// TODO: 카메라 컴포넌트는 따로 빼서?
+	CameraComponent = CreateDefaultSubobject<UCommonCameraComponent>(TEXT("CameraComponent"));
 
 	// TODO: 다른 플레이어에게 보이게?
 

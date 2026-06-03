@@ -110,4 +110,9 @@ private:
 	/** 활성화된 GameFeature 플러그인 URL 목록 */
 	TArray<FString> GameFeaturePluginURLs;
 
+	/** Experience 로드 완료 델리게이트 (우선순위별) */
+	FOnExperienceLoaded OnExperienceLoaded_High;
+	FOnExperienceLoaded OnExperienceLoaded_Normal;
+	FOnExperienceLoaded OnExperienceLoaded_Low;
+
 };

@@ -122,15 +122,14 @@ TCoroTask<void> UExperienceManagerComponent::LoadExperienceCoroutine()
 	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience 로드 완료: %s"), NetRole, *CurrentExperience->GetName());
 
 
-	// TODO: Experience 로드 후
-	/*OnExperienceLoaded_High.Broadcast(CurrentExperience);
+	OnExperienceLoaded_High.Broadcast(CurrentExperience);
 	OnExperienceLoaded_High.Clear();
 
 	OnExperienceLoaded_Normal.Broadcast(CurrentExperience);
 	OnExperienceLoaded_Normal.Clear();
 
 	OnExperienceLoaded_Low.Broadcast(CurrentExperience);
-	OnExperienceLoaded_Low.Clear();*/
+	OnExperienceLoaded_Low.Clear();
 }
 
 TCoroTask<void> UExperienceManagerComponent::LoadGameFeatureCoroutine(FString PluginURL) const
@@ -196,21 +195,19 @@ TCoroTask<const UExperienceDefinition*> UExperienceManagerComponent::WaitForExpe
 		}
 	}
 
-	// TODO: Experience
-	// 이미 로드 완료된 경우
-	//if (Manager->IsExperienceLoaded())
-	//{
-	//	co_return Manager->GetCurrentExperienceChecked();
-	//}
+	if (Manager->IsExperienceLoaded())
+	{
+		co_return Manager->GetCurrentExperienceChecked();
+	}
 
-	//// 우선순위별 델리게이트 대기
-	//switch (Priority)
-	//{
-	//case 0:
-	//	co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_High);
-	//case 1:
-	//	co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_Normal);
-	//default:
-	//	co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_Low);
-	//}
+	// 우선순위별 델리게이트 대기
+	switch (Priority)
+	{
+	case 0:
+		co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_High);
+	case 1:
+		co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_Normal);
+	default:
+		co_return co_await Coro::Async::WaitForDelegate(Manager, Manager->OnExperienceLoaded_Low);
+	}
 }
