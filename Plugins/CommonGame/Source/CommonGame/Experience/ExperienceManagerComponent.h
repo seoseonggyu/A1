@@ -94,6 +94,8 @@ private:
 	/** GameFeature 플러그인 로드 코루틴 */
 	TCoroTask<void> LoadGameFeatureCoroutine(FString PluginURL) const;
 
+	/** Experience 비활성화 */
+	void DeactivateExperience();
 
 private:
 	/** 현재 Experience ID (복제됨) */

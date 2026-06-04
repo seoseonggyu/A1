@@ -18,7 +18,7 @@ DEFINE_LOG_CATEGORY(ExperienceManagerLog);
 UExperienceManagerComponent::UExperienceManagerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-
+	SetIsReplicatedByDefault(true);
 }
 
 void UExperienceManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -35,7 +35,7 @@ void UExperienceManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReas
 {
 	Super::EndPlay(EndPlayReason);
 
-	// TOOD: Experience DeactivateExperience();
+	DeactivateExperience();
 }
 
 void UExperienceManagerComponent::SetCurrentExperienceAuth(FPrimaryAssetId ExperienceId)
@@ -145,6 +145,28 @@ TCoroTask<void> UExperienceManagerComponent::LoadGameFeatureCoroutine(FString Pl
 	{
 		UE_LOG(ExperienceManagerLog, Log, TEXT("%s GameFeature 로드 완료: %s"), NetRole, *PluginURL);
 	}
+}
+
+void UExperienceManagerComponent::DeactivateExperience()
+{
+	if (LoadState == EExperienceLoadState::Unloaded || LoadState == EExperienceLoadState::Deactivating)
+	{
+		return;
+	}
+
+	LoadState = EExperienceLoadState::Deactivating;
+
+	UGameFeaturesSubsystem& GFS = UGameFeaturesSubsystem::Get();
+
+	for (const FString& PluginURL : GameFeaturePluginURLs)
+	{
+		UE_LOG(ExperienceManagerLog, Log, TEXT("GameFeature 비활성화: %s"), *PluginURL);
+		GFS.DeactivateGameFeaturePlugin(PluginURL);
+	}
+
+	CurrentExperience = nullptr;
+	GameFeaturePluginURLs.Reset();
+	LoadState = EExperienceLoadState::Unloaded;
 }
 
 //-----------------------------------------------------------------------------
