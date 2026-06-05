@@ -41,6 +41,14 @@
 			"Name": "DeveloperTools",
 			"Enabled": true,
 			"Optional": true
+		},
+		{
+			"Name": "UAF",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
 		}
 	]
 }
