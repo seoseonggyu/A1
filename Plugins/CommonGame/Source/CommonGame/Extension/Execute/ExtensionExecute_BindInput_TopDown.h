@@ -29,9 +29,6 @@ private:
 	/** 이동 입력 처리 */
 	void Input_Move(const FInputActionValue& InputActionValue) const;
 
-	/** 시점 입력 처리 */
-	void Input_Look(const FInputActionValue& InputActionValue) const;
-
 	/** Ability 입력 Press 처리 - ASC로 라우팅 */
 	void Input_AbilityPressed(FGameplayTag InputTag) const;
 

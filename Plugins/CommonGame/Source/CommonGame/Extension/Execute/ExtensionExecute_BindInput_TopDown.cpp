@@ -52,17 +52,10 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 		BindingHandles.Add(MoveHandle);
 	}
 
-	// Look 입력 바인딩 (람다 사용)
-	if (uint32 LookHandle = InputComponent->BindNativeActionValueLambda(
-		CommonGameTags::Input_Native_Look,
-		ETriggerEvent::Triggered,
-		[this](const FInputActionValue& Value) { Input_Look(Value); }))
-	{
-		BindingHandles.Add(LookHandle);
-	}
 
+	// TODO: Ability
 	// Ability 입력 바인딩 - ASC로 라우팅
-	for (const FInputActionAndTag& Mapping : AbilityInputActions)
+	/*for (const FInputActionAndTag& Mapping : AbilityInputActions)
 	{
 		if (!Mapping.InputTag.IsValid())
 		{
@@ -82,7 +75,7 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 			BindingHandles.Add(Handles.PressHandle);
 			BindingHandles.Add(Handles.ReleaseHandle);
 		}
-	}
+	}*/
 }
 
 void FExtensionExecute_BindInput_TopDown::OnDeactivate(AActor* Owner) const
@@ -135,35 +128,14 @@ void FExtensionExecute_BindInput_TopDown::Input_Move(const FInputActionValue& In
 
 	if (Value.X != 0.0f)
 	{
-		const FVector MovementDirection = MovementRotation.RotateVector(FVector::ForwardVector);
-		Pawn->AddMovementInput(MovementDirection, Value.X);
+		FVector Forward = FRotationMatrix(MovementRotation).GetUnitAxis(EAxis::X);
+		Pawn->AddMovementInput(Forward, Value.X);
 	}
 
 	if (Value.Y != 0.0f)
 	{
-		const FVector MovementDirection = MovementRotation.RotateVector(FVector::RightVector);
-		Pawn->AddMovementInput(MovementDirection, Value.Y);
-	}
-}
-
-void FExtensionExecute_BindInput_TopDown::Input_Look(const FInputActionValue& InputActionValue) const
-{
-	APawn* Pawn = WeakPawn.Get();
-	if (!Pawn)
-	{
-		return;
-	}
-
-	const FVector2D Value = InputActionValue.Get<FVector2D>();
-
-	if (Value.X != 0.0f)
-	{
-		Pawn->AddControllerYawInput(Value.X);
-	}
-
-	if (Value.Y != 0.0f)
-	{
-		Pawn->AddControllerPitchInput(Value.Y);
+		FVector Right = FRotationMatrix(MovementRotation).GetUnitAxis(EAxis::Y);
+		Pawn->AddMovementInput(Right, Value.Y);
 	}
 }
 
