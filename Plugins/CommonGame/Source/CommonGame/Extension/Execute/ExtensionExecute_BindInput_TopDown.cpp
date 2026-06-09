@@ -2,7 +2,7 @@
 
 #include "Extension/Execute/ExtensionExecute_BindInput_TopDown.h"
 #include "AbilitySystemInterface.h"
-//#include "AbilitySystem/CommonAbilitySystemComponent.h" // TODO: Ability
+#include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "CommonGameTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -53,9 +53,8 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 	}
 
 
-	// TODO: Ability
 	// Ability 입력 바인딩 - ASC로 라우팅
-	/*for (const FInputActionAndTag& Mapping : AbilityInputActions)
+	for (const FInputActionAndTag& Mapping : AbilityInputActions)
 	{
 		if (!Mapping.InputTag.IsValid())
 		{
@@ -75,7 +74,7 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 			BindingHandles.Add(Handles.PressHandle);
 			BindingHandles.Add(Handles.ReleaseHandle);
 		}
-	}*/
+	}
 }
 
 void FExtensionExecute_BindInput_TopDown::OnDeactivate(AActor* Owner) const
@@ -149,11 +148,10 @@ void FExtensionExecute_BindInput_TopDown::Input_AbilityPressed(FGameplayTag Inpu
 
 	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
 	{
-		// TODO: Ability
-		/*if (UCommonAbilitySystemComponent* ASC = Cast<UCommonAbilitySystemComponent>(ASI->GetAbilitySystemComponent()))
+		if (UCommonAbilitySystemComponent* ASC = Cast<UCommonAbilitySystemComponent>(ASI->GetAbilitySystemComponent()))
 		{
 			ASC->AbilityInputTagPressed(InputTag);
-		}*/
+		}
 	}
 }
 
@@ -167,10 +165,9 @@ void FExtensionExecute_BindInput_TopDown::Input_AbilityReleased(FGameplayTag Inp
 
 	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
 	{
-		// TODO: Ability
-		/*if (UCommonAbilitySystemComponent* ASC = Cast<UCommonAbilitySystemComponent>(ASI->GetAbilitySystemComponent()))
+		if (UCommonAbilitySystemComponent* ASC = Cast<UCommonAbilitySystemComponent>(ASI->GetAbilitySystemComponent()))
 		{
 			ASC->AbilityInputTagReleased(InputTag);
-		}*/
+		}
 	}
 }
