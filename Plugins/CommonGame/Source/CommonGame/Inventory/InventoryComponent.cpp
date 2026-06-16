@@ -2,7 +2,7 @@
 
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/ItemDefinition.h"
-//#include "Equipment/QuickBarComponent.h" // TODO: QuickBar
+#include "Equipment/QuickBarComponent.h"
 #include "Coroutine/CommonAssetAwaiters.h"
 #include "Net/UnrealNetwork.h"
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InventoryComponent)
@@ -150,11 +150,10 @@ static TCoroTask<void> GiveInitialItemsCoroutine(UInventoryComponent* Component,
 
 		if (Entry.bAddToQuickBar)
 		{
-			// TODO: QuickBar
-			/*if (UQuickBarComponent* QuickBar = Component->GetOwner()->FindComponentByClass<UQuickBarComponent>())
+			if (UQuickBarComponent* QuickBar = Component->GetOwner()->FindComponentByClass<UQuickBarComponent>())
 			{
 				QuickBar->AddItemToSlotAuth(Instance);
-			}*/
+			}
 		}
 	}
 }
@@ -296,8 +295,7 @@ void UInventoryComponent::ModifyTagStatServer_Implementation(int32 ItemId, FGame
 		return;
 	}
 
-	// TODO: TagStat 관련
-	/*if (auto Modifier = Item->ModifyTagStatAuth(StatTag))
+	if (auto Modifier = Item->ModifyTagStatAuth(StatTag))
 	{
 		Modifier->Value = NewValue;
 		UE_LOG(InventoryComponentLog, Log, TEXT("ModifyTagStatServer: ItemId=%d, %s = %.2f 설정 완료"), ItemId, *StatTag.ToString(), NewValue);
@@ -305,7 +303,7 @@ void UInventoryComponent::ModifyTagStatServer_Implementation(int32 ItemId, FGame
 	else
 	{
 		UE_LOG(InventoryComponentLog, Warning, TEXT("ModifyTagStatServer: ItemId=%d, %s TagStat을 찾을 수 없습니다"), ItemId, *StatTag.ToString());
-	}*/
+	}
 }
 
 UItemInstance* UInventoryComponent::FindItemAtSlot(int32 SlotIndex) const
