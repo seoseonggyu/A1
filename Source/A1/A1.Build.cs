@@ -2,39 +2,42 @@
 
 using UnrealBuildTool;
 
-public class A1 : ModuleRules
-{
-    public A1(ReadOnlyTargetRules Target) : base(Target)
+public class A1 : ModuleRules {
+  public A1(ReadOnlyTargetRules Target) : base(Target) {
+    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+    PublicIncludePaths.AddRange(new string[]
     {
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+      "A1"
+    });
 
-        PrivateIncludePaths.Add(ModuleDirectory);
+    PrivateIncludePaths.Add(ModuleDirectory);
 
-        SetupIrisSupport(Target);
+    SetupIrisSupport(Target);
 
-        PublicDependencyModuleNames.AddRange(
-            [
-            "Core",
-            "CoreUObject",
-            "Engine",
-            "InputCore",
-            "EnhancedInput",
-            "ModularGameplayActors",
-            "GameFeatures",
-            "CommonCoroutine",
-            "CommonGame",
-            "NetCore",
-            "GameplayTags",
-            "GameplayAbilities",
-            "GameplayTasks",
-            "ModularGameplay",
-            //"CommonUIExtension",
-            //"ModelViewViewModel",
-            //"UMG",
-            //"CommonUI",
-            //"Slate",
-            //"SlateCore",
+    PublicDependencyModuleNames.AddRange(
+      [
+      "Core",
+      "CoreUObject",
+      "Engine",
+      "InputCore",
+      "EnhancedInput",
+      "ModularGameplayActors",
+      "GameFeatures",
+      "CommonCoroutine",
+      "CommonGame",
+      "NetCore",
+      "GameplayTags",
+      "GameplayAbilities",
+      "GameplayTasks",
+      "ModularGameplay",
+       //"CommonUIExtension",
+       //"ModelViewViewModel",
+       //"UMG",
+       //"CommonUI",
+       //"Slate",
+       //"SlateCore",
       ]
-      );
-    }
+  );
+  }
 }
