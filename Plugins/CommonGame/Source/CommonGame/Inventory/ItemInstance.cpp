@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+Ôªø// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Inventory/ItemInstance.h"
 #include "Inventory/InventoryComponent.h"
@@ -13,13 +13,13 @@ void UItemInstance::InitializeFragmentsFromDefinition()
 {
 	if (!Definition)
 	{
-		UE_LOG(ItemInstanceLog, Warning, TEXT("Definition is nullptr"));
+		UE_LOG(ItemInstanceLog, Warning, TEXT("DefinitionÏù¥ nullptrÏûÖÎãàÎã§"));
 		return;
 	}
 
 	Fragments.Reset();
 
-	// Definition¿« FragmentµÈ¿ª ∫πªÁ
+	// DefinitionÏùò FragmentÎì§ÏùÑ Î≥µÏÇ¨
 	for (const TInstancedStruct<FItemFragment>& SourceFragment : Definition->Fragments)
 	{
 		TInstancedStruct<FItemFragment>& NewFragment = Fragments.Add_GetRef(SourceFragment);
@@ -66,7 +66,7 @@ void UItemInstance::ResetFragmentToDefault(int32 FragmentIdx)
 		return;
 	}
 
-	// Definition(CDO)ø°º≠ ±‚∫ª Fragment ∞°¡Æø¿±‚
+	// Definition(CDO)ÏóêÏÑú Í∏∞Î≥∏ Fragment Í∞ÄÏ†∏Ïò§Í∏∞
 	const TInstancedStruct<FItemFragment>& DefaultEntry = Definition->Fragments[FragmentIdx];
 	const FItemFragment* DefaultFragment = DefaultEntry.GetPtr<FItemFragment>();
 	const UScriptStruct* FragmentStruct = DefaultEntry.GetScriptStruct();
@@ -82,7 +82,7 @@ void UItemInstance::ResetFragmentToDefault(int32 FragmentIdx)
 		return;
 	}
 
-	// Definition¿« ±‚∫ª∞™¿∏∑Œ ∫πø¯
+	// DefinitionÏùò Í∏∞Î≥∏Í∞íÏúºÎ°ú Î≥µÏõê
 	FragmentStruct->CopyScriptStruct(Fragment, DefaultFragment);
 	Fragment->OnChanged(this);
 }
@@ -92,7 +92,6 @@ bool UItemInstance::HasAuthority() const
 	const UInventoryComponent* Inventory = Cast<UInventoryComponent>(GetOuter());
 	return Inventory && Inventory->GetOwner() && Inventory->GetOwner()->HasAuthority();
 }
-
 
 FGameplayTag UItemInstance::GetEquipmentSlotTag() const
 {
@@ -114,6 +113,22 @@ FGameplayTag UItemInstance::GetQuickBarSlotTag() const
 	}
 
 	return Fragment->EquipmentDefinition->QuickBarSlotTag;
+}
+
+int32 UItemInstance::FindTagStatIndex(FGameplayTag InStatTag) const
+{
+	for (int32 i = 0; i < Fragments.Num(); ++i)
+	{
+		if (const FFragment_TagStat* Found = Fragments[i].GetPtr<FFragment_TagStat>())
+		{
+			if (Found->StatTag.MatchesTagExact(InStatTag))
+			{
+				return i;
+			}
+		}
+	}
+
+	return INDEX_NONE;
 }
 
 FItemNetStateList* UItemInstance::GetOwnerNetStates() const
@@ -142,4 +157,59 @@ bool UItemInstance::RemoveNetStateByIndex(int32 FragmentIdx)
 	NetStates->MarkArrayDirty();
 
 	return true;
+}
+
+TItemFragmentNetStateModifier<FNetState_TagStat> UItemInstance::ModifyTagStatAuth(FGameplayTag InStatTag)
+{
+	if (!HasAuthority())
+	{
+		return {};
+	}
+
+	return ModifyNetStateByIndexAuth<FNetState_TagStat, FFragment_TagStat>(FindTagStatIndex(InStatTag));
+}
+
+bool UItemInstance::RemoveTagStatAuth(FGameplayTag InStatTag)
+{
+	if (!HasAuthority())
+	{
+		return false;
+	}
+
+	return RemoveNetStateByIndex(FindTagStatIndex(InStatTag));
+}
+
+bool UItemInstance::GetTagStatValue(FGameplayTag InStatTag, float& OutValue) const
+{
+	int32 Index = FindTagStatIndex(InStatTag);
+	if (Index == INDEX_NONE)
+	{
+		return false;
+	}
+
+	if (const FFragment_TagStat* Found = Fragments[Index].GetPtr<FFragment_TagStat>())
+	{
+		OutValue = Found->Value;
+		return true;
+	}
+
+	return false;
+}
+
+bool UItemInstance::SetTagStatValueLocal(FGameplayTag InStatTag, float NewValue)
+{
+	int32 Index = FindTagStatIndex(InStatTag);
+	if (Index == INDEX_NONE)
+	{
+		return false;
+	}
+
+	if (FFragment_TagStat* Found = Fragments[Index].GetMutablePtr<FFragment_TagStat>())
+	{
+		Found->Value = NewValue;
+		Found->OnChanged(this);
+		return true;
+	}
+
+	return false;
 }

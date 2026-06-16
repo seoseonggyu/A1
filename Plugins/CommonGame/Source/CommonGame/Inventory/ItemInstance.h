@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "Inventory/Fragment/ItemFragment.h"
-// #include "Inventory/Fragment/ItemFragment_TagStat.h" // TODO: TagStat 추가
+#include "Inventory/Fragment/ItemFragment_TagStat.h"
 #include "Inventory/Fragment/NetState/ItemFragmentNetStateModifier.h"
 #include "ItemInstance.generated.h"
 
@@ -149,7 +149,54 @@ public:
 		return RemoveNetStateByIndex(GetFragmentIndex(TFragment::StaticStruct()));
 	}
 
-	// TODO: 여기서 TagStat NetState 수정
+	/**
+	 * 특정 태그의 TagStat NetState를 수정합니다 (서버 전용)
+	 *
+	 * @param InStatTag 찾을 스탯 태그
+	 * @return 해당 태그의 TagStat Modifier (없으면 무효)
+	 * @code
+	 * if (auto Modifier = ItemInstance->ModifyTagStatAuth(StatTag_Damage))
+	 * {
+	 *     Modifier->Value = 75.f;
+	 * }
+	 * @endcode
+	 */
+	TItemFragmentNetStateModifier<FNetState_TagStat> ModifyTagStatAuth(FGameplayTag InStatTag);
+
+	/**
+	 * 특정 태그의 TagStat NetState를 제거합니다 (서버 전용)
+	 *
+	 * NetState를 제거하면 클라이언트에서 Definition의 기본값으로 복원됩니다.
+	 *
+	 * @param InStatTag 찾을 스탯 태그
+	 * @return NetState가 존재하여 제거되었으면 true
+	 */
+	bool RemoveTagStatAuth(FGameplayTag InStatTag);
+
+	//-----------------------------------------------------------------------------
+	// TagStat API (조회)
+	//-----------------------------------------------------------------------------
+
+	/**
+	 * 특정 태그의 TagStat 값을 반환합니다
+	 *
+	 * @param InStatTag 찾을 스탯 태그
+	 * @param OutValue 찾은 값 (출력)
+	 * @return 해당 태그를 가진 TagStat이 있으면 true
+	 */
+	bool GetTagStatValue(FGameplayTag InStatTag, float& OutValue) const;
+
+	/**
+	 * 특정 태그의 TagStat 값을 로컬에서 직접 수정합니다 (네트워크 복제 없음)
+	 *
+	 * 클라이언트/서버가 각각 로컬에서 계산하는 값에 사용합니다.
+	 * 예: 탄약 (어빌리티 양쪽 실행)
+	 *
+	 * @param InStatTag 찾을 스탯 태그
+	 * @param NewValue 새 값
+	 * @return 해당 태그를 가진 TagStat이 있으면 true
+	 */
+	bool SetTagStatValueLocal(FGameplayTag InStatTag, float NewValue);
 
 
 
@@ -172,7 +219,7 @@ private:
 
 
 	/** 특정 StatTag를 가진 TagStat Fragment의 인덱스를 찾습니다 */
-	// int32 FindTagStatIndex(FGameplayTag InStatTag) const; TODO: 여기서 TagStat NetState 수정
+	int32 FindTagStatIndex(FGameplayTag InStatTag) const;
 
 	/** Fragment 인덱스로 NetState를 수정합니다 (찾거나 생성) */
 	template<typename TNetState, typename TFragment>
