@@ -38,7 +38,7 @@ public:
 protected:
 	// TODO: 애니메이션 관련
 
-private:
+protected:
 	/** Top-Down 카메라 컴포넌트 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCommonCameraComponent> CameraComponent;
