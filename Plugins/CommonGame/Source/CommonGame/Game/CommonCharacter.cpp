@@ -26,3 +26,22 @@ void ACommonCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 }
+
+void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const
+{
+	// 애니메이션은 클라이언트에서만 필요합니다
+	if (HasAuthority() || !AnimLayerClass)
+	{
+		return;
+	}
+
+	if (GetMesh() && AnimLayerClass)
+	{
+		GetMesh()->LinkAnimClassLayers(AnimLayerClass);
+	}
+}
+
+void ACommonCharacter::ResetAnimationToDefault() const
+{
+	// TODO: 
+}

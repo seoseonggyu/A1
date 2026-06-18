@@ -33,7 +33,8 @@ public:
 	/** 카메라 컴포넌트를 반환합니다 */
 	UCommonCameraComponent* GetCommonCameraComponent() const { return CameraComponent; }
 
-	// TODO: 애니메이션 관련
+	void SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const;
+	void ResetAnimationToDefault() const;
 
 protected:
 	// TODO: 애니메이션 관련
