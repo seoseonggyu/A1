@@ -2,6 +2,7 @@
 
 #include "Player/A1PlayerController.h"
 #include "Player/A1Character.h"
+#include "Player/A1PlayerState.h"
 #include "System/A1GameState.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1GameMode)
@@ -13,6 +14,7 @@ AA1GameMode::AA1GameMode(const FObjectInitializer& ObjectInitializer)
 {
     PlayerControllerClass = AA1PlayerController::StaticClass();
     DefaultPawnClass = AA1Character::StaticClass();
+	PlayerStateClass = AA1PlayerState::StaticClass();
     GameStateClass = AA1GameState::StaticClass();
 }
 
