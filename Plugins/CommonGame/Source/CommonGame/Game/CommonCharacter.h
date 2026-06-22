@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ModularCharacter.h"
+#include "AbilitySystemInterface.h"
 #include "CommonCharacter.generated.h"
 
 class UCommonCameraComponent;
@@ -19,7 +20,7 @@ DECLARE_LOG_CATEGORY_EXTERN(CommonCharacterLog, Log, All);
  */
 
 UCLASS()
-class COMMONGAME_API ACommonCharacter : public AModularCharacter
+class COMMONGAME_API ACommonCharacter : public AModularCharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -29,6 +30,9 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+
+	/** PlayerState의 AbilitySystemComponent를 반환합니다 */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	/** 카메라 컴포넌트를 반환합니다 */
 	UCommonCameraComponent* GetCommonCameraComponent() const { return CameraComponent; }

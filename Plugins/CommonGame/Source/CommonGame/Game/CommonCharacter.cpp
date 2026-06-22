@@ -1,6 +1,11 @@
 #include "CommonCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/CommonCameraComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "AbilitySystemComponent.h"
+#include UE_INLINE_GENERATED_CPP_BY_NAME(CommonCharacter)
+
+DEFINE_LOG_CATEGORY(CommonCharacterLog);
 
 ACommonCharacter::ACommonCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) // TODO: 이동 속도 관련
@@ -25,6 +30,15 @@ void ACommonCharacter::BeginPlay()
 void ACommonCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+}
+
+UAbilitySystemComponent* ACommonCharacter::GetAbilitySystemComponent() const
+{
+	if (const IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(GetPlayerState()))
+	{
+		return ASI->GetAbilitySystemComponent();
+	}
+	return nullptr;
 }
 
 void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const
