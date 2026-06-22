@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Game/CommonGameModeBase.h"
 #include "Game/CommonCharacter.h"
@@ -33,21 +33,21 @@ void ACommonGameModeBase::InitGame(const FString& MapName, const FString& Option
 
 TCoroTask<void> ACommonGameModeBase::StartExperienceLoadCoroutine()
 {
-	// GameState »ı¼º±îÁö ´ë±âÇÕ´Ï´Ù
+	// GameState ìƒì„±ê¹Œì§€ ëŒ€ê¸°í•©ë‹ˆë‹¤
 	co_await Coro::Latent::Until(this, [this]() { return GetGameState<ACommonGameStateBase>() != nullptr; });
 
-	// WorldSettings¿¡¼­ Experience °¡Á®¿À±â
+	// WorldSettingsì—ì„œ Experience ê°€ì ¸ì˜¤ê¸°
 	ACommonWorldSettings* CommonWorldSettings = Cast<ACommonWorldSettings>(GetWorld()->GetWorldSettings());
 	if (!CommonWorldSettings)
 	{
-		// UE_LOG(CommonGameModeLog, Error, TEXT("CommonWorldSettings¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù")); //TODO: Log ¿¡·¯
+		UE_LOG(CommonGameModeLog, Error, TEXT("CommonWorldSettingsë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤"));
 		co_return;
 	}
 
 	FPrimaryAssetId ExperienceId = CommonWorldSettings->GetDefaultExperienceId();
 	if (!ExperienceId.IsValid())
 	{
-		//UE_LOG(CommonGameModeLog, Error, TEXT("WorldSettings¿¡ DefaultExperienceId°¡ ¼³Á¤µÇÁö ¾Ê¾Ò½À´Ï´Ù")); TODO: Log ¿¡·¯
+		UE_LOG(CommonGameModeLog, Error, TEXT("WorldSettingsì— DefaultExperienceIdê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤"));
 		co_return;
 	}
 
@@ -55,16 +55,16 @@ TCoroTask<void> ACommonGameModeBase::StartExperienceLoadCoroutine()
 	UExperienceManagerComponent* ExperienceManager = CommonGameState->GetExperienceManagerComponent();
 	if (!ExperienceManager)
 	{
-		//UE_LOG(CommonGameModeLog, Error, TEXT("ExperienceManagerComponent¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù")); TODO: Log ¿¡·¯
+		UE_LOG(CommonGameModeLog, Error, TEXT("ExperienceManagerComponentë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤"));
 		co_return;
 	}
 
-	// Experience ¼³Á¤ ½ÃÀÛ
-	//UE_LOG(CommonGameModeLog, Log, TEXT("Experience ·Îµå ½ÃÀÛ: %s"), *ExperienceId.ToString()); TODO: Log ¿¡·¯
+	// Experience ì„¤ì • ì‹œì‘
+	UE_LOG(CommonGameModeLog, Log, TEXT("Experience ë¡œë“œ ì‹œì‘: %s"), *ExperienceId.ToString());
 	ExperienceManager->SetCurrentExperienceAuth(ExperienceId);
 
 
-	// Experience ·Îµå ¿Ï·á ´ë±â (µ¨¸®°ÔÀÌÆ® ±â¹İ)
+	// Experience ë¡œë“œ ì™„ë£Œ ëŒ€ê¸° (ë¸ë¦¬ê²Œì´íŠ¸ ê¸°ë°˜)
 	if (const UExperienceDefinition* Experience = co_await UExperienceManagerComponent::WaitForExperienceLoaded_HighStaticCoroutine(this))
 	{
 		OnExperienceLoaded(Experience);
@@ -75,9 +75,9 @@ TCoroTask<void> ACommonGameModeBase::StartExperienceLoadCoroutine()
 
 void ACommonGameModeBase::OnExperienceLoaded(const UExperienceDefinition* Experience)
 {
-	UE_LOG(CommonGameModeLog, Log, TEXT("Experience ·Îµå ¿Ï·á: %s"), *Experience->GetName());
+	UE_LOG(CommonGameModeLog, Log, TEXT("Experience ë¡œë“œ ì™„ë£Œ: %s"), *Experience->GetName());
 
-	// Experience ·Îµå Àü¿¡ Á¢¼ÓÇÑ ÇÃ·¹ÀÌ¾îµé ½ºÆù ½Ãµµ
+	// Experience ë¡œë“œ ì „ì— ì ‘ì†í•œ í”Œë ˆì´ì–´ë“¤ ìŠ¤í° ì‹œë„
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PC = Iterator->Get();
@@ -94,10 +94,10 @@ void ACommonGameModeBase::OnExperienceLoaded(const UExperienceDefinition* Experi
 
 void ACommonGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	// Experience°¡ ·ÎµåµÇÁö ¾Ê¾ÒÀ¸¸é Ã³¸®ÇÏÁö ¾Ê½À´Ï´Ù
+	// Experienceê°€ ë¡œë“œë˜ì§€ ì•Šì•˜ìœ¼ë©´ ì²˜ë¦¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤
 	if (!IsExperienceLoaded())
 	{
-		UE_LOG(CommonGameModeLog, Log, TEXT("Experience ·Îµå ´ë±â Áß, ÇÃ·¹ÀÌ¾î Ã³¸® Áö¿¬: %s"), *GetNameSafe(NewPlayer));
+		UE_LOG(CommonGameModeLog, Log, TEXT("Experience ë¡œë“œ ëŒ€ê¸° ì¤‘, í”Œë ˆì´ì–´ ì²˜ë¦¬ ì§€ì—°: %s"), *GetNameSafe(NewPlayer));
 		return;
 	}
 
@@ -106,7 +106,7 @@ void ACommonGameModeBase::HandleStartingNewPlayer_Implementation(APlayerControll
 
 UClass* ACommonGameModeBase::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-	// Experience°¡ ·ÎµåµÇÁö ¾Ê¾ÒÀ¸¸é nullptr ¹İÈ¯ (½ºÆù ´ë±â)
+	// Experienceê°€ ë¡œë“œë˜ì§€ ì•Šì•˜ìœ¼ë©´ nullptr ë°˜í™˜ (ìŠ¤í° ëŒ€ê¸°)
 	if (!IsExperienceLoaded())
 	{
 		return nullptr;
@@ -126,16 +126,16 @@ UClass* ACommonGameModeBase::GetDefaultPawnClassForController_Implementation(ACo
 		}
 	}
 
-	UE_LOG(CommonGameModeLog, Warning, TEXT("Experience¿¡¼­ DefaultPawnClass¸¦ °¡Á®¿ÀÁö ¸øÇÔ, ±âº» Å¬·¡½º »ç¿ë: %s"), *GetNameSafe(InController));
+	UE_LOG(CommonGameModeLog, Warning, TEXT("Experienceì—ì„œ DefaultPawnClassë¥¼ ê°€ì ¸ì˜¤ì§€ ëª»í•¨, ê¸°ë³¸ í´ë˜ìŠ¤ ì‚¬ìš©: %s"), *GetNameSafe(InController));
 	return Super::GetDefaultPawnClassForController_Implementation(InController);
 }
 
 APawn* ACommonGameModeBase::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform)
 {	
-	// Experience°¡ ·ÎµåµÇÁö ¾Ê¾ÒÀ¸¸é ½ºÆùÇÏÁö ¾Ê½À´Ï´Ù
+	// Experienceê°€ ë¡œë“œë˜ì§€ ì•Šì•˜ìœ¼ë©´ ìŠ¤í°í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤
 	if (!IsExperienceLoaded())
 	{
-		UE_LOG(CommonGameModeLog, Log, TEXT("Experience ·Îµå ´ë±â Áß, Pawn ½ºÆù Áö¿¬: %s"), *GetNameSafe(NewPlayer));
+		UE_LOG(CommonGameModeLog, Log, TEXT("Experience ë¡œë“œ ëŒ€ê¸° ì¤‘, Pawn ìŠ¤í° ì§€ì—°: %s"), *GetNameSafe(NewPlayer));
 		return nullptr;
 	}
 

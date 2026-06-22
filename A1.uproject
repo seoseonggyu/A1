@@ -22,6 +22,10 @@
 			]
 		},
 		{
+			"Name": "Iris",
+			"Enabled": true
+		},
+		{
 			"Name": "ModularGameplay",
 			"Enabled": true
 		},
@@ -39,6 +43,26 @@
 		},
 		{
 			"Name": "Ark",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonGame",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModel",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonUIExtension",
 			"Enabled": true
 		}
 	]

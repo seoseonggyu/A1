@@ -31,12 +31,12 @@ public class A1 : ModuleRules {
       "GameplayAbilities",
       "GameplayTasks",
       "ModularGameplay",
-       //"CommonUIExtension",
-       //"ModelViewViewModel",
-       //"UMG",
-       //"CommonUI",
-       //"Slate",
-       //"SlateCore",
+       "CommonUIExtension",
+       "ModelViewViewModel",
+       "UMG",
+       "CommonUI",
+       "Slate",
+       "SlateCore",
       ]
   );
   }
