@@ -40,6 +40,7 @@ void UCommonAbilitySystemComponent::PostNetInit()
 
 void UCommonAbilitySystemComponent::NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability)
 {
+	// 어빌리티 활성화가 성공한 직후
 	Super::NotifyAbilityActivated(Handle, Ability);
 
 	if (UCommonGameplayAbility* CommonAbility = Cast<UCommonGameplayAbility>(Ability))
@@ -50,6 +51,7 @@ void UCommonAbilitySystemComponent::NotifyAbilityActivated(const FGameplayAbilit
 
 void UCommonAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, bool bWasCancelled)
 {
+	//어빌리티 활성화가 끝난 직후
 	Super::NotifyAbilityEnded(Handle, Ability, bWasCancelled);
 
 	if (UCommonGameplayAbility* CommonAbility = Cast<UCommonGameplayAbility>(Ability))

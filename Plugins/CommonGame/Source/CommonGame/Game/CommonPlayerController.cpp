@@ -68,6 +68,8 @@ void ACommonPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	// TODO: 서버에서만 호출?
+
 	// 서버에서 ASC의 Owner/Avatar 정보를 설정합니다
 	if (ACommonPlayerState* PS = GetPlayerState<ACommonPlayerState>())
 	{

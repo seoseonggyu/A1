@@ -1,7 +1,7 @@
-﻿#include "A1AttributeSet.h"
+﻿#include "A1VitalSet.h"
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AbilitySystem/A1AttributeSet.h"
+#include "AbilitySystem/A1VitalSet.h"
 #include "Player/A1Character.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
@@ -12,15 +12,15 @@
 #include "UI/Character/CharacterViewModel.h"
 #include "Net/UnrealNetwork.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(A1AttributeSet)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(A1VitalSet)
 
-DEFINE_LOG_CATEGORY(A1AttributeSetLog);
+DEFINE_LOG_CATEGORY(A1VitalSetLog);
 
-UA1AttributeSet::UA1AttributeSet()
+UA1VitalSet::UA1VitalSet()
 {
 }
 
-void UA1AttributeSet::BeginDestroy()
+void UA1VitalSet::BeginDestroy()
 {
 	// 캐시된 ViewModel 정리
 	if (IsValid(CachedViewModel))
@@ -32,7 +32,7 @@ void UA1AttributeSet::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-void UA1AttributeSet::PostNetInit()
+void UA1VitalSet::PostNetInit()
 {
 	Super::PostNetInit();
 
@@ -40,21 +40,20 @@ void UA1AttributeSet::PostNetInit()
 	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
 	if (!ASC)
 	{
-		UE_LOG(A1AttributeSetLog, Warning, TEXT("[A1AttributeSet] PostNetInit 실패: ASC를 찾을 수 없습니다"));
+		UE_LOG(A1VitalSetLog, Warning, TEXT("[A1VitalSet] PostNetInit 실패: ASC를 찾을 수 없습니다"));
 		return;
 	}
 
 	APawn* Pawn = Cast<APawn>(ASC->GetAvatarActor());
 	if (!Pawn)
 	{
-		UE_LOG(A1AttributeSetLog, Warning, TEXT("[A1AttributeSet] PostNetInit 실패: AvatarActor가 Pawn이 아닙니다"));
+		UE_LOG(A1VitalSetLog, Warning, TEXT("[A1VitalSet] PostNetInit 실패: AvatarActor가 Pawn이 아닙니다"));
 		return;
 	}
 
 	const APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
 	if (!PC || !PC->IsLocalController())
 	{
-		// 로컬 플레이어가 아니면 정상적으로 스킵
 		return;
 	}
 
@@ -62,37 +61,40 @@ void UA1AttributeSet::PostNetInit()
 	UCommonPrimaryGameLayout* Layout = UCommonPrimaryGameLayout::GetPrimaryGameLayout(PC->GetLocalPlayer());
 	if (!Layout)
 	{
-		UE_LOG(A1AttributeSetLog, Warning, TEXT("[A1AttributeSet] PostNetInit 실패: PrimaryGameLayout을 찾을 수 없습니다"));
+		UE_LOG(A1VitalSetLog, Warning, TEXT("[A1VitalSet] PostNetInit 실패: PrimaryGameLayout을 찾을 수 없습니다"));
 		return;
 	}
 
 	CachedViewModel = Layout->GetViewModel<UCharacterViewModel>(UCharacterViewModel::ViewModelName);
 	if (!CachedViewModel)
 	{
-		UE_LOG(A1AttributeSetLog, Warning, TEXT("[A1AttributeSet] PostNetInit 실패: CharacterViewModel을 생성할 수 없습니다"));
+		UE_LOG(A1VitalSetLog, Warning, TEXT("[A1VitalSet] PostNetInit 실패: CharacterViewModel을 생성할 수 없습니다"));
 		return;
 	}
 
 	CachedViewModel->InitializeViewModel(ASC);
 }
 
-void UA1AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void UA1VitalSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// PushModel 사용
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UA1AttributeSet, Health, Params);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UA1AttributeSet, MaxHealth, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, Health, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MaxHealth, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, Mana, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MaxMana, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, Stamina, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MaxStamina, Params);
 }
 
-void UA1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+void UA1VitalSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	// Damage Meta Attribute 처리
+	// TODO: 각 Attribute에 맞게
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
 		const float IncomingDamage = GetDamage();
@@ -124,22 +126,30 @@ void UA1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	}
 }
 
-void UA1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+void UA1VitalSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
-	// Health를 0 ~ MaxHealth 범위로 클램프
+	// TODO: 각 Attribute에 맞게
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
+	else if (Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
+	}
+	else if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
+	}
 }
 
-void UA1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+void UA1VitalSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
 
-	// Health가 0이 되면 죽음 처리
+	// TODO: 각 Attribute에 맞게
 	if (Attribute == GetHealthAttribute() && NewValue <= 0.f && OldValue > 0.f)
 	{
 		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
@@ -152,12 +162,32 @@ void UA1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, f
 	}
 }
 
-void UA1AttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue)
+void UA1VitalSet::OnRep_Health(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1AttributeSet, Health, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, Health, OldValue);
 }
 
-void UA1AttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
+void UA1VitalSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1AttributeSet, MaxHealth, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, MaxHealth, OldValue);
+}
+
+void UA1VitalSet::OnRep_Mana(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, Mana, OldValue);
+}
+
+void UA1VitalSet::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, MaxMana, OldValue);
+}
+
+void UA1VitalSet::OnRep_Stamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, Stamina, OldValue);
+}
+
+void UA1VitalSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, MaxStamina, OldValue);
 }

@@ -31,14 +31,28 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Health")
 	float Health = 100.f;
-
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Health")
 	float MaxHealth = 100.f;
-
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Health")
 	float HealthPercent = 1.f;
 
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Mana")
+	float Mana = 100.f;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Mana")
+	float MaxMana = 100.f;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Mana")
+	float ManaPercent = 1.f;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Stamina")
+	float Stamina = 100.f;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Stamina")
+	float MaxStamina = 100.f;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Category = "Character ViewModel|Stamina")
+	float StaminaPercent = 1.f;
+
 	void UpdateHealthData();
+	void UpdateManaData();
+	void UpdateStaminaData();
 	void UpdateAllData();
 
 public:
@@ -52,4 +66,10 @@ protected:
 private:
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
+
+	void OnManaChanged(const FOnAttributeChangeData& Data);
+	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
+
+	void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
 };

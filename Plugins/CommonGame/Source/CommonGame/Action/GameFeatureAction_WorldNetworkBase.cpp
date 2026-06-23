@@ -47,6 +47,8 @@ void UGameFeatureAction_WorldNetworkBase::OnGameFeatureDeactivating(FGameFeature
 {
 	FGameFeatureStateChangeContext ChangeContext(Context);
 
+	// TODO: 여기서도 각 GameInstance마다?
+	
 	// OnStartGameInstance 해제
 	if (FDelegateHandle* HandlePtr = GameInstanceStartHandles.Find(ChangeContext))
 	{
