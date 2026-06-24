@@ -119,6 +119,28 @@ public:
 		static_assert(TIsDerivedFrom<T, UCommonViewModelBase>::Value, "T must derive from UCommonViewModelBase");
 		return Cast<T>(GetViewModelByName(ViewModelName));
 	}
+
+	template<typename T>
+	T* FindWidgetOfType(UUserWidget* RootWidget)
+	{
+		if (!RootWidget || !RootWidget->WidgetTree)
+		{
+			return nullptr;
+		}
+
+		TArray<UWidget*> Widgets;
+		RootWidget->WidgetTree->GetAllWidgets(Widgets);
+		for (UWidget* Widget : Widgets)
+		{
+			if (T* Found = Cast<T>(Widget))
+			{
+				return Found;
+			}
+		}
+
+		return nullptr;
+	}
+
 	
 	/** ViewModel을 반환합니다 */
 	UFUNCTION(BlueprintPure, Category = "Common UI|ViewModel")
@@ -149,6 +171,7 @@ public:
 protected:
 	/** Widget의 MVVMView에 필요한 ViewModel들을 자동으로 설정합니다 */
 	void SetupViewModelsForWidget(const UCommonActivatableWidget* Widget);
+	void SetupViewModelsForWidgetTress(const UCommonActivatableWidget* Widget);
 	
 	/** ViewModel을 생성하여 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Common UI|ViewModel", meta = (DeterminesOutputType = "ViewModelClass"))

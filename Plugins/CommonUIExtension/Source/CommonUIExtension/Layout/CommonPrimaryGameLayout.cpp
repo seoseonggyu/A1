@@ -87,7 +87,8 @@ UCommonActivatableWidget* UCommonPrimaryGameLayout::PushWidgetToLayerStack(FGame
 
 		// Widget의 MVVM 바인딩에 필요한 ViewModel 자동 설정
 		SetupViewModelsForWidget(Widget);
-
+		SetupViewModelsForWidgetTress(Widget);
+		
 		return Widget;
 	}
 
@@ -220,6 +221,24 @@ void UCommonPrimaryGameLayout::SetupViewModelsForWidget(const UCommonActivatable
 		{
 			// Widget의 MVVMView에 ViewModel 설정
 			View->SetViewModel(ViewModelName, ViewModel);
+		}
+	}
+}
+
+void UCommonPrimaryGameLayout::SetupViewModelsForWidgetTress(const UCommonActivatableWidget* Widget)
+{
+	if (!Widget || !Widget->WidgetTree)
+	{
+		return;
+	}
+
+	TArray<UWidget*> TressWidgets;
+	Widget->WidgetTree->GetAllWidgets(TressWidgets);
+	for (UWidget* treeWidget : TressWidgets)
+	{
+		if (UCommonActivatableWidget* Found = Cast<UCommonActivatableWidget>(treeWidget))
+		{
+			SetupViewModelsForWidget(Found);
 		}
 	}
 }

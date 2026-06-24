@@ -10,3 +10,17 @@ UMeleeWeaponInstance::UMeleeWeaponInstance(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 }
+
+void UMeleeWeaponInstance::OnEquipped()
+{
+	Super::OnEquipped();
+
+}
+
+void UMeleeWeaponInstance::OnUnequipped()
+{
+
+
+
+	Super::OnUnequipped();
+}

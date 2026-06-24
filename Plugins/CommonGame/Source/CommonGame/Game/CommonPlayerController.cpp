@@ -68,7 +68,10 @@ void ACommonPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// TODO: 서버에서만 호출?
+	/// OnPossess는 서버에서만 작동
+	/*FString serverRole = HasAuthority() ? TEXT("[Server]") : TEXT("[Client]");
+	FString localPlayer = IsLocalController() ? TEXT("[IsLocalController]") : TEXT("[Not IsLocalController]");
+	UE_LOG(LogTemp, Log, TEXT("Network Role: %s,  IsLocal: %s"), *serverRole, *localPlayer);*/
 
 	// 서버에서 ASC의 Owner/Avatar 정보를 설정합니다
 	if (ACommonPlayerState* PS = GetPlayerState<ACommonPlayerState>())

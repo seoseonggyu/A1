@@ -63,13 +63,7 @@ void UCharacterViewModel::UpdateHealthData()
 		return;
 	}
 
-	bool bFound = false;
-	const float CurrentHealth = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetHealthAttribute(), bFound);
-	const float CurrentMaxHealth = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetMaxHealthAttribute(), bFound);
-
-	UE_MVVM_SET_PROPERTY_VALUE(Health, CurrentHealth);
-	UE_MVVM_SET_PROPERTY_VALUE(MaxHealth, CurrentMaxHealth);
-	UE_MVVM_SET_PROPERTY_VALUE(HealthPercent, CurrentMaxHealth > 0.f ? CurrentHealth / CurrentMaxHealth : 0.f);
+	UPDATE_ATTRIBUTE_GROUP(Health, MaxHealth, HealthPercent, UA1VitalSet::GetHealthAttribute(), UA1VitalSet::GetMaxHealthAttribute());
 }
 
 void UCharacterViewModel::UpdateManaData()
@@ -79,14 +73,7 @@ void UCharacterViewModel::UpdateManaData()
 	{
 		return;
 	}
-
-	bool bFound = false;
-	const float CurrentMana = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetManaAttribute(), bFound);
-	const float CurrentMaxMana = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetMaxManaAttribute(), bFound);
-
-	UE_MVVM_SET_PROPERTY_VALUE(Mana, CurrentMana);
-	UE_MVVM_SET_PROPERTY_VALUE(MaxMana, CurrentMaxMana);
-	UE_MVVM_SET_PROPERTY_VALUE(ManaPercent, CurrentMaxMana > 0.f ? CurrentMana / CurrentMaxMana : 0.f);
+	UPDATE_ATTRIBUTE_GROUP(Mana, MaxMana, ManaPercent, UA1VitalSet::GetManaAttribute(), UA1VitalSet::GetMaxManaAttribute());
 }
 
 void UCharacterViewModel::UpdateStaminaData()
@@ -97,15 +84,8 @@ void UCharacterViewModel::UpdateStaminaData()
 		return;
 	}
 
-	bool bFound = false;
-	const float CurrentStamina = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetStaminaAttribute(), bFound);
-	const float CurrentMaxStamina = ASCPtr->GetGameplayAttributeValue(UA1VitalSet::GetMaxStaminaAttribute(), bFound);
-
-	UE_MVVM_SET_PROPERTY_VALUE(Stamina, CurrentStamina);
-	UE_MVVM_SET_PROPERTY_VALUE(MaxStamina, CurrentMaxStamina);
-	UE_MVVM_SET_PROPERTY_VALUE(StaminaPercent, CurrentMaxStamina > 0.f ? CurrentStamina / CurrentMaxStamina : 0.f);
+	UPDATE_ATTRIBUTE_GROUP(Stamina, MaxStamina, StaminaPercent, UA1VitalSet::GetStaminaAttribute(), UA1VitalSet::GetMaxStaminaAttribute());
 }
-
 
 void UCharacterViewModel::UpdateAllData()
 {
@@ -113,6 +93,7 @@ void UCharacterViewModel::UpdateAllData()
 	UpdateManaData();
 	UpdateStaminaData();
 }
+
 
 void UCharacterViewModel::OnHealthChanged(const FOnAttributeChangeData& Data)
 {

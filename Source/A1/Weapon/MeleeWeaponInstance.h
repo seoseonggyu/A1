@@ -25,4 +25,16 @@ class A1_API UMeleeWeaponInstance : public UWeaponInstance
 
 public:
 	UMeleeWeaponInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+protected:
+	virtual void OnEquipped() override;
+	virtual void OnUnequipped() override;
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Animation")
+	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
+
+
+private:
+
 };

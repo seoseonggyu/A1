@@ -34,4 +34,11 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Primary, "QuickBar.Slot.Primary");
+
+	//-----------------------------------------------------------------------------
+	// Input.Ability
+	//-----------------------------------------------------------------------------
+
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Widget_Inventory, "Input.Ability.Widget.Inventory");
+
 }

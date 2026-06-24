@@ -8,6 +8,23 @@
 
 class UAbilitySystemComponent;
 struct FOnAttributeChangeData;
+struct FGameplayAttribute;
+
+#define UPDATE_ATTRIBUTE_GROUP( \
+	CurrentProp, \
+	MaxProp, \
+	PercentProp, \
+	CurrentAttr, \
+	MaxAttr) \
+{ \
+	bool bFound = false; \
+	const float CurrentValue = ASCPtr->GetGameplayAttributeValue(CurrentAttr, bFound); \
+	const float MaxValue = ASCPtr->GetGameplayAttributeValue(MaxAttr, bFound); \
+	UE_MVVM_SET_PROPERTY_VALUE(CurrentProp, CurrentValue); \
+	UE_MVVM_SET_PROPERTY_VALUE(MaxProp, MaxValue); \
+	UE_MVVM_SET_PROPERTY_VALUE(PercentProp, MaxValue > 0.f ? CurrentValue / MaxValue : 0.f); \
+}
+
 
 DECLARE_LOG_CATEGORY_EXTERN(CharacterViewModelLog, Log, All);
 
