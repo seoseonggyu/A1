@@ -34,7 +34,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Animation")
 	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
 
-
 private:
 
 };

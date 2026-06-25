@@ -36,12 +36,14 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Primary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Secondary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Tertiary);
 
 
 	//-----------------------------------------------------------------------------
 	// Input.Ability
 	//-----------------------------------------------------------------------------
 
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Widget_Inventory);
-
 }
