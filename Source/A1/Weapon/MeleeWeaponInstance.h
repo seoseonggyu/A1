@@ -35,5 +35,9 @@ protected:
 	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
 
 private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
+	float BaseDamage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
+	TArray<float> ComboDamage;
 };
