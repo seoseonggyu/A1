@@ -31,6 +31,6 @@ public:
 
 
 protected:
-	UMeleeWeaponInstance* GetMeleeWeaponInstance() const;
+	virtual UMeleeWeaponInstance* GetMeleeWeaponInstance() const;
 
 };

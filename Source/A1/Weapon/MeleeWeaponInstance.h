@@ -26,18 +26,33 @@ class A1_API UMeleeWeaponInstance : public UWeaponInstance
 public:
 	UMeleeWeaponInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+
+	UAnimMontage* GetAttackMontage(int Index) const 
+	{
+		if (Index < 0 || AttackMontage.Num() <= Index) return nullptr;
+		return AttackMontage[Index]; 
+	}
+
+	float GetComboDamage(int Index) const 
+	{ 
+		if (Index < 0 || ComboDamage.Num() <= Index) return 0;
+		return ComboDamage[Index]; 
+	}
+
+	float GetBaseDamage() const { return BaseDamage; }
+
 protected:
 	virtual void OnEquipped() override;
 	virtual void OnUnequipped() override;
-
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Animation")
-	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
-
+	
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
-	float BaseDamage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Animation", meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UAnimMontage>> AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
 	TArray<float> ComboDamage;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
+	float BaseDamage;
 };

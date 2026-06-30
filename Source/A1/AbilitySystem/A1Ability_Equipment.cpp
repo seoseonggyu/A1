@@ -23,15 +23,12 @@ bool UA1Ability_Equipment::CanActivateAbility(const FGameplayAbilitySpecHandle H
 	}
 
 
-
-
 	return true;
 }
 
 void UA1Ability_Equipment::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
 
 }
 
