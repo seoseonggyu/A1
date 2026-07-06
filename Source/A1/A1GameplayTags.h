@@ -36,6 +36,7 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Primary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Secondary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Tertiary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Quaternary);
 
 
 	//-----------------------------------------------------------------------------
@@ -44,4 +45,9 @@ namespace A1GameplayTags
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Widget_Inventory);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Primary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Secondary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Tertiary);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Quaternary);
+
 }

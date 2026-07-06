@@ -34,6 +34,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Primary, "QuickBar.Slot.Primary");
 	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Secondary, "QuickBar.Slot.Secondary");
 	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Tertiary, "QuickBar.Slot.Tertiary");
+	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Quaternary, "QuickBar.Slot.Quaternary");
 
 	//-----------------------------------------------------------------------------
 	// Input.Ability
@@ -41,5 +42,8 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack, "Input.Ability.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Widget_Inventory, "Input.Ability.Widget.Inventory");
-
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Primary, "Input.Ability.QuickBar.Primary");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Secondary, "Input.Ability.QuickBar.Secondary");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Tertiary, "Input.Ability.QuickBar.Tertiary");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Quaternary, "Input.Ability.QuickBar.Quaternary");
 }
