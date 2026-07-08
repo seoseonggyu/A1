@@ -1,9 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Equipment/Fragment/EquipmentFragment_AnimationData.h"
-#include "Equipment/Fragment/EquipmentFragment.h"
 #include "Equipment/EquipmentInstance.h"
 #include "Game/CommonCharacter.h"
+
+#include "Awaiters/Asset.h"
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EquipmentFragment_AnimationData)
 
 void FEquipmentFragment_AnimationData::OnEquipped(UEquipmentInstance* Instance)
@@ -23,6 +24,9 @@ void FEquipmentFragment_AnimationData::OnEquipped(UEquipmentInstance* Instance)
 	if (AnimInstanceClass) {
 		Character->SetAnimationData(AnimInstanceClass);
 	}
+
+	LoadAnimMontageCoroutine(Character, EquipMontage);
+
 }
 
 void FEquipmentFragment_AnimationData::OnUnequipped(UEquipmentInstance* Instance)
@@ -40,4 +44,18 @@ void FEquipmentFragment_AnimationData::OnUnequipped(UEquipmentInstance* Instance
 	}
 
 	Character->ResetAnimationToDefault(); // TODO: Equipment 해제 후 기본 애니메이션 상태로?
+}
+
+TCoroTask<void> FEquipmentFragment_AnimationData::LoadAnimMontageCoroutine(ACommonCharacter* Character, TSoftObjectPtr<UAnimMontage> Montage)
+{
+	if (Character == nullptr)
+	{
+		co_return;
+	}
+
+	UAnimMontage* LoadedMontage = co_await Coro::Async::LoadObject(Character, Montage);
+	if (LoadedMontage)
+	{
+		Character->PlayAnimMontage(LoadedMontage);
+	}
 }

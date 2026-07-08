@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Coro.h"
 #include "Equipment/Fragment/EquipmentFragment.h"
 #include "EquipmentFragment_AnimationData.generated.h"
 
 class UCharacterAnimationData;
+class ACommonCharacter;
 
 /**
  * 장착 시 애니메이션 데이터를 설정하는 Fragment
@@ -22,8 +24,15 @@ public:
 	virtual void OnEquipped(UEquipmentInstance* Instance) override;
 	virtual void OnUnequipped(UEquipmentInstance* Instance) override;
 
+private:
+	TCoroTask<void> LoadAnimMontageCoroutine(ACommonCharacter* Character, TSoftObjectPtr<UAnimMontage> Montage);
+
 public:
 	/** 적용할 애니메이션 데이터 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (AssetBundles = "Client"))
 	TSubclassOf<UAnimInstance> AnimInstanceClass;
+
+	/* 장착 애니메이션 */
+	UPROPERTY(EditDefaultsOnly)
+	TSoftObjectPtr<UAnimMontage> EquipMontage;
 };
