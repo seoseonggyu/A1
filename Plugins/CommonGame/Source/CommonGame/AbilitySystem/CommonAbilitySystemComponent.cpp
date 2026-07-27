@@ -60,6 +60,22 @@ void UCommonAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHandl
 	}
 }
 
+void UCommonAbilitySystemComponent::AbilityInputTagStarted(const FGameplayTag& InputTag)
+{
+	if (!InputTag.IsValid())
+	{
+		return;
+	}
+
+	for (const FGameplayAbilitySpec& Spec : ActivatableAbilities.Items)
+	{
+		if (Spec.Ability && (Spec.DynamicAbilityTags.HasTagExact(InputTag)))
+		{
+			InputStartedSpecHandles.AddUnique(Spec.Handle);
+		}
+	}
+}
+
 void UCommonAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid())
@@ -126,7 +142,22 @@ void UCommonAbilitySystemComponent::ProcessAbilityInput(float DeltaTime, bool bG
 		}
 	}
 
-	// 2. OnInputTriggered 정책: Press된 Ability 활성화
+	// 2. OnInputStarted 정책: Started된 Ability에 대한 활성화
+	for (const FGameplayAbilitySpecHandle& SpecHandle : InputStartedSpecHandles)
+	{
+		if (FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(SpecHandle))
+		{
+			if (AbilitySpec->Ability)
+			{
+				if (AbilitySpec->IsActive())
+				{
+					AbilitySecInputStarted(*AbilitySpec);
+				}
+			}
+		}
+	}
+
+	// 3. OnInputTriggered 정책: Press된 Ability 활성화
 	for (const FGameplayAbilitySpecHandle& Handle : InputPressedSpecHandles)
 	{
 		if (FGameplayAbilitySpec* Spec = FindAbilitySpecFromHandle(Handle))
@@ -154,13 +185,13 @@ void UCommonAbilitySystemComponent::ProcessAbilityInput(float DeltaTime, bool bG
 		}
 	}
 
-	// 3. 수집된 Ability 활성화
+	// 4. 수집된 Ability 활성화
 	for (const FGameplayAbilitySpecHandle& Handle : AbilitiesToActivate)
 	{
 		TryActivateAbility(Handle);
 	}
 
-	// 4. Release 처리: 활성화된 Ability에 입력 해제 알림
+	// 5. Release 처리: 활성화된 Ability에 입력 해제 알림
 	for (const FGameplayAbilitySpecHandle& Handle : InputReleasedSpecHandles)
 	{
 		if (FGameplayAbilitySpec* Spec = FindAbilitySpecFromHandle(Handle))
@@ -186,13 +217,15 @@ void UCommonAbilitySystemComponent::ProcessAbilityInput(float DeltaTime, bool bG
 		}
 	}
 
-	// 입력 상태 정리 (Pressed/Released는 매 프레임 리셋)
+	// 입력 상태 정리 (Started/Pressed/Released는 매 프레임 리셋)
+	InputStartedSpecHandles.Reset();
 	InputPressedSpecHandles.Reset();
 	InputReleasedSpecHandles.Reset();
 }
 
 void UCommonAbilitySystemComponent::ClearAbilityInput()
 {
+	InputStartedSpecHandles.Reset();
 	InputPressedSpecHandles.Reset();
 	InputReleasedSpecHandles.Reset();
 	InputHeldSpecHandles.Reset();
@@ -268,4 +301,28 @@ void UCommonAbilitySystemComponent::CancelActivationGroupAbilities(ECommonAbilit
 			CancelAbilityHandle(Spec.Handle);
 		}
 	}
+}
+
+void UCommonAbilitySystemComponent::AbilitySecInputStarted(FGameplayAbilitySpec& Spec)
+{
+	if (Spec.IsActive())
+	{
+		// 실행 중인 어빌리티 내부의 대기 중인 태스크에게 입력 신호를 전달한다.
+		// RPC가 아니라 로컬 ASC 우편함에 기록 후 로컬 델리게이트를 브로드캐스트할 뿐이며,
+		// 서버로의 전달은 신호를 받은 태스크가 OnStartCallback에서 수행한다.
+		// (Handle + ActivationPredictionKey)가 태스크의 등록 키와 일치해야 신호가 닿는다.
+		InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::GameCustom1, Spec.Handle, Spec.ActivationInfo.GetActivationPredictionKey());
+	}
+}
+
+void UCommonAbilitySystemComponent::AbilitySpecInputPressed(FGameplayAbilitySpec& Spec)
+{
+	// TODO: Input Pressed
+	Super::AbilitySpecInputPressed(Spec);
+}
+
+void UCommonAbilitySystemComponent::AbilitySpecInputReleased(FGameplayAbilitySpec& Spec)
+{
+	// TODO: Input Pressed
+	Super::AbilitySpecInputReleased(Spec);
 }

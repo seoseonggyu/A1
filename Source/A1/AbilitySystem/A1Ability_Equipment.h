@@ -10,12 +10,6 @@ class UMeleeWeaponInstance;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1Ability_Equipment, Log, All);
 
-/**
- * 원거리 무기 사격 Ability
- *
- * 클라이언트에서 히트스캔 후 TargetData를 서버로 전송하고,
- * 서버에서 리와인딩 검증 후 데미지를 적용합니다.
- */
 UCLASS(Abstract)
 class A1_API UA1Ability_Equipment: public UCommonGameplayAbility
 {

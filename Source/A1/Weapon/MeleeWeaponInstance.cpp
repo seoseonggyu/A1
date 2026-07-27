@@ -20,7 +20,5 @@ void UMeleeWeaponInstance::OnEquipped()
 void UMeleeWeaponInstance::OnUnequipped()
 {
 
-
-
 	Super::OnUnequipped();
 }

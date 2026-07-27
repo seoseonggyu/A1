@@ -11,7 +11,7 @@ DEFINE_LOG_CATEGORY(A1Ability_Equipment);
 UA1Ability_Equipment::UA1Ability_Equipment(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// TODO: ³×Æ®¿öÅ· ¼³Á¤
+	// TODO: ï¿½ï¿½Æ®ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½
 }
 
 bool UA1Ability_Equipment::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
@@ -22,14 +22,12 @@ bool UA1Ability_Equipment::CanActivateAbility(const FGameplayAbilitySpecHandle H
 		return false;
 	}
 
-
 	return true;
 }
 
 void UA1Ability_Equipment::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
 }
 
 void UA1Ability_Equipment::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -51,7 +49,6 @@ UMeleeWeaponInstance* UA1Ability_Equipment::GetMeleeWeaponInstance() const
 	{
 		return nullptr;
 	}
-
 
 	return Cast<UMeleeWeaponInstance>(EquipmentComp->GetEquipmentInSlot(A1GameplayTags::Equipment_Slot_Weapon));
 }

@@ -5,7 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_WaitConfirmCancel.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
-#include "Tasks/A1AbilityTask_WaitInputStart.h"
+#include "AbilitySystem/Tasks/A1AbilityTask_WaitInputStart.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_MeleeWeaponComboAttack)
 

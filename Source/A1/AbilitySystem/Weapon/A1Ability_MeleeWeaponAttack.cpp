@@ -12,7 +12,7 @@ UA1Ability_MeleeWeaponAttack::UA1Ability_MeleeWeaponAttack(const FObjectInitiali
 	: Super(ObjectInitializer)
 
 {
-	// TODO: ��Ʈ��ŷ ����
+	// TODO: Network
 }
 
 bool UA1Ability_MeleeWeaponAttack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
@@ -26,7 +26,6 @@ void UA1Ability_MeleeWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHan
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-
 	const UMeleeWeaponInstance* WeaponInstance = GetMeleeWeaponInstance();
 	UAnimMontage* AttackMontage = WeaponInstance->GetAttackMontage(ComboIndex);
 	if (AttackMontage == nullptr)
@@ -39,13 +38,11 @@ void UA1Ability_MeleeWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHan
 
 	ASC->PlayMontage(this, ActivationInfo, AttackMontage, 1.0f);
 
-	K2_EndAbility();
+	// TODO: Not This End
+	// K2_EndAbility();
 }
 
-void UA1Ability_MeleeWeaponAttack::EndAbility(const FGameplayAbilitySpecHandle Handle,
-                                              const FGameplayAbilityActorInfo* ActorInfo,
-                                              const FGameplayAbilityActivationInfo ActivationInfo,
-                                              bool bReplicateEndAbility, bool bWasCancelled)
+void UA1Ability_MeleeWeaponAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

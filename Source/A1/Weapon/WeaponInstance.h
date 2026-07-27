@@ -8,11 +8,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(WeaponInstanceLog, Log, All);
 
-/**
- * 무기 인스턴스 베이스 클래스
- *
- * UEquipmentInstance를 상속하여 무기 고유의 기능을 추가합니다.
- */
 UCLASS(BlueprintType)
 class A1_API UWeaponInstance : public UEquipmentInstance
 {

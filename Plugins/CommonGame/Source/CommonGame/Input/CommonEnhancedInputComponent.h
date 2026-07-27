@@ -14,14 +14,17 @@ DECLARE_LOG_CATEGORY_EXTERN(CommonEnhancedInputComponentLog, Log, All);
 // FAbilityInputBindingHandles
 //-----------------------------------------------------------------------------
 
-/** BindAbilityAction의 Press/Release 바인딩 핸들 */
+/** BindAbilityAction의 Start/Press/Release 바인딩 핸들 */
 struct FAbilityInputBindingHandles
 {
 public:
-	bool IsValid() const { return PressHandle != 0 && ReleaseHandle != 0; }
-	
+	bool IsValid() const { return StartHandle != 0 && PressHandle != 0 && ReleaseHandle != 0; }
+
 public:
-	/** Press(Started) 바인딩 핸들 */
+	/** Start(Started) 바인딩 핸들 */
+	uint32 StartHandle = 0;
+
+	/** Press(Triggered) 바인딩 핸들 */
 	uint32 PressHandle = 0;
 
 	/** Release(Completed) 바인딩 핸들 */
@@ -61,7 +64,7 @@ public:
 	 * 예: 점프, 재장전, 상호작용 등 on/off 방식의 입력
 	 * @return 바인딩 핸들 (0이면 실패, 제거 시 사용)
 	 */
-	template<class UserClass, typename... VarTypes>
+	template <class UserClass, typename... VarTypes>
 	uint32 BindNativeAction(
 		const FGameplayTag& InputTag,
 		ETriggerEvent TriggerEvent,
@@ -85,7 +88,7 @@ public:
 	 * 예: 이동(WASD -> FVector2D), 시점 회전(마우스 -> FVector2D)
 	 * @return 바인딩 핸들 (0이면 실패, 제거 시 사용)
 	 */
-	template<class UserClass, typename... VarTypes>
+	template <class UserClass, typename... VarTypes>
 	uint32 BindNativeAction(
 		const FGameplayTag& InputTag,
 		ETriggerEvent TriggerEvent,
@@ -109,7 +112,7 @@ public:
 	 * 예: 차징 공격(누른 시간에 따라 위력 변화), 홀드 입력 처리
 	 * @return 바인딩 핸들 (0이면 실패, 제거 시 사용)
 	 */
-	template<class UserClass, typename... VarTypes>
+	template <class UserClass, typename... VarTypes>
 	uint32 BindNativeAction(
 		const FGameplayTag& InputTag,
 		ETriggerEvent TriggerEvent,
@@ -137,7 +140,7 @@ public:
 	 * 주로 struct에서 입력 처리 시 사용됩니다
 	 * @return 바인딩 핸들 (0이면 실패, 제거 시 사용)
 	 */
-	template<typename FuncType>
+	template <typename FuncType>
 	uint32 BindNativeActionValueLambda(const FGameplayTag& InputTag, ETriggerEvent TriggerEvent, FuncType&& Func)
 	{
 		if (const UInputAction* Action = FindNativeActionByTag(InputTag))
@@ -156,7 +159,7 @@ public:
 	 * 입력 값과 함께 시간/상태 메타데이터가 필요한 경우 사용됩니다
 	 * @return 바인딩 핸들 (0이면 실패, 제거 시 사용)
 	 */
-	template<typename FuncType>
+	template <typename FuncType>
 	uint32 BindNativeActionInstanceLambda(const FGameplayTag& InputTag, ETriggerEvent TriggerEvent, FuncType&& Func)
 	{
 		if (const UInputAction* Action = FindNativeActionByTag(InputTag))
@@ -175,11 +178,11 @@ public:
 	/**
 	 * 어빌리티용 입력을 바인딩합니다
 	 *
-	 * Started(Press)와 Completed(Release)를 자동으로 등록합니다
+	 * Start (Started), Press(Triggered), Completed(Release)를 자동으로 등록합니다
 	 * 콜백에 어떤 입력인지 태그와 Press/Release 여부를 전달합니다
-	 * @return Press/Release 바인딩 핸들 (제거 시 사용)
+	 * @return Start/Press/Release 바인딩 핸들 (제거 시 사용)
 	 */
-	template<class UserClass>
+	template <class UserClass>
 	FAbilityInputBindingHandles BindAbilityAction(
 		const FGameplayTag& InputTag,
 		UserClass* Object,
@@ -189,8 +192,11 @@ public:
 
 		if (const UInputAction* Action = FindAbilityActionByTag(InputTag))
 		{
-			// Press (Started)
-			Handles.PressHandle = BindAction(Action, ETriggerEvent::Started, Object, Func, InputTag, true).GetHandle();
+			// Start (Started)
+			Handles.StartHandle = BindAction(Action, ETriggerEvent::Started, Object, Func, InputTag, true).GetHandle();
+
+			// Press (Triggered)
+			Handles.PressHandle = BindAction(Action, ETriggerEvent::Triggered, Object, Func, InputTag, true).GetHandle();
 
 			// Release (Completed)
 			Handles.ReleaseHandle = BindAction(Action, ETriggerEvent::Completed, Object, Func, InputTag, false).GetHandle();
@@ -206,21 +212,25 @@ public:
 	/**
 	 * 어빌리티용 입력을 람다로 바인딩합니다
 	 *
-	 * Started(Press)와 Completed(Release)를 자동으로 등록합니다
+	 * Start (Started), Press(Triggered), Completed(Release)를 자동으로 등록합니다
 	 * UObject 없이 람다 함수를 직접 바인딩할 수 있습니다
-	 * @param PressFunc Press(Started) 콜백
+	 * @param StartedFunc Start(Started) 콜백
+	 * @param PressFunc Press(Triggered) 콜백
 	 * @param ReleaseFunc Release(Completed) 콜백
-	 * @return Press/Release 바인딩 핸들 (제거 시 사용)
+	 * @return Start/Press/Release 바인딩 핸들 (제거 시 사용)
 	 */
-	template<typename PressFuncType, typename ReleaseFuncType>
-	FAbilityInputBindingHandles BindAbilityActionLambda(const FGameplayTag& InputTag, PressFuncType&& PressFunc, ReleaseFuncType&& ReleaseFunc)
+	template <typename StartedFuncType, typename PressFuncType, typename ReleaseFuncType>
+	FAbilityInputBindingHandles BindAbilityActionLambda(const FGameplayTag& InputTag, StartedFuncType&& StartedFunc, PressFuncType&& PressFunc, ReleaseFuncType&& ReleaseFunc)
 	{
 		FAbilityInputBindingHandles Handles;
 
 		if (const UInputAction* Action = FindAbilityActionByTag(InputTag))
 		{
-			// Press (Started)
-			Handles.PressHandle = BindActionInstanceLambda(Action, ETriggerEvent::Started, Forward<PressFuncType>(PressFunc)).GetHandle();
+			// Start (Started)
+			Handles.StartHandle =  BindActionInstanceLambda(Action, ETriggerEvent::Started, Forward<StartedFuncType>(StartedFunc)).GetHandle();
+
+			// Press (Triggered)
+			Handles.PressHandle = BindActionInstanceLambda(Action, ETriggerEvent::Triggered, Forward<PressFuncType>(PressFunc)).GetHandle();
 
 			// Release (Completed)
 			Handles.ReleaseHandle = BindActionInstanceLambda(Action, ETriggerEvent::Completed, Forward<ReleaseFuncType>(ReleaseFunc)).GetHandle();

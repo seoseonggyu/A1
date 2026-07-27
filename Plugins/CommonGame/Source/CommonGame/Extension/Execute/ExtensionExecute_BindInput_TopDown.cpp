@@ -62,15 +62,17 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 		}
 
 		const FGameplayTag InputTag = Mapping.InputTag;
-
+		
 		FAbilityInputBindingHandles Handles = InputComponent->BindAbilityActionLambda(
 			InputTag,
+			[this, InputTag](const FInputActionInstance&) { Input_AbilityStarted(InputTag); },
 			[this, InputTag](const FInputActionInstance&) { Input_AbilityPressed(InputTag); },
 			[this, InputTag](const FInputActionInstance&) { Input_AbilityReleased(InputTag); }
 		);
 
 		if (Handles.IsValid())
 		{
+			BindingHandles.Add(Handles.StartHandle);
 			BindingHandles.Add(Handles.PressHandle);
 			BindingHandles.Add(Handles.ReleaseHandle);
 		}
@@ -135,6 +137,23 @@ void FExtensionExecute_BindInput_TopDown::Input_Move(const FInputActionValue& In
 	{
 		FVector Right = FRotationMatrix(MovementRotation).GetUnitAxis(EAxis::Y);
 		Pawn->AddMovementInput(Right, Value.Y);
+	}
+}
+
+void FExtensionExecute_BindInput_TopDown::Input_AbilityStarted(FGameplayTag InputTag) const
+{
+	APawn* Pawn = WeakPawn.Get();
+	if (!Pawn)
+	{
+		return;
+	}
+	
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
+	{
+		if (UCommonAbilitySystemComponent* ASC = Cast<UCommonAbilitySystemComponent>(ASI->GetAbilitySystemComponent()))
+		{
+			ASC->AbilityInputTagStarted(InputTag);
+		}
 	}
 }
 

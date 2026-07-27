@@ -48,6 +48,18 @@ public:
 	// 입력-Ability 연동
 	//-----------------------------------------------------------------------------
 
+	// TODO: 설명 필요
+	/**
+	 * 입력 태그가 시작되었음을 알립니다
+	 * 
+	 * Ability에 DynamicAbilityTags와 InputTag가 맞는지 찾아
+	 * InputStartedSpecHandles에 추가합니다
+	 * @param InputTag 시작한 입력 태그
+	 * 
+	 */
+	void AbilityInputTagStarted(const FGameplayTag& InputTag);
+	
+	
 	/**
 	 * 입력 태그가 눌렸음을 알립니다
 	 *
@@ -94,8 +106,18 @@ public:
 
 	/** 해당 그룹의 모든 Ability를 취소합니다 */
 	void CancelActivationGroupAbilities(ECommonAbilityActivationGroup Group, UCommonGameplayAbility* IgnoreAbility);
+	
+protected:
+
+	virtual void AbilitySecInputStarted(FGameplayAbilitySpec& Spec);
+	virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
+	virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
 
 protected:
+	
+	/** 이번 프레임에 Start된 Ability 핸들들 */
+	TArray<FGameplayAbilitySpecHandle> InputStartedSpecHandles;
+	
 	/** 이번 프레임에 Press된 Ability 핸들들 */
 	TArray<FGameplayAbilitySpecHandle> InputPressedSpecHandles;
 
