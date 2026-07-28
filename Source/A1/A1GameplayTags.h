@@ -7,7 +7,7 @@
 namespace A1GameplayTags
 {
 	//-----------------------------------------------------------------------------
-	// Equipment.Slot - Àåºñ ½½·Ô ÅÂ±×
+	// Equipment.Slot
 	//-----------------------------------------------------------------------------
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Unarmed_LeftHand);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Unarmed_RightHand);
@@ -30,7 +30,7 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Foot);
 
 	//-----------------------------------------------------------------------------
-	// QuickBar.Slot - Äü¹Ù ½½·Ô ÅÂ±×
+	// QuickBar.Slot
 	//-----------------------------------------------------------------------------
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(QuickBar_Slot_Primary);
@@ -49,5 +49,32 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Secondary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Tertiary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Quaternary);
+	
+	//-----------------------------------------------------------------------------
+	// Ability
+	//-----------------------------------------------------------------------------
+	
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_1);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_2);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_3);
+	
+	//-----------------------------------------------------------------------------
+	// Status
+	//-----------------------------------------------------------------------------
+	
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Attack);
+	
+	
+	//-----------------------------------------------------------------------------
+	// Gameplay.Event
+	//-----------------------------------------------------------------------------
+	
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Begin);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Tick);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_End);
+	
+	
+	
 
 }

@@ -23,6 +23,17 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
+	virtual void HandleMontageEvent(FGameplayEventData Payload);
+	
+private:
+	UFUNCTION()
+	void OnMontageEventTriggered(FGameplayEventData Payload);
+	
+	UFUNCTION()
+	void OnMontageFinished();
+	
+protected:
 	UPROPERTY(EditDefaultsOnly, Category="A1|Melee Attack Index")
 	uint32 ComboIndex = 0;
+
 };

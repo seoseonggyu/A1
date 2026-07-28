@@ -11,16 +11,23 @@ DEFINE_LOG_CATEGORY(A1Ability_Equipment);
 UA1Ability_Equipment::UA1Ability_Equipment(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// TODO: ��Ʈ��ŷ ����
+	// TODO: Network
 }
 
 bool UA1Ability_Equipment::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
+	// TODO: 현재 무기만 설정
 	const UMeleeWeaponInstance* WeaponInstance = GetMeleeWeaponInstance();
 	if (!WeaponInstance)
 	{
 		return false;
 	}
+	
 
 	return true;
 }

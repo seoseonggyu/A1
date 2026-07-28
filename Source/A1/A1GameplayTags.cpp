@@ -4,7 +4,7 @@ namespace A1GameplayTags
 {
 
 	//-----------------------------------------------------------------------------
-	// Equipment.Slot - Àåºñ ½½·Ô ÅÂ±×
+	// Equipment.Slot - ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½
 	//-----------------------------------------------------------------------------
 
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Unarmed_LeftHand, "Equipment.Slot.Unarmed.LeftHand");
@@ -28,7 +28,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Foot, "Equipment.Slot.Foot");
 
 	//-----------------------------------------------------------------------------
-	// QuickBar.Slot - Äü¹Ù ½½·Ô ÅÂ±×
+	// QuickBar.Slot
 	//-----------------------------------------------------------------------------
 
 	UE_DEFINE_GAMEPLAY_TAG(QuickBar_Slot_Primary, "QuickBar.Slot.Primary");
@@ -46,4 +46,29 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Secondary, "Input.Ability.QuickBar.Secondary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Tertiary, "Input.Ability.QuickBar.Tertiary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Quaternary, "Input.Ability.QuickBar.Quaternary");
+	
+	//-----------------------------------------------------------------------------
+	// Ability
+	//-----------------------------------------------------------------------------
+	
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack, "Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_1, "Ability.Attack.1");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_2, "Ability.Attack.2");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_3, "Ability.Attack.3");
+	
+	//-----------------------------------------------------------------------------
+	// Status
+	//-----------------------------------------------------------------------------
+	
+	UE_DEFINE_GAMEPLAY_TAG(Status_Attack, "Status.Attack");
+	
+	
+	//-----------------------------------------------------------------------------
+	// Gameplay.Event
+	//-----------------------------------------------------------------------------
+	
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_Begin, "GameplayEvent.Montage.Begin");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_Tick, "GameplayEvent.Montage.Tick");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_End, "GameplayEvent.Montage.End");
+	
 }

@@ -22,7 +22,8 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	virtual void HandleMontageEvent(FGameplayEventData Payload); /*TEMP*/
+protected:
+	virtual void HandleMontageEvent(FGameplayEventData Payload) override;
 	
 private:
 	void WaitInputContinue();

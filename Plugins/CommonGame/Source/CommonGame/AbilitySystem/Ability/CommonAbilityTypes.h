@@ -45,6 +45,8 @@ public:
 UENUM(BlueprintType)
 enum class ECommonAbilityActivationPolicy : uint8
 {
+	Manual,
+	
 	/** 입력 시작 시 활성화 (누르는 순간) */
 	OnInputTriggered,
 

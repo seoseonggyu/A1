@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "AbilitySystem/CommonAttributeSet.h"
+#include "AbilitySystem/CommonAbilityTagRelationshipMapping.h"
 #include "AbilitySystem/Ability/CommonGameplayAbility.h"
 #include "AbilitySystem/Ability/CommonAbilityTypes.h"
 #include "CommonGameTags.h"
@@ -69,7 +70,7 @@ void UCommonAbilitySystemComponent::AbilityInputTagStarted(const FGameplayTag& I
 
 	for (const FGameplayAbilitySpec& Spec : ActivatableAbilities.Items)
 	{
-		if (Spec.Ability && (Spec.DynamicAbilityTags.HasTagExact(InputTag)))
+		if (Spec.Ability && (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag)))
 		{
 			InputStartedSpecHandles.AddUnique(Spec.Handle);
 		}
@@ -307,22 +308,73 @@ void UCommonAbilitySystemComponent::AbilitySecInputStarted(FGameplayAbilitySpec&
 {
 	if (Spec.IsActive())
 	{
-		// 실행 중인 어빌리티 내부의 대기 중인 태스크에게 입력 신호를 전달한다.
-		// RPC가 아니라 로컬 ASC 우편함에 기록 후 로컬 델리게이트를 브로드캐스트할 뿐이며,
-		// 서버로의 전달은 신호를 받은 태스크가 OnStartCallback에서 수행한다.
-		// (Handle + ActivationPredictionKey)가 태스크의 등록 키와 일치해야 신호가 닿는다.
-		InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::GameCustom1, Spec.Handle, Spec.ActivationInfo.GetActivationPredictionKey());
+		if (UGameplayAbility* AbilityInstance = Spec.GetPrimaryInstance())
+		{
+			// 실행 중인 어빌리티 내부의 대기 중인 태스크에게 입력 신호를 전달한다.
+			// RPC가 아니라 로컬 ASC 우편함에 기록 후 로컬 델리게이트를 브로드캐스트할 뿐이며,
+			// 서버로의 전달은 신호를 받은 태스크가 OnStartCallback에서 수행한다.
+			// (Handle + ActivationPredictionKey)가 태스크의 등록 키와 일치해야 신호가 닿는다.
+			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::GameCustom1, Spec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+		}
 	}
 }
 
+
 void UCommonAbilitySystemComponent::AbilitySpecInputPressed(FGameplayAbilitySpec& Spec)
 {
-	// TODO: Input Pressed
 	Super::AbilitySpecInputPressed(Spec);
+
+	// UGameplayAbility::bReplicateInputDirectly는 지원하지 않는다.
+	// WaitInputPress 계열 AbilityTask가 동작하도록 복제 이벤트로 대신 전달한다.
+	if (Spec.IsActive())
+	{
+		if (UGameplayAbility* AbilityInstance = Spec.GetPrimaryInstance())
+		{
+			// InputPressed 이벤트 전송(여기서 서버로 복제하지 않음). 수신 태스크가 필요 시 서버로 복제한다.
+			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, Spec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+		}
+	}
 }
 
 void UCommonAbilitySystemComponent::AbilitySpecInputReleased(FGameplayAbilitySpec& Spec)
 {
-	// TODO: Input Pressed
 	Super::AbilitySpecInputReleased(Spec);
+
+	// UGameplayAbility::bReplicateInputDirectly는 지원하지 않는다.
+	// WaitInputRelease 계열 AbilityTask가 동작하도록 복제 이벤트로 대신 전달한다.
+	if (Spec.IsActive())
+	{
+		if (UGameplayAbility* AbilityInstance = Spec.GetPrimaryInstance())
+		{
+			// InputReleased 이벤트 전송(여기서 서버로 복제하지 않음). 수신 태스크가 필요 시 서버로 복제한다.
+			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, Spec.Handle, AbilityInstance->GetCurrentActivationInfo().GetActivationPredictionKey());
+		}
+	}
+}
+
+void UCommonAbilitySystemComponent::SetTagRelationshipMapping(UCommonAbilityTagRelationshipMapping* NewMapping)
+{
+	TagRelationshipMapping = NewMapping;
+}
+
+void UCommonAbilitySystemComponent::GetAdditionalActivationTagRequirements(const FGameplayTagContainer& AbilityTags, FGameplayTagContainer& OutActivationRequired, FGameplayTagContainer& OutActivationBlocked) const
+{
+	if (TagRelationshipMapping)
+	{
+		TagRelationshipMapping->GetRequiredAndBlockedActivationTags(AbilityTags, &OutActivationRequired, &OutActivationBlocked);
+	}
+}
+
+void UCommonAbilitySystemComponent::ApplyAbilityBlockAndCancelTags(const FGameplayTagContainer& AbilityTags, UGameplayAbility* RequestingAbility, bool bEnableBlockTags, const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags, const FGameplayTagContainer& CancelTags)
+{
+	FGameplayTagContainer ModifiedBlockTags = BlockTags;
+	FGameplayTagContainer ModifiedCancelTags = CancelTags;
+
+	if (TagRelationshipMapping)
+	{
+		// 매핑을 사용해 어빌리티 태그를 Block/Cancel 태그로 확장한다.
+		TagRelationshipMapping->GetAbilityTagsToBlockAndCancel(AbilityTags, &ModifiedBlockTags, &ModifiedCancelTags);
+	}
+
+	Super::ApplyAbilityBlockAndCancelTags(AbilityTags, RequestingAbility, bEnableBlockTags, ModifiedBlockTags, bExecuteCancelTags, ModifiedCancelTags);
 }

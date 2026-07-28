@@ -8,6 +8,7 @@
 #include "CommonAbilitySystemComponent.generated.h"
 
 class UCommonGameplayAbility;
+class UCommonAbilityTagRelationshipMapping;
 
 /**
  * CommonGame의 AbilitySystemComponent
@@ -47,8 +48,7 @@ public:
 	//-----------------------------------------------------------------------------
 	// 입력-Ability 연동
 	//-----------------------------------------------------------------------------
-
-	// TODO: 설명 필요
+	
 	/**
 	 * 입력 태그가 시작되었음을 알립니다
 	 * 
@@ -106,12 +106,27 @@ public:
 
 	/** 해당 그룹의 모든 Ability를 취소합니다 */
 	void CancelActivationGroupAbilities(ECommonAbilityActivationGroup Group, UCommonGameplayAbility* IgnoreAbility);
-	
+
+	//-----------------------------------------------------------------------------
+	// 태그 관계 매핑 (Tag Relationship)
+	//-----------------------------------------------------------------------------
+
+	/** 현재 태그 관계 매핑을 설정합니다. nullptr이면 매핑을 해제합니다. */
+	void SetTagRelationshipMapping(UCommonAbilityTagRelationshipMapping* NewMapping);
+
+	/** 어빌리티 태그를 참조하여 추가로 요구/차단되는 활성화 태그를 수집합니다. */
+	void GetAdditionalActivationTagRequirements(const FGameplayTagContainer& AbilityTags, FGameplayTagContainer& OutActivationRequired, FGameplayTagContainer& OutActivationBlocked) const;
+
 protected:
 
 	virtual void AbilitySecInputStarted(FGameplayAbilitySpec& Spec);
+
+public:
 	virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
+
+	/** 매핑으로 Block/Cancel 태그를 확장한 뒤 기본 처리를 수행합니다. */
+	virtual void ApplyAbilityBlockAndCancelTags(const FGameplayTagContainer& AbilityTags, UGameplayAbility* RequestingAbility, bool bEnableBlockTags, const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags, const FGameplayTagContainer& CancelTags) override;
 
 protected:
 	
@@ -129,6 +144,10 @@ protected:
 
 	/** 활성화 그룹별 Ability 카운트 */
 	int32 ActivationGroupCounts[static_cast<uint8>(ECommonAbilityActivationGroup::MAX)];
+
+	/** 어빌리티 태그 간 Block/Cancel/활성 조건 관계를 정의하는 매핑 (설정 시 사용) */
+	UPROPERTY()
+	TObjectPtr<UCommonAbilityTagRelationshipMapping> TagRelationshipMapping;
 
 	/** PostNetInit 호출 여부 */
 	bool bPostNetInitialized = false;
