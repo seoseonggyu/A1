@@ -22,18 +22,45 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-protected:
 	virtual void HandleMontageEvent(FGameplayEventData Payload);
-	
+
 private:
 	UFUNCTION()
-	void OnMontageEventTriggered(FGameplayEventData Payload);
+	void OnTargetDataReady(FGameplayEventData Payload);
 	
 	UFUNCTION()
+	void OnMontageEventTriggered(FGameplayEventData Payload);
+
+	UFUNCTION()
 	void OnMontageFinished();
+
+	/** 아바타 캐릭터의 OrientRotationToMovement를 로컬(서버·소유 클라 각각)에서 설정한다. 비복제 설정이므로 실행되는 쪽에서만 적용된다. */
+	void SetOrientRotationToMovementLocal(bool bNewOrient) const;
+
+protected:
+	UFUNCTION()
+	void ParseTargetData(const FGameplayAbilityTargetDataHandle& InTargetDataHandle, TArray<int32>& OutCharacterHitIndexes);
+
+	UFUNCTION()
+	void ProcessHitResult(/*FHitResult HitResult, float Damage, AD1EquipmentBase* WeaponActor*/);
+	
+	UFUNCTION()
+	void ResetHitActors();
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="A1|Melee Attack Index")
 	uint32 ComboIndex = 0;
+
+	/** true일 때만 공격 중 이동 방향으로의 자동 회전(OrientRotationToMovement)을 끈다. */
+	UPROPERTY(EditDefaultsOnly, Category="A1|Melee Attack Rotation")
+	bool bDisableOrientRotationDuringAttack = true;
+
+private:
+	/** 어빌리티 실행 전 OrientRotationToMovement 값. EndAbility에서 원복하기 위해 캐시한다. */
+	bool bCachedOrientRotationToMovement = false;
+	
+protected:
+	UPROPERTY()
+	TSet<TWeakObjectPtr<AActor>> CachedHitActors;
 
 };

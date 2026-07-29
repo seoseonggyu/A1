@@ -23,6 +23,9 @@ class COMMONGAME_API UCommonGameplayAbility : public UGameplayAbility
 public:
 	UCommonGameplayAbility(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
+	UCommonAbilitySystemComponent* GetCommonAbilitySystemComponentFromActorInfo() const;
+	
 	//-----------------------------------------------------------------------------
 	// 활성화 정책
 	//-----------------------------------------------------------------------------

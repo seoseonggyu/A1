@@ -220,6 +220,9 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	// 슬롯 맵에 등록합니다
 	AddToSlotMap(NewInstance);
 
+	// 스폰 액터는 복제되지 않으므로 서버에서도 직접 스폰합니다 (클라이언트는 PostReplicatedAdd 경로에서 스폰됨)
+	NewInstance->SpawnEquipmentActors();
+
 	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PostReplicatedAdd에서 호출됨)
 	NewInstance->OnEquipped();
 
@@ -254,7 +257,10 @@ bool UEquipmentComponent::UnequipItemAuth(UEquipmentInstance* Instance)
 
 	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PreReplicatedRemove에서 호출됨)
 	Instance->OnUnequipped();
-	
+
+	// 서버에서 스폰한 장비 액터를 파괴합니다 (클라이언트는 PreReplicatedRemove에서 파괴됨)
+	Instance->DestroyEquipmentActors();
+
 	// 목록에서 제거합니다
 	EquipmentList.Entries.RemoveAtSwap(EntryIndex);
 	EquipmentList.MarkArrayDirty();
@@ -277,6 +283,21 @@ UEquipmentInstance* UEquipmentComponent::GetEquipmentInSlot(FGameplayTag SlotTag
 		return *Found;
 	}
 
+	return nullptr;
+}
+
+AActor* UEquipmentComponent::GetEquipmentInstance(FGameplayTag SlotTag) const
+{
+	// TODO: Temporarily returns only the first Actor
+	if (const UEquipmentInstance* Instance = GetEquipmentInSlot(SlotTag))
+	{
+		const TArray<AActor*>& SpawnedActors = Instance->GetSpawnedActors();
+		if (SpawnedActors.IsValidIndex(0))
+		{
+			return SpawnedActors[0];
+		}
+	}
+	
 	return nullptr;
 }
 

@@ -143,7 +143,11 @@ public:
 	/** 슬롯에 장착된 장비를 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	UEquipmentInstance* GetEquipmentInSlot(FGameplayTag SlotTag) const;
-
+	
+	/** 슬롯에 장착된 스폰된 Actor를 반환합니다 */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	AActor* GetEquipmentInstance(FGameplayTag SlotTag) const;
+	
 private:
 	/** EquipmentInstance를 생성합니다 */
 	UEquipmentInstance* CreateEquipmentInstance(const UEquipmentDefinition* Definition, int32 SourceItemId) const;
