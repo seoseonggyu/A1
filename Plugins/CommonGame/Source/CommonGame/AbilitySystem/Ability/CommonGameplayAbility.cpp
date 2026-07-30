@@ -3,6 +3,8 @@
 #include "AbilitySystem/Ability/CommonGameplayAbility.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Game/CommonCharacter.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(CommonGameplayAbility)
 
 UCommonGameplayAbility::UCommonGameplayAbility(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -23,6 +25,11 @@ UCommonGameplayAbility::UCommonGameplayAbility(const FObjectInitializer& ObjectI
 UCommonAbilitySystemComponent* UCommonGameplayAbility::GetCommonAbilitySystemComponentFromActorInfo() const
 {
 	return (CurrentActorInfo ? Cast<UCommonAbilitySystemComponent>(CurrentActorInfo->AbilitySystemComponent.Get()) : nullptr);
+}
+
+ACommonCharacter* UCommonGameplayAbility::GetCommonCharacterFromActorInfo() const
+{
+	return (CurrentActorInfo ? Cast<ACommonCharacter>(CurrentActorInfo->AvatarActor.Get()) : nullptr);
 }
 
 bool UCommonGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const

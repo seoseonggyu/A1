@@ -29,7 +29,9 @@ public:
 
 	float GetComboDamage(int Index) const 
 	{ 
-		if (Index < 0 || ComboDamage.Num() <= Index) return 0;
+		if (ComboDamage.Num() < 0) return BaseDamage;
+		if (Index < 0 || ComboDamage.Num() <= Index) return BaseDamage;
+		
 		return ComboDamage[Index]; 
 	}
 

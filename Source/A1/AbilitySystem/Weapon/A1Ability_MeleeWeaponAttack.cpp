@@ -2,6 +2,7 @@
 #include "Weapon/MeleeWeaponInstance.h"
 #include "AbilitySystemComponent.h"
 #include "A1GameplayTags.h"
+#include "DeveloperPrint.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
@@ -41,9 +42,7 @@ bool UA1Ability_MeleeWeaponAttack::CanActivateAbility(const FGameplayAbilitySpec
 void UA1Ability_MeleeWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	ResetHitActors();
-
+	
 	// BP에서 활성화한 경우에만 공격 중 이동 방향으로의 자동 회전을 끈다. (서버·소유 클라 각각에서 로컬 적용)
 	if (bDisableOrientRotationDuringAttack)
 	{
@@ -99,30 +98,35 @@ void UA1Ability_MeleeWeaponAttack::HandleMontageEvent(FGameplayEventData Payload
 	OnMontageFinished();
 }
 
+// PerformTrace(AnimNotifyState)가 히트 시 보내는 GameplayEvent_Trace를 받아 실행되는 콜백.
+// 트레이스가 서버 전용이라 이 함수도 서버에서만 호출된다. Payload의 TargetData에서 대상을 추려 데미지 GE를 적용한다.
 void UA1Ability_MeleeWeaponAttack::OnTargetDataReady(FGameplayEventData Payload)
 {
-	// AD1EquipmentBase* WeaponActor = const_cast<AD1EquipmentBase*>(Cast<AD1EquipmentBase>(Payload.Instigator));
-	// if (WeaponActor == nullptr)
-	// 	return;
-
 	UCommonAbilitySystemComponent* SourceASC = GetCommonAbilitySystemComponentFromActorInfo();
 	if (SourceASC == nullptr)
 		return;
-
+	
+	// 어빌리티 스펙이 아직 유효할 때만 처리한다. (활성화가 이미 끝났으면 무시)
 	if (SourceASC->FindAbilitySpecFromHandle(CurrentSpecHandle))
 	{
+		// PerformTrace가 보낸 이벤트의 Payload에서 TargetData(맞은 대상들의 HitResult 묶음)를 로컬로 가져온다.
+		// MoveTemp으로 소유권을 옮겨 복사를 피한다. (이벤트/타깃데이터가 전부 서버 로컬이라 복제는 필요 없음)
 		FGameplayAbilityTargetDataHandle LocalTargetDataHandle(MoveTemp(const_cast<FGameplayAbilityTargetDataHandle&>(Payload.TargetData)));
-
+	
+		// TargetData를 훑어 "캐릭터인 대상 & 이번 활성화에서 아직 안 맞은 대상"의 인덱스만 골라낸다.
 		TArray<int32> CharacterHitIndexes;
 		ParseTargetData(LocalTargetDataHandle, CharacterHitIndexes);
 
-		float Damage = 10.0f; // TODO: Damage Process
-
-		for (int32 CharqacterHitIndex : CharacterHitIndexes)
+		// 현재 콤보 인덱스에 해당하는 무기 데미지 값. (아래 ProcessHitResult에서 SetByCaller로 GE에 전달)
+		UMeleeWeaponInstance* WeaponInstance = GetMeleeWeaponInstance();
+		float Damage = WeaponInstance->GetComboDamage(ComboIndex);
+		
+		// 골라낸 인덱스별로 실제 HitResult를 꺼내 데미지 처리를 수행한다.
+		// (인덱스는 ParseTargetData가 GetHitResult() != null 인 항목만 담았으므로 역참조가 안전하다)
+		for (int32 CharacterHitIndex : CharacterHitIndexes)
 		{
-			FHitResult HitResult = *LocalTargetDataHandle.Data[CharqacterHitIndex]->GetHitResult();
-			ProcessHitResult(/*HitResult, Damage, false, nullptr, WeaponActor*/);
-			
+			FHitResult HitResult = *LocalTargetDataHandle.Data[CharacterHitIndex]->GetHitResult();
+			ProcessHitResult(HitResult, Damage);
 		}
 	}
 }
@@ -155,45 +159,4 @@ void UA1Ability_MeleeWeaponAttack::SetOrientRotationToMovementLocal(bool bNewOri
 	}
 
 	MovementComp->bOrientRotationToMovement = bNewOrient;
-}
-
-void UA1Ability_MeleeWeaponAttack::ParseTargetData(const FGameplayAbilityTargetDataHandle& InTargetDataHandle, TArray<int32>& OutCharacterHitIndexes)
-{
-	for (int32 i = 0; i < InTargetDataHandle.Data.Num(); i++)
-	{
-		const TSharedPtr<FGameplayAbilityTargetData>& TargetData = InTargetDataHandle.Data[i];
-
-		if (FHitResult* HitResult = const_cast<FHitResult*>(TargetData->GetHitResult()))
-		{
-			if (AActor* HitActor = HitResult->GetActor())
-			{
-				AA1Character* TargetCharacter = Cast<AA1Character>(HitActor);
-				if (TargetCharacter == nullptr)
-				{
-					TargetCharacter = Cast<AA1Character>(HitActor->GetOwner());
-				}
-
-				AActor* SelectedActor = TargetCharacter ? TargetCharacter : HitActor;
-				if (CachedHitActors.Contains(SelectedActor))
-					continue;
-
-				CachedHitActors.Add(SelectedActor);
-
-				if (TargetCharacter)
-				{
-					OutCharacterHitIndexes.Add(i);
-				}
-			}
-		}
-	}
-}
-
-void UA1Ability_MeleeWeaponAttack::ProcessHitResult()
-{
-	// TODO: Damage 처리
-}
-
-void UA1Ability_MeleeWeaponAttack::ResetHitActors()
-{
-	CachedHitActors.Reset();
 }

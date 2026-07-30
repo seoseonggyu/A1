@@ -8,6 +8,7 @@
 #include "CommonGameplayAbility.generated.h"
 
 class UCommonAbilitySystemComponent;
+class ACommonCharacter;
 
 /**
  * CommonGame의 기본 GameplayAbility
@@ -25,6 +26,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
 	UCommonAbilitySystemComponent* GetCommonAbilitySystemComponentFromActorInfo() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
+	ACommonCharacter* GetCommonCharacterFromActorInfo() const;
 	
 	//-----------------------------------------------------------------------------
 	// 활성화 정책

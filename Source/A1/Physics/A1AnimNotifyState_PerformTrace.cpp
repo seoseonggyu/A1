@@ -25,9 +25,8 @@ void UA1AnimNotifyState_PerformTrace::NotifyBegin(USkeletalMeshComponent* MeshCo
 {
 	Super::NotifyBegin(MeshComponent, Animation, TotalDuration, EventReference);
 
-	WeaponActor.Reset();
-	CollisionBox.Reset();
-	HitActors.Empty();
+	// 이전에 남은 상태가 있으면 정리하고 새로 시작한다.
+	ActiveContexts.Remove(MeshComponent);
 
 	if (MeshComponent->GetOwnerRole() != ExecuteNetRole)
 		return;
@@ -40,7 +39,7 @@ void UA1AnimNotifyState_PerformTrace::NotifyBegin(USkeletalMeshComponent* MeshCo
 	if (EquipmentComp == nullptr)
 		return;
 
-	// 장착된 무기 액터와 그 액터의 트레이스용 CollisionBox를 캐시한다.
+	// 장착된 무기 액터와 그 액터의 트레이스용 CollisionBox를 이 메시의 컨텍스트에 캐시한다.
 	AActor* Weapon = EquipmentComp->GetEquipmentInstance(A1GameplayTags::Equipment_Slot_Weapon);
 	if (Weapon == nullptr)
 		return;
@@ -52,8 +51,9 @@ void UA1AnimNotifyState_PerformTrace::NotifyBegin(USkeletalMeshComponent* MeshCo
 		return;
 	}
 
-	WeaponActor = Weapon;
-	CollisionBox = Box;
+	FTraceContext& Context = ActiveContexts.Add(MeshComponent);
+	Context.WeaponActor = Weapon;
+	Context.CollisionBox = Box;
 }
 
 void UA1AnimNotifyState_PerformTrace::NotifyTick(USkeletalMeshComponent* MeshComponent, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
@@ -63,30 +63,36 @@ void UA1AnimNotifyState_PerformTrace::NotifyTick(USkeletalMeshComponent* MeshCom
 	if (MeshComponent->GetOwnerRole() != ExecuteNetRole)
 		return;
 
-	if (CollisionBox.IsValid() == false)
+	FTraceContext* Context = ActiveContexts.Find(MeshComponent);
+	if (Context == nullptr || Context->CollisionBox.IsValid() == false)
 		return;
 
-	PerformTrace(MeshComponent);
+	PerformTrace(MeshComponent, *Context);
 }
 
 void UA1AnimNotifyState_PerformTrace::NotifyEnd(USkeletalMeshComponent* MeshComponent, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComponent, Animation, EventReference);
 
-	if (MeshComponent->GetOwnerRole() == ExecuteNetRole && CollisionBox.IsValid())
+	if (MeshComponent->GetOwnerRole() == ExecuteNetRole)
 	{
-		// 마지막 구간까지 한 번 더 검사한다.
-		PerformTrace(MeshComponent);
+		if (FTraceContext* Context = ActiveContexts.Find(MeshComponent))
+		{
+			// 마지막 구간까지 한 번 더 검사한다.
+			if (Context->CollisionBox.IsValid())
+			{
+				PerformTrace(MeshComponent, *Context);
+			}
+		}
 	}
 
-	WeaponActor.Reset();
-	CollisionBox.Reset();
-	HitActors.Empty();
+	// 이 메시의 트레이스 상태를 제거한다. (다른 캐릭터의 상태에는 영향 없음)
+	ActiveContexts.Remove(MeshComponent);
 }
 
-void UA1AnimNotifyState_PerformTrace::PerformTrace(USkeletalMeshComponent* MeshComponent)
+void UA1AnimNotifyState_PerformTrace::PerformTrace(USkeletalMeshComponent* MeshComponent, FTraceContext& Context)
 {
-	UBoxComponent* Box = CollisionBox.Get();
+	UBoxComponent* Box = Context.CollisionBox.Get();
 	if (Box == nullptr)
 		return;
 
@@ -114,7 +120,7 @@ void UA1AnimNotifyState_PerformTrace::PerformTrace(USkeletalMeshComponent* MeshC
 
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(A1PerformTrace), false);
 	QueryParams.AddIgnoredActor(MeshComponent->GetOwner());
-	QueryParams.AddIgnoredActor(WeaponActor.Get());
+	QueryParams.AddIgnoredActor(Context.WeaponActor.Get());
 
 	// 블로킹 없이 박스 오버랩만 검사한다.
 	TArray<FOverlapResult> Overlaps;
@@ -125,10 +131,10 @@ void UA1AnimNotifyState_PerformTrace::PerformTrace(USkeletalMeshComponent* MeshC
 	for (const FOverlapResult& Overlap : Overlaps)
 	{
 		AActor* HitActor = Overlap.GetActor();
-		if (HitActor == nullptr || HitActors.Contains(HitActor))
+		if (HitActor == nullptr || Context.HitActors.Contains(HitActor))
 			continue;
 
-		HitActors.Add(HitActor);
+		Context.HitActors.Add(HitActor);
 
 		FHitResult HitResult;
 		HitResult.HitObjectHandle = FActorInstanceHandle(HitActor);
@@ -161,7 +167,7 @@ void UA1AnimNotifyState_PerformTrace::PerformTrace(USkeletalMeshComponent* MeshC
 
 	FGameplayEventData EventData;
 	EventData.TargetData = TargetDataHandle;
-	EventData.Instigator = WeaponActor.Get();
+	EventData.Instigator = Context.WeaponActor.Get();
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComponent->GetOwner(), EventTag, EventData);
 }

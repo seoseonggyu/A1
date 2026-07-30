@@ -93,7 +93,25 @@ protected:
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComponent, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
 private:
-	void PerformTrace(USkeletalMeshComponent* MeshComponent);
+	/**
+	 * 몽타주를 재생 중인 메시별 트레이스 상태.
+	 *
+	 * UAnimNotifyState는 몽타주당 인스턴스가 하나뿐이라 여러 캐릭터가 같은 몽타주를 동시에
+	 * 재생하면 상태가 서로 덮어써진다. 이를 막기 위해 메시별로 상태를 분리해 보관한다.
+	 */
+	struct FTraceContext
+	{
+		/** 스폰된 무기 액터 (EquipmentComponent에서 조회) */
+		TWeakObjectPtr<AActor> WeaponActor;
+
+		/** 무기 액터의 트레이스용 CollisionBox */
+		TWeakObjectPtr<UBoxComponent> CollisionBox;
+
+		/** 이번 구간에서 이미 맞은 대상 (중복 히트 방지) */
+		TSet<TWeakObjectPtr<AActor>> HitActors;
+	};
+
+	void PerformTrace(USkeletalMeshComponent* MeshComponent, FTraceContext& Context);
 
 	/** 무기 액터에서 사용할 CollisionBox를 찾는다. (태그 우선, 없으면 첫 번째 BoxComponent) */
 	UBoxComponent* FindCollisionBox(AActor* Actor) const;
@@ -114,15 +132,6 @@ public:
 	FA1TraceDebugParams TraceDebugParams;
 
 private:
-	/** 스폰된 무기 액터 (EquipmentComponent에서 조회) */
-	UPROPERTY()
-	TWeakObjectPtr<AActor> WeaponActor;
-
-	/** 무기 액터의 트레이스용 CollisionBox */
-	UPROPERTY()
-	TWeakObjectPtr<UBoxComponent> CollisionBox;
-
-	/** 이번 구간에서 이미 맞은 대상 (중복 히트 방지) */
-	UPROPERTY()
-	TSet<TWeakObjectPtr<AActor>> HitActors;
+	/** 메시(캐릭터)별 트레이스 상태. Begin에서 추가하고 End에서 제거한다. */
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FTraceContext> ActiveContexts;
 };

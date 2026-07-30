@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/A1Ability_Equipment.h"
+#include "A1Ability_MeleeWeapon.h"
 #include "A1Ability_MeleeWeaponAttack.generated.h"
 
 
@@ -11,7 +11,7 @@ DECLARE_LOG_CATEGORY_EXTERN(A1Ability_MeleeWeaponAttack, Log, All);
 
 
 UCLASS()
-class A1_API UA1Ability_MeleeWeaponAttack : public UA1Ability_Equipment
+class A1_API UA1Ability_MeleeWeaponAttack : public UA1Ability_MeleeWeapon
 {
 	GENERATED_BODY()
 
@@ -38,16 +38,6 @@ private:
 	void SetOrientRotationToMovementLocal(bool bNewOrient) const;
 
 protected:
-	UFUNCTION()
-	void ParseTargetData(const FGameplayAbilityTargetDataHandle& InTargetDataHandle, TArray<int32>& OutCharacterHitIndexes);
-
-	UFUNCTION()
-	void ProcessHitResult(/*FHitResult HitResult, float Damage, AD1EquipmentBase* WeaponActor*/);
-	
-	UFUNCTION()
-	void ResetHitActors();
-	
-protected:
 	UPROPERTY(EditDefaultsOnly, Category="A1|Melee Attack Index")
 	uint32 ComboIndex = 0;
 
@@ -58,9 +48,5 @@ protected:
 private:
 	/** 어빌리티 실행 전 OrientRotationToMovement 값. EndAbility에서 원복하기 위해 캐시한다. */
 	bool bCachedOrientRotationToMovement = false;
-	
-protected:
-	UPROPERTY()
-	TSet<TWeakObjectPtr<AActor>> CachedHitActors;
 
 };

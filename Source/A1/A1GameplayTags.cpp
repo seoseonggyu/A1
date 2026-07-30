@@ -41,6 +41,8 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack, "Input.Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack_Skill_1, "Input.Ability.Attack.Skill.1");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack_Skill_2, "Input.Ability.Attack.Skill.2");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Widget_Inventory, "Input.Ability.Widget.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Primary, "Input.Ability.QuickBar.Primary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Secondary, "Input.Ability.QuickBar.Secondary");
@@ -55,12 +57,16 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_1, "Ability.Attack.1");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_2, "Ability.Attack.2");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_3, "Ability.Attack.3");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_1, "Ability.Attack.Skill.1");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_2, "Ability.Attack.Skill.2");
 	
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
 	
 	UE_DEFINE_GAMEPLAY_TAG(Status_Attack, "Status.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Skill, "Status.Skill");
+	UE_DEFINE_GAMEPLAY_TAG(Status_RejectHitReact, "Status.RejectHitReact");
 	
 	
 	//-----------------------------------------------------------------------------
@@ -71,5 +77,13 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_Tick, "GameplayEvent.Montage.Tick");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_End, "GameplayEvent.Montage.End");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Trace, "GameplayEvent.Trace");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Stun, "GameplayEvent.Stun");
+		
+	//-----------------------------------------------------------------------------
+	// SetByCaller_BaseDamage
+	//-----------------------------------------------------------------------------
+
+	/** 데미지 값 (SetByCaller) */
+	A1_API UE_DEFINE_GAMEPLAY_TAG(SetByCaller_BaseDamage, "SetByCaller.BaseDamage");
 	
 }

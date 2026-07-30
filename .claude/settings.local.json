@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(./Source/**)",
+      "Read(./Plugins/**)",
+      "Read(./Config/**)",
+      "Edit(./Source/**)",
+      "Edit(./Plugins/**/Source/**)",
+      "Edit(./Config/**)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./Plugins/**/Intermediate/**)",
+      "Read(./Intermediate/**)",
+      "Read(./Binaries/**)",
+      "Read(./DerivedDataCache/**)",
+      "Read(./Saved/**)",
+      "Edit(./**/*.uasset)",
+      "Edit(./**/*.umap)"
+    ]
+  }
+}

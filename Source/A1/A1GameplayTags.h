@@ -44,6 +44,8 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack_Skill_1);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack_Skill_2);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Widget_Inventory);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Primary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Secondary);
@@ -58,12 +60,16 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_1);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_2);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_3);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_1);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_2);
 	
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
 	
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Attack);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Skill);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_RejectHitReact);
 	
 	
 	//-----------------------------------------------------------------------------
@@ -74,6 +80,12 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Tick);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_End);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Trace);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Stun);
 	
+	//-----------------------------------------------------------------------------
+	// SetByCaller_BaseDamage
+	//-----------------------------------------------------------------------------
+
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_BaseDamage);
 
 }

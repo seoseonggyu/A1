@@ -8,10 +8,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(A1VitalSetLog, Log, All);
 
-/**
- * Ä³¸¯ÅÍ ±âº» ½ºÅÈ AttributeSet
- *
- */
+
 UCLASS()
 class A1_API UA1VitalSet : public UCommonAttributeSet
 {
@@ -45,14 +42,11 @@ protected:
 	UFUNCTION()
 	void OnRep_MaxStamina(const FGameplayAttributeData& OldValue);
 
-
-	/** ÃÊ±âÈ­µÈ ViewModel Ä³½Ã (BeginDestroy¿¡¼­ Á¤¸®¿ë) */
 	UPROPERTY()
 	TObjectPtr<class UCharacterViewModel> CachedViewModel;
 
 public:
 
-	// TODO: ¿©±â¼­ ÀÌ °ªÀ¸·Î ¼³Á¤ÇÏ´Â °Ô ¾Æ´Ï¶ó Effect·Î
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health = 100.f;
 	ATTRIBUTE_ACCESSORS(UA1VitalSet, Health)
@@ -76,13 +70,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stamina", ReplicatedUsing = OnRep_MaxStamina, meta = (ShowOnlyInnerProperties))
 	FGameplayAttributeData MaxStamina = 150.f;
 	ATTRIBUTE_ACCESSORS(UA1VitalSet, MaxStamina)
-	
 
 	//-----------------------------------------------------------------------------
-	// Meta Attributes (º¹Á¦µÇÁö ¾ÊÀ½, °è»ê¿ë)
+	// Meta Attributes (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½)
 	//-----------------------------------------------------------------------------
 		
-	/** µé¾î¿Â µ¥¹ÌÁö (PostGameplayEffectExecute¿¡¼­ Armor/Health·Î ºÐ¹è) */
 	UPROPERTY(BlueprintReadOnly, Category = "Damage")
 	FGameplayAttributeData Damage = 0.f;
 	ATTRIBUTE_ACCESSORS(UA1VitalSet, Damage)
