@@ -24,9 +24,6 @@ protected:
 private:
 	void ExecuteGroundBreaker();
 
-	/** 아바타 캐릭터의 이동을 로컬(서버·소유 클라 각각)에서 정지/복구한다. 비복제 이동 모드 변경이므로 실행되는 쪽에서만 적용된다. */
-	void SetMovementFrozenLocal(bool bFrozen) const;
-
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="A1|Ground Breaker")
 	TObjectPtr<UAnimMontage> GroundBreakerMontage;

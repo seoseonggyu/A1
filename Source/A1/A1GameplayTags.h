@@ -51,7 +51,9 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Secondary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Tertiary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Quaternary);
-	
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Sprint);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Interact);
+
 	//-----------------------------------------------------------------------------
 	// Ability
 	//-----------------------------------------------------------------------------
@@ -62,7 +64,12 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_3);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_1);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_2);
-	
+
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint_Check);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint_Active);
+
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
+
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
@@ -70,6 +77,9 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Attack);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Skill);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_RejectHitReact);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Sprint);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_StaminaRegen_Blocked);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Interacting);
 	
 	
 	//-----------------------------------------------------------------------------
@@ -80,7 +90,13 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Tick);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_End);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Trace);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Reset);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Stun);
+
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Attack);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Pickup);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Door);
 	
 	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage

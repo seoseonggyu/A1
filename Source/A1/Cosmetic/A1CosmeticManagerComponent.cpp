@@ -10,6 +10,11 @@ UA1CosmeticManagerComponent::UA1CosmeticManagerComponent(const FObjectInitialize
 	SetIsReplicatedByDefault(true);
 }
 
+UA1CosmeticManagerComponent* UA1CosmeticManagerComponent::FindCosmeticManagerComponent(const APawn* Pawn)
+{
+	return Pawn ? Pawn->FindComponentByClass<UA1CosmeticManagerComponent>() : nullptr;
+}
+
 void UA1CosmeticManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -50,7 +55,6 @@ void UA1CosmeticManagerComponent::InitializeManager()
 			}
 		}
 	}
-
 }
 
 UChildActorComponent* UA1CosmeticManagerComponent::SpawnCosmeticSlotActor(TSoftObjectPtr<USkeletalMesh> InDefaultMesh)
@@ -78,4 +82,3 @@ UChildActorComponent* UA1CosmeticManagerComponent::SpawnCosmeticSlotActor(TSoftO
 
 	return CosmeticComponent;
 }
-

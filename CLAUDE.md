@@ -5,7 +5,7 @@
 ## 빌드
 
 - 헤더 추가/이동 시 **프로젝트 파일 재생성 → 빌드** 순서.
-- Claude Code는 빌드를 임의로 실행하지 말고, 사용자에게 빌드 명령을 제안한다.
+- 사용자가 직접 빌드를 하기 때문에. Claude Code는 빌드를 하라고 제안한다.
 
 ## 디렉터리
 
@@ -45,3 +45,7 @@ Config/                    DefaultEngine/Game/Input.ini
 - `.uasset`(Blueprint, DataAsset)은 바이너리라 편집 불가. C++ 변경이 BP 참조를 깨뜨릴 수 있으면 **먼저 알리고** 진행한다.
   (`Plugins/GameFeatures/Ark/Content` 및 `/Game` 하위)
 - 복제 프로퍼티 추가 시 `GetLifetimeReplicatedProps` 갱신 필수.
+
+## 작업 후
+
+- 코드가 생성, 삭제, 변경이 되었으면 바뀐 부분이 어디인지를 알려준다.

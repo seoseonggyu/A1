@@ -14,6 +14,13 @@ class UA1CosmeticManagerComponent : public UPawnComponent
 public:
 	UA1CosmeticManagerComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	/** Pawnì—ì„œ A1CosmeticManagerComponentë¥¼ ì°¾ì•„ ë°˜í™˜í•©ë‹ˆë‹¤ */
+	UFUNCTION(BlueprintCallable, Category = "Cosmetic")
+	static UA1CosmeticManagerComponent* FindCosmeticManagerComponent(const APawn* Pawn);
+
+	// TODO: ToSafely
+	TArray<TObjectPtr<UChildActorComponent>> GetCosmeticSlots(){ return CosmeticSlots;}
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -26,10 +33,7 @@ private:
 protected:
 	UPROPERTY(EditDefaultsOnly, meta = (ArraySizeEnum = "EArmorType"))
 	TSoftObjectPtr<USkeletalMesh> InitialCosmetics[(int32)EArmorType::Count];
-
-	/*UPROPERTY(EditDefaultsOnly) // TODO: ½ºÅ² °ü·Ã
-	ECharacterSkinType CharacterSkinType = ECharacterSkinType::Asian;*/
-
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AA1ArmorBase> CosmeticSlotClass;
 

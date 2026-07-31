@@ -8,7 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_Skill_WhirlwindSlash)
 
-// TODO: 데미지 처리 및 GameplayEffect
+// TODO: 데미지 처리 및 Cooldown 및 Mana Check 및 몽타주 Notify
 
 UA1Ability_Skill_WhirlwindSlash::UA1Ability_Skill_WhirlwindSlash(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -50,11 +50,11 @@ void UA1Ability_Skill_WhirlwindSlash::ActivateAbility(const FGameplayAbilitySpec
 		TraceEventTask->ReadyForActivation();
 	}
 
-	// if (UAbilityTask_WaitGameplayEvent* ResetEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, A1GameplayTags::GameplayEvent_Reset, nullptr, false, true))
-	// {
-	// 	ResetEventTask->EventReceived.AddDynamic(this, &ThisClass::OnReset);
-	// 	ResetEventTask->ReadyForActivation();
-	// }
+	if (UAbilityTask_WaitGameplayEvent* ResetEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, A1GameplayTags::GameplayEvent_Reset, nullptr, false, true))
+	{
+		ResetEventTask->EventReceived.AddDynamic(this, &ThisClass::OnReset);
+		ResetEventTask->ReadyForActivation();
+	}
 
 	if (UAbilityTask_WaitGameplayEvent* WhirlwindSlashBeginEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, A1GameplayTags::GameplayEvent_Montage_Begin, nullptr, true, true))
 	{
@@ -71,7 +71,9 @@ void UA1Ability_Skill_WhirlwindSlash::ActivateAbility(const FGameplayAbilitySpec
 
 void UA1Ability_Skill_WhirlwindSlash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	
+	// 정상 종료·취소·중단 모두 이곳을 거치므로 정지시켰던 이동을 반드시 원복한다.
+	SetMovementFrozenLocal(false);
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -103,12 +105,14 @@ void UA1Ability_Skill_WhirlwindSlash::OnReset(FGameplayEventData Payload)
 
 void UA1Ability_Skill_WhirlwindSlash::OnWhirlwindSlashBegin(FGameplayEventData Payload)
 {
-	// TODO: 여기서 캐릭터 못움직이게
+	// 시전 시작(선딜) 구간에서는 이동을 정지시킨다.
+	SetMovementFrozenLocal(true);
 }
 
 void UA1Ability_Skill_WhirlwindSlash::OnWhirlwindSlashEnd(FGameplayEventData Payload)
 {
-	// TODO: 여기서 캐릭터 못움직이게
+	// 후딜 구간에서는 다시 이동을 정지시킨다.
+	SetMovementFrozenLocal(true);
 }
 
 void UA1Ability_Skill_WhirlwindSlash::OnMontageFinished()

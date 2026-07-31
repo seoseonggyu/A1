@@ -27,6 +27,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
 	UCommonAbilitySystemComponent* GetCommonAbilitySystemComponentFromActorInfo() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "A1Ability")
+	ACommonPlayerController* GetCommonPlayerControllerFromActorInfo() const;
+
+	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
+	AController* GetControllerFromActorInfo() const;
+	
 	UFUNCTION(BlueprintCallable, Category = "A1|Ability")
 	ACommonCharacter* GetCommonCharacterFromActorInfo() const;
 	

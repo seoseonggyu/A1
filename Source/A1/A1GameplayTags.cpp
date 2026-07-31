@@ -48,7 +48,9 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Secondary, "Input.Ability.QuickBar.Secondary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Tertiary, "Input.Ability.QuickBar.Tertiary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Quaternary, "Input.Ability.QuickBar.Quaternary");
-	
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Sprint, "Input.Ability.Sprint");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Interact, "Input.Ability.Interact");
+
 	//-----------------------------------------------------------------------------
 	// Ability
 	//-----------------------------------------------------------------------------
@@ -59,7 +61,12 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_3, "Ability.Attack.3");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_1, "Ability.Attack.Skill.1");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_2, "Ability.Attack.Skill.2");
-	
+
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint_Check, "Ability.Sprint.Check");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint_Active, "Ability.Sprint.Active");
+
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
+
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
@@ -67,6 +74,9 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Status_Attack, "Status.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Skill, "Status.Skill");
 	UE_DEFINE_GAMEPLAY_TAG(Status_RejectHitReact, "Status.RejectHitReact");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Sprint, "Status.Sprint");
+	UE_DEFINE_GAMEPLAY_TAG(Status_StaminaRegen_Blocked, "Status.StaminaRegen.Blocked");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Interacting, "Status.Interacting");
 	
 	
 	//-----------------------------------------------------------------------------
@@ -77,7 +87,13 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_Tick, "GameplayEvent.Montage.Tick");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_End, "GameplayEvent.Montage.End");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Trace, "GameplayEvent.Trace");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Reset, "GameplayEvent.Reset");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Stun, "GameplayEvent.Stun");
+
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact, "GameplayEvent.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Attack, "GameplayEvent.Interact.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Pickup, "GameplayEvent.Interact.Pickup");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Door, "GameplayEvent.Interact.Door");
 		
 	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage

@@ -130,6 +130,18 @@ void UA1VitalSet::PreAttributeChange(const FGameplayAttribute& Attribute, float&
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
+	ClampAttribute(Attribute, NewValue);
+}
+
+void UA1VitalSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+
+	ClampAttribute(Attribute, NewValue);
+}
+
+void UA1VitalSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const
+{
 	// TODO: 각 Attribute에 맞게
 	if (Attribute == GetHealthAttribute())
 	{

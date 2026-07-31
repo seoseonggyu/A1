@@ -6,6 +6,8 @@
 #include "A1GameplayTags.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Player/A1Character.h"
 
 
@@ -17,7 +19,11 @@ UA1Ability_MeleeWeapon::UA1Ability_MeleeWeapon(const FObjectInitializer& ObjectI
 	: Super(ObjectInitializer)
 {
 	// TODO: Network
-	
+
+	// 근접 공격류(기본 공격/콤보/스킬 등 이 클래스를 상속하는 모든 어빌리티) 실행 중에는
+	// 스태미나 재생을 멈춘다. (GE_Stamina_Regen이 Status.StaminaRegen.Blocked를 Ignore로 감시)
+	// 종료 시 ActivationOwnedTags가 즉시 제거되므로 Sprint와 달리 지연 없이 바로 재생이 재개된다.
+	ActivationOwnedTags.AddTag(A1GameplayTags::Status_StaminaRegen_Blocked);
 }
 
 void UA1Ability_MeleeWeapon::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -121,3 +127,25 @@ void UA1Ability_MeleeWeapon::ResetHitActors()
 {
 	CachedHitActors.Reset();
 };
+
+void UA1Ability_MeleeWeapon::SetMovementFrozenLocal(bool bFrozen) const
+{
+	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	if (Character == nullptr)
+		return;
+
+	UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement();
+	if (MovementComp == nullptr)
+		return;
+
+	if (bFrozen)
+	{
+		// MOVE_None으로 전환해 이동 입력을 무시하게 한다.
+		MovementComp->DisableMovement();
+	}
+	else
+	{
+		// 물리 볼륨에 맞는 기본 이동 모드(보통 MOVE_Walking)로 복구한다.
+		MovementComp->SetDefaultMovementMode();
+	}
+}

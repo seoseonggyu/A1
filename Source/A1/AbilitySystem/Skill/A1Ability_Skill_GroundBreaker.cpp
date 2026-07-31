@@ -11,8 +11,9 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-// TODO: 데미지 처리 및 GameplayEffect
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_Skill_GroundBreaker)
+
+// TODO: 데미지 처리 및 Cooldown 및 Mana Check 및 몽타주 Notify
 
 UA1Ability_Skill_GroundBreaker::UA1Ability_Skill_GroundBreaker(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -63,28 +64,6 @@ void UA1Ability_Skill_GroundBreaker::EndAbility(const FGameplayAbilitySpecHandle
 	SetMovementFrozenLocal(false);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-void UA1Ability_Skill_GroundBreaker::SetMovementFrozenLocal(bool bFrozen) const
-{
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	if (Character == nullptr)
-		return;
-
-	UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement();
-	if (MovementComp == nullptr)
-		return;
-
-	if (bFrozen)
-	{
-		// MOVE_None으로 전환해 이동 입력을 무시하게 한다.
-		MovementComp->DisableMovement();
-	}
-	else
-	{
-		// 물리 볼륨에 맞는 기본 이동 모드(보통 MOVE_Walking)로 복구한다.
-		MovementComp->SetDefaultMovementMode();
-	}
 }
 
 void UA1Ability_Skill_GroundBreaker::OnGroundBreakerBegin(FGameplayEventData Payload)

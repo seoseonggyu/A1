@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Game/CommonCharacter.h"
+#include "Interaction/A1Interactable.h"
 #include "A1Character.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(A1CharacterLog, Log, All);
@@ -11,33 +12,26 @@ DECLARE_LOG_CATEGORY_EXTERN(A1CharacterLog, Log, All);
 
 /**
  *
- * ÆÀ ½Ã½ºÅÛÀ» Áö¿øÇÏ´Â Ä³¸¯ÅÍ Å¬·¡½ºÀÔ´Ï´Ù.
- * ÆÀ Á¤º¸´Â ¼ÒÀ¯ PlayerController¿¡¼­ °¡Á®¿É´Ï´Ù.
+ * ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
+ * ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ PlayerControllerï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É´Ï´ï¿½.
+ *
+ * IA1Interactableì„ êµ¬í˜„í•´ ë‹¤ë¥¸ í”Œë ˆì´ì–´ì˜ ì»¤ì„œ í˜¸ë²„ ëŒ€ìƒì´ ë  ìˆ˜ ìˆë‹¤ (í•˜ì´ë¼ì´íŠ¸ ì „ìš©,
+ * ì´ë²ˆ ë‹¨ê³„ì—ì„œëŠ” ì‹¤ì œ ìƒí˜¸ì‘ìš© ì²˜ë¦¬(OnInteractAuth)ëŠ” ì—°ê²°í•˜ì§€ ì•ŠëŠ”ë‹¤).
  */
 UCLASS()
-class A1_API AA1Character : public ACommonCharacter
+class A1_API AA1Character : public ACommonCharacter, public IA1Interactable
 {
 	GENERATED_BODY()
-	
+
 public:
 	AA1Character(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	//-----------------------------------------------------------------------------
-	// ITeamInterface ±¸Çö
+	// IA1Interactable (í•˜ì´ë¼ì´íŠ¸ ì „ìš©)
 	//-----------------------------------------------------------------------------
 
-	// TODO: Team °ü·Ã
-	/** ¼ÒÀ¯ PlayerControllerÀÇ ÆÀ ÅÂ±×¸¦ ¹İÈ¯ÇÕ´Ï´Ù */
-	//virtual FGameplayTag GetTeamTag() const override; 
+	virtual void GetHighlightComponents(TArray<UPrimitiveComponent*>& OutComponents) const override;
+	virtual void GatherInteractionOptions(const FA1InteractionQuery& Query, TArray<FA1InteractionOption>& OutOptions) const override;
+	virtual bool CanInteract(const FA1InteractionQuery& Query) const override;
 
-	/** Character¿¡¼­´Â ÆÀ ¼³Á¤À» Áö¿øÇÏÁö ¾Ê½À´Ï´Ù (PlayerController¸¦ ÅëÇØ ¼³Á¤) */
-	//virtual void SetTeamTagAuth(FGameplayTag NewTeamTag) override;
-
-	//-----------------------------------------------------------------------------
-	// Á×À½ Ã³¸®
-	//-----------------------------------------------------------------------------
-
-	// TODO: Á×À½ Ã³¸®
-	/** Ã¼·ÂÀÌ 0ÀÌ µÇ¾úÀ» ¶§ È£ÃâµË´Ï´Ù (¼­¹ö Àü¿ë) */
-	//void HandleDeathAuth();
 };

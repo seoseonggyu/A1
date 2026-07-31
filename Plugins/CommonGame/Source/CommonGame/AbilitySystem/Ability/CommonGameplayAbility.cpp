@@ -4,6 +4,7 @@
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Game/CommonCharacter.h"
+#include "Game/CommonPlayerController.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(CommonGameplayAbility)
 
@@ -25,6 +26,40 @@ UCommonGameplayAbility::UCommonGameplayAbility(const FObjectInitializer& ObjectI
 UCommonAbilitySystemComponent* UCommonGameplayAbility::GetCommonAbilitySystemComponentFromActorInfo() const
 {
 	return (CurrentActorInfo ? Cast<UCommonAbilitySystemComponent>(CurrentActorInfo->AbilitySystemComponent.Get()) : nullptr);
+}
+
+ACommonPlayerController* UCommonGameplayAbility::GetCommonPlayerControllerFromActorInfo() const
+{
+	return (CurrentActorInfo ? Cast<ACommonPlayerController>(CurrentActorInfo->PlayerController.Get()) : nullptr);
+}
+
+AController* UCommonGameplayAbility::GetControllerFromActorInfo() const
+{
+	if (CurrentActorInfo)
+	{
+		if (AController* PC = CurrentActorInfo->PlayerController.Get())
+		{
+			return PC;
+		}
+
+		AActor* TestActor = CurrentActorInfo->OwnerActor.Get();
+		while (TestActor)
+		{
+			if (AController* C = Cast<AController>(TestActor))
+			{
+				return C;
+			}
+
+			if (APawn* Pawn = Cast<APawn>(TestActor))
+			{
+				return Pawn->GetController();
+			}
+
+			TestActor = TestActor->GetOwner();
+		}
+	}
+
+	return nullptr;
 }
 
 ACommonCharacter* UCommonGameplayAbility::GetCommonCharacterFromActorInfo() const

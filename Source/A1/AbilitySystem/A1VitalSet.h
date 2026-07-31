@@ -22,11 +22,21 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
 	virtual void PostNetInit() override;
 
 protected:
+	/**
+	 * Health/Mana/Stamina를 [0, Max]로 클램프한다.
+	 * PreAttributeChange(CurrentValue용)와 PreAttributeBaseChange(BaseValue용) 양쪽에서 공유해서 호출해야 한다.
+	 * BaseValue 쪽을 누락하면, 이미 Max인 상태에서도 Periodic/Instant GE가 BaseValue를 Max 이상으로 계속 쌓을 수 있고
+	 * (CurrentValue만 Max로 눌려 보이므로 겉보기엔 안 줄어드는 것처럼 보이다가, 몇 차례 소모돼 BaseValue가
+	 * Max 아래로 내려가야 비로소 화면에 반영되는 버그가 생긴다.
+	 */
+	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
+
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldValue);
 	UFUNCTION()

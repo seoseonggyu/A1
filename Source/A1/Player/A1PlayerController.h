@@ -8,15 +8,12 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(A1PlayerControllerLog, Log, All);
 
-// TODO: ÆÀ º¯°æ
-/** ÆÀ º¯°æ ½Ã È£ÃâµÇ´Â µ¨¸®°ÔÀÌÆ® */
-//DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTeamChanged, ACSPlayerController* /*PlayerController*/, FGameplayTag /*NewTeamTag*/);
 
 /**
  * PlayerController
  *
- * ÇÃ·¹ÀÌ¾îÀÇ ÆÀ Á¤º¸¸¦ °ü¸®ÇÏ°í, ITeamInterface¸¦ ±¸ÇöÇÕ´Ï´Ù.
- * ÆÀ Á¤º¸´Â ¼­¹ö¿¡¼­ ¼³Á¤µÇ¸ç Å¬¶óÀÌ¾ğÆ®·Î º¹Á¦µË´Ï´Ù.
+ * ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½, ITeamInterfaceï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+ * ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
  */
 UCLASS()
 class A1_API AA1PlayerController : public ACommonPlayerController
@@ -27,30 +24,36 @@ public:
 	AA1PlayerController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	//-----------------------------------------------------------------------------
-	// AActor ¿À¹ö¶óÀÌµå
+	// AActor ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìµï¿½
 	//-----------------------------------------------------------------------------
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//-----------------------------------------------------------------------------
-	// ITeamInterface ±¸Çö
+	// ìƒí˜¸ì‘ìš© í˜¸ë²„ (ë¡œì»¬ ì „ìš©)
 	//-----------------------------------------------------------------------------
 
-	// TODO: ÆÀ °ü·Ã
-	// /virtual FGameplayTag GetTeamTag() const override { return TeamTag; }
-	//virtual void SetTeamTagAuth(FGameplayTag NewTeamTag) override;
-//
-//protected:
-//	/** ÆÀ ÅÂ±× º¹Á¦ ½Ã È£Ãâ */
-//	UFUNCTION()
-//	void OnRep_TeamTag();
-//
-//public:
-//	/** ÆÀ º¯°æ µ¨¸®°ÔÀÌÆ® */
-//	FOnTeamChanged OnTeamChanged;
-//
-//private:
-//	/** ÇöÀç ÆÀ ÅÂ±× (º¹Á¦µÊ) */
-//	UPROPERTY(ReplicatedUsing = OnRep_TeamTag)
-//	FGameplayTag TeamTag;
+	/** í˜„ì¬ ì»¤ì„œê°€ ì˜¬ë¼ê°€ ìˆëŠ” Interactable ì•¡í„°. ì†Œìœ  í´ë¼ì—ì„œë§Œ ìœ íš¨í•˜ë©° ë³µì œë˜ì§€ ì•ŠëŠ”ë‹¤. */
+	AActor* GetHoveredInteractable() const { return HoveredInteractable.Get(); }
+
+protected:
+	/** ë§¤ í”„ë ˆì„ ì…ë ¥ ì²˜ë¦¬ ì‹œì . ì†Œìœ  í´ë¼ì—ì„œ ì»¤ì„œ í˜¸ë²„ë¥¼ ê°±ì‹ í•œë‹¤. */
+	virtual void PostProcessInput(const float DeltaTime, const bool bGamePaused) override;
+
+private:
+	/** ì»¤ì„œ ì•„ë˜ Interactableì„ íŠ¸ë ˆì´ìŠ¤í•´ í•˜ì´ë¼ì´íŠ¸ë¥¼ ê°±ì‹ í•œë‹¤. ë¡œì»¬ ì „ìš©. */
+	void UpdateInteractionHoverLocal();
+
+	/** ëŒ€ìƒ Interactableì˜ í•˜ì´ë¼ì´íŠ¸(CustomDepth ì™¸ê³½ì„ )ë¥¼ ì¼œê³  ëˆë‹¤. ë¡œì»¬ ì „ìš©. */
+	void SetInteractableHighlightLocal(AActor* InteractableActor, bool bHighlight);
+
+	/**
+	 * ìš°í´ë¦­ ì‹œ í˜¸ì¶œ. í˜„ì¬ëŠ” ê²€ì¦ìš© TODO ìŠ¤í… â€” í˜¸ë²„ ì¤‘ì¸ ëŒ€ìƒì„ ë¡œê·¸ë¡œë§Œ í™•ì¸í•œë‹¤.
+	 * TODO: IA_Interact ì…ë ¥ ì•¡ì…˜/GA_Interact ì–´ë¹Œë¦¬í‹° ì—°ë™ì´ ì¤€ë¹„ë˜ë©´ ì‹¤ì œ ìƒí˜¸ì‘ìš© ë°œë™ìœ¼ë¡œ êµì²´.
+	 */
+	void OnInteractionRightClickLocal();
+
+	/** í˜„ì¬ í˜¸ë²„ ì¤‘ì¸ Interactable. ë¹„ë³µì œ. */
+	TWeakObjectPtr<AActor> HoveredInteractable;
+	
 };
