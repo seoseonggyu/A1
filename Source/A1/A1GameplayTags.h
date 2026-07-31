@@ -89,6 +89,7 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Begin);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Tick);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_End);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Montage_Move);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Trace);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Reset);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Stun);

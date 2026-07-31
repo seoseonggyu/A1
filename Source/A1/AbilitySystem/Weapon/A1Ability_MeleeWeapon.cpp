@@ -6,8 +6,9 @@
 #include "A1GameplayTags.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
 #include "Player/A1Character.h"
 
 
@@ -128,24 +129,46 @@ void UA1Ability_MeleeWeapon::ResetHitActors()
 	CachedHitActors.Reset();
 };
 
-void UA1Ability_MeleeWeapon::SetMovementFrozenLocal(bool bFrozen) const
+/**
+ * DisableMovement()로 MOVE_None을 만들면 CharacterMovementComponent가 이동 계산 자체를 건너뛰어
+ * 몽타주 루트 모션·RootMotionSource도 전부 무시된다. (공중에서는 중력까지 멈춘다)
+ * 그래서 이동 모드는 그대로 두고 AController의 이동 입력만 막아(AddMovementInput이 무시된다)
+ * "조작은 불가 + 애니메이션 전진은 유지" 상태를 만든다.
+ */
+void UA1Ability_MeleeWeapon::SetMoveInputBlockedLocal(bool bBlocked)
 {
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	if (Character == nullptr)
-		return;
-
-	UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement();
-	if (MovementComp == nullptr)
-		return;
-
-	if (bFrozen)
+	// SetIgnoreMoveInput은 누적 카운터라 차단/해제 호출 짝이 반드시 맞아야 한다.
+	// 시전 중 아바타가 죽어 교체되어도 원래 컨트롤러를 되돌릴 수 있도록 차단한 컨트롤러를 기억해 둔다.
+	if (bBlocked == false)
 	{
-		// MOVE_None으로 전환해 이동 입력을 무시하게 한다.
-		MovementComp->DisableMovement();
+		if (AController* BlockedController = MoveInputBlockedController.Get())
+		{
+			BlockedController->SetIgnoreMoveInput(false);
+		}
+
+		MoveInputBlockedController.Reset();
+		return;
 	}
-	else
+
+	// 이미 차단 중이면 카운터를 중복으로 올리지 않는다.
+	if (MoveInputBlockedController.IsValid())
+		return;
+
+	APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo());
+	if (Pawn == nullptr)
+		return;
+
+	AController* Controller = Pawn->GetController();
+	if (Controller == nullptr)
+		return;
+
+	Controller->SetIgnoreMoveInput(true);
+	MoveInputBlockedController = Controller;
+
+	if (UCharacterMovementComponent* MovementComp = Cast<UCharacterMovementComponent>(Pawn->GetMovementComponent()))
 	{
-		// 물리 볼륨에 맞는 기본 이동 모드(보통 MOVE_Walking)로 복구한다.
-		MovementComp->SetDefaultMovementMode();
+		// 차단 직전까지 쌓인 속도·입력을 지워 시전 중에는 루트 모션만 캐릭터를 움직이게 한다.
+		MovementComp->StopMovementImmediately();
+		Pawn->ConsumeMovementInputVector();
 	}
 }

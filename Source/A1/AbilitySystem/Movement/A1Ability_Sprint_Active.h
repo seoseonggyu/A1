@@ -18,7 +18,7 @@ class UGameplayEffect;
  *
  * 이동속도는 A1에 속도 Attribute가 없으므로 GameplayEffect가 아니라 CharacterMovement의
  * MaxWalkSpeed를 로컬(서버·소유 클라 각각)에서 배율로 올렸다가 종료 시 원복하는 방식으로 처리한다.
- * (SetMovementFrozenLocal / SetOrientRotationToMovementLocal과 동일한 비복제 로컬 패턴)
+ * (SetMoveInputBlockedLocal / SetOrientRotationToMovementLocal과 동일한 비복제 로컬 패턴)
  *
  * 종료 시 이동속도를 원복하고 회복 억제 효과를 부여한다.
  * 서버 권위 종료를 위해 bServerRespectsRemoteAbilityCancellation=false, NetSecurityPolicy=ServerOnlyTermination.

@@ -22,36 +22,17 @@ APlayerController* AA1GameMode::SpawnPlayerControllerCommon(ENetRole InRemoteRol
 {
 	APlayerController* PlayerController = Super::SpawnPlayerControllerCommon(InRemoteRole, SpawnLocation, SpawnRotation, InPlayerControllerClass);
 
-	// 팀 배정 (ChoosePlayerStart보다 먼저 호출되어야 함)
-	if (AA1PlayerController* A1PlayerController = Cast<AA1PlayerController>(PlayerController))
-	{
-		// TODO: 팀 관련
-		/*if (UTeamManagerComponent* TeamManager = GetTeamManagerComponent())
-		{
-			TeamManager->AutoAssignTeamAuth(CSPlayerController);
-		}*/
-	}
 
 	return PlayerController;
 }
 
 void AA1GameMode::Logout(AController* Exiting)
 {
-	// TODO: 팀관련
-	// 팀에서 제거
-	/*if (ACSPlayerController* CSPlayerController = Cast<ACSPlayerController>(Exiting))
-	{
-		if (UTeamManagerComponent* TeamManager = GetTeamManagerComponent())
-		{
-			TeamManager->RemovePlayerFromTeamAuth(CSPlayerController);
-		}
-	}*/
 
 	Super::Logout(Exiting);
 }
 
 AActor* AA1GameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
-	// TODO: 팀관련 소환?
 	return Super::ChoosePlayerStart_Implementation(Player);
 }

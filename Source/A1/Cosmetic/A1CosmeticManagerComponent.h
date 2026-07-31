@@ -18,8 +18,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Cosmetic")
 	static UA1CosmeticManagerComponent* FindCosmeticManagerComponent(const APawn* Pawn);
 
-	// TODO: ToSafely
-	TArray<TObjectPtr<UChildActorComponent>> GetCosmeticSlots(){ return CosmeticSlots;}
+	const TArray<TObjectPtr<UChildActorComponent>>& GetCosmeticSlots() const { return CosmeticSlots; }
 	
 protected:
 	virtual void BeginPlay() override;

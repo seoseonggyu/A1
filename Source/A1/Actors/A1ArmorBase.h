@@ -16,8 +16,7 @@ public:
 public:
 	void InitializeActor(TSoftObjectPtr<USkeletalMesh> InDefaultArmorMesh);
 
-	// TODO: ToReference
-	TObjectPtr<USkeletalMeshComponent> GetMesh(){ return ArmorMeshComponent;}
+	USkeletalMeshComponent* GetMesh() const { return ArmorMeshComponent; }
 	
 private:
 	TCoroTask<void> LoadArmorMeshCoroutine(TSoftObjectPtr<USkeletalMesh> ArmorMesh);

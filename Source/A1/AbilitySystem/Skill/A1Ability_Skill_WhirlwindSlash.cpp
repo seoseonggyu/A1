@@ -8,7 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_Skill_WhirlwindSlash)
 
-// TODO: 데미지 처리 및 Cooldown 및 Mana Check 및 몽타주 Notify
+// TODO: Cooldown 및 Mana Check 및 몽타주 Notify 및 
 
 UA1Ability_Skill_WhirlwindSlash::UA1Ability_Skill_WhirlwindSlash(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -35,6 +35,10 @@ void UA1Ability_Skill_WhirlwindSlash::ActivateAbility(const FGameplayAbilitySpec
 		return;
 	}
 
+	// 시전 시작(선딜) 구간에서는 이동 입력을 막는다.
+	// 이동 모드는 유지되므로 몽타주 루트 모션은 그대로 캐릭터를 움직인다.
+	SetMoveInputBlockedLocal(true);
+	
 	if (UAbilityTask_PlayMontageAndWait* WhirlwindSlashMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("WhirlwindSlashMontage"), WhirlwindSlashMontage, 1.f, NAME_None, true))
 	{
 		WhirlwindSlashMontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageFinished);
@@ -61,6 +65,12 @@ void UA1Ability_Skill_WhirlwindSlash::ActivateAbility(const FGameplayAbilitySpec
 		WhirlwindSlashBeginEventTask->EventReceived.AddDynamic(this, &ThisClass::OnWhirlwindSlashBegin);
 		WhirlwindSlashBeginEventTask->ReadyForActivation();
 	}
+	
+	if (UAbilityTask_WaitGameplayEvent* WhirlwindSlashBeginEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, A1GameplayTags::GameplayEvent_Montage_Move, nullptr, true, true))
+	{
+		WhirlwindSlashBeginEventTask->EventReceived.AddDynamic(this, &ThisClass::OnMove);
+		WhirlwindSlashBeginEventTask->ReadyForActivation();
+	}
 
 	if (UAbilityTask_WaitGameplayEvent* WhirlwindSlashEndEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, A1GameplayTags::GameplayEvent_Montage_End, nullptr, true, true))
 	{
@@ -71,10 +81,15 @@ void UA1Ability_Skill_WhirlwindSlash::ActivateAbility(const FGameplayAbilitySpec
 
 void UA1Ability_Skill_WhirlwindSlash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// 정상 종료·취소·중단 모두 이곳을 거치므로 정지시켰던 이동을 반드시 원복한다.
-	SetMovementFrozenLocal(false);
+	// 정상 종료·취소·중단 모두 이곳을 거치므로 막아두었던 이동 입력을 반드시 원복한다.
+	SetMoveInputBlockedLocal(false);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UA1Ability_Skill_WhirlwindSlash::OnMove(FGameplayEventData Payload)
+{
+	SetMoveInputBlockedLocal(false);
 }
 
 void UA1Ability_Skill_WhirlwindSlash::OnTrace(FGameplayEventData Payload)
@@ -105,14 +120,12 @@ void UA1Ability_Skill_WhirlwindSlash::OnReset(FGameplayEventData Payload)
 
 void UA1Ability_Skill_WhirlwindSlash::OnWhirlwindSlashBegin(FGameplayEventData Payload)
 {
-	// 시전 시작(선딜) 구간에서는 이동을 정지시킨다.
-	SetMovementFrozenLocal(true);
+
 }
 
 void UA1Ability_Skill_WhirlwindSlash::OnWhirlwindSlashEnd(FGameplayEventData Payload)
 {
-	// 후딜 구간에서는 다시 이동을 정지시킨다.
-	SetMovementFrozenLocal(true);
+	SetMoveInputBlockedLocal(true);
 }
 
 void UA1Ability_Skill_WhirlwindSlash::OnMontageFinished()

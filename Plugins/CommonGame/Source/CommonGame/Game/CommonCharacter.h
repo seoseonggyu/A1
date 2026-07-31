@@ -40,8 +40,6 @@ public:
 	void SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const;
 	void ResetAnimationToDefault() const;
 
-protected:
-	// TODO: 애니메이션 관련
 
 protected:
 	/** Top-Down 카메라 컴포넌트 */

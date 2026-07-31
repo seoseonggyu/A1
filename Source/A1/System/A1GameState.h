@@ -10,7 +10,7 @@
 /**
  * GameState
  *
- * ÆÀ ½Ã½ºÅÛÀ» °ü¸®ÇÏ´Â TeamManagerComponent¸¦ Æ÷ÇÔÇÕ´Ï´Ù.
+ * ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ TeamManagerComponentï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
  */
 UCLASS()
 class A1_API AA1GameState : public ACommonGameStateBase
@@ -20,16 +20,4 @@ class A1_API AA1GameState : public ACommonGameStateBase
 public:
 	AA1GameState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	//-----------------------------------------------------------------------------
-	// ÄÄÆ÷³ÍÆ® Á¢±ÙÀÚ
-	//-----------------------------------------------------------------------------
-
-	// TODO: ÆÀ °ü·Ã
-	/** TeamManagerComponent¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
-	//UTeamManagerComponent* GetTeamManagerComponent() const { return TeamManagerComponent; }
-
-//private:
-//	/** ÆÀ °ü¸® ÄÄÆ÷³ÍÆ® */
-//	UPROPERTY()
-//	TObjectPtr<UTeamManagerComponent> TeamManagerComponent;
 };

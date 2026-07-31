@@ -17,7 +17,11 @@ protected:
 
 protected:
 	UFUNCTION()
+	void OnMove(FGameplayEventData Payload);
+	
+	UFUNCTION()
 	void OnTrace(FGameplayEventData Payload);
+	
 
 	UFUNCTION()
 	void OnReset(FGameplayEventData Payload);

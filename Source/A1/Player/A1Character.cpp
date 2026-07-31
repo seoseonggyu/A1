@@ -35,29 +35,32 @@ AA1Character::AA1Character(const FObjectInitializer& ObjectInitializer)
 
 void AA1Character::GetHighlightComponents(TArray<UPrimitiveComponent*>& OutComponents) const
 {
-	if ( UA1CosmeticManagerComponent* CosmeticCmp = UA1CosmeticManagerComponent::FindCosmeticManagerComponent(this))
+	const UA1CosmeticManagerComponent* CosmeticCmp = UA1CosmeticManagerComponent::FindCosmeticManagerComponent(this);
+	if (CosmeticCmp == nullptr)
 	{
-		TArray<TObjectPtr<UChildActorComponent>> Slots = CosmeticCmp->GetCosmeticSlots();
-
-		for (UChildActorComponent* ChildActorComponent : Slots)
-		{
-			if (!ChildActorComponent)
-			{
-				continue;
-			}
-
-			if (AA1ArmorBase* ArmorActor = Cast<AA1ArmorBase>(ChildActorComponent->GetChildActor()))
-			{
-				if (UPrimitiveComponent* MeshComponent = ArmorActor->GetMesh())
-				{
-					OutComponents.Add(MeshComponent);
-				}
-			}
-		}
+		return;
 	}
 
+	const TArray<TObjectPtr<UChildActorComponent>>& Slots = CosmeticCmp->GetCosmeticSlots();
 
-	// TODO:
+	for (const TObjectPtr<UChildActorComponent>& ChildActorComponent : Slots)
+	{
+		if (ChildActorComponent == nullptr)
+		{
+			continue;
+		}
+
+		const AA1ArmorBase* ArmorActor = Cast<AA1ArmorBase>(ChildActorComponent->GetChildActor());
+		if (ArmorActor == nullptr)
+		{
+			continue;
+		}
+
+		if (USkeletalMeshComponent* ArmorMesh = ArmorActor->GetMesh())
+		{
+			OutComponents.Add(ArmorMesh);
+		}
+	}
 }
 
 void AA1Character::GatherInteractionOptions(const FA1InteractionQuery& Query, TArray<FA1InteractionOption>& OutOptions) const
