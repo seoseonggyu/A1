@@ -25,7 +25,7 @@ UCommonUIManagerSubsystem (GameInstance)
 `Source/A1/UI/<도메인>/<이름>ViewModel.h/.cpp`, `UCommonViewModelBase` 상속.
 
 ```cpp
-UCLASS(BlueprintType)
+UCLASS(BlueprintType)[SKILL.md](../a1-replication/SKILL.md)
 class A1_API U<이름>ViewModel : public UCommonViewModelBase
 {
     GENERATED_BODY()

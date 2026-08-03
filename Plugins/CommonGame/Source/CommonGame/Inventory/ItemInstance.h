@@ -16,10 +16,10 @@ class UInventoryComponent;
 DECLARE_LOG_CATEGORY_EXTERN(ItemInstanceLog, Log, All);
 
 /**
- * ·±Å¸ÀÓ ¾ÆÀÌÅÛ ÀÎ½ºÅÏ½º
+ * ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½
  *
- * Fragment ±â¹ÝÀ¸·Î ¾ÆÀÌÅÛ ¼Ó¼ºÀ» µ¿ÀûÀ¸·Î ±¸¼ºÇÕ´Ï´Ù.
- * Fragment´Â Definition¿¡¼­ ÃÊ±âÈ­µÇ°í, NetState¸¸ ³×Æ®¿öÅ© º¹Á¦µË´Ï´Ù.
+ * Fragment ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ó¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+ * Fragmentï¿½ï¿½ Definitionï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ï¿½Ç°ï¿½, NetStateï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
  */
 UCLASS(BlueprintType, Blueprintable)
 class COMMONGAME_API UItemInstance : public UObject
@@ -30,33 +30,33 @@ class COMMONGAME_API UItemInstance : public UObject
 
 public:
 	//-----------------------------------------------------------------------------
-	// Inventory ÄÝ¹é
+	// Inventory ï¿½Ý¹ï¿½
 	//-----------------------------------------------------------------------------
 
-	/** ÀÎº¥Åä¸®¿¡ Ãß°¡µÉ ¶§ È£ÃâµË´Ï´Ù */
+	/** ï¿½Îºï¿½ï¿½ä¸®ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½Ë´Ï´ï¿½ */
 	virtual void OnAdded(UInventoryComponent* Inventory, int32 StackCount) {}
 
-	/** ÀÎº¥Åä¸® ³»¿¡¼­ º¯°æµÉ ¶§ È£ÃâµË´Ï´Ù */
+	/** ï¿½Îºï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½Ë´Ï´ï¿½ */
 	virtual void OnChanged(UInventoryComponent* Inventory, int32 StackCount) {}
 
-	/** ÀÎº¥Åä¸®¿¡¼­ Á¦°ÅµÉ ¶§ È£ÃâµË´Ï´Ù */
+	/** ï¿½Îºï¿½ï¿½ä¸®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Åµï¿½ ï¿½ï¿½ È£ï¿½ï¿½Ë´Ï´ï¿½ */
 	virtual void OnRemoved(UInventoryComponent* Inventory) {}
 
-	/** ¼­¹ö ±ÇÇÑÀÌ ÀÖ´ÂÁö È®ÀÎÇÕ´Ï´Ù */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Õ´Ï´ï¿½ */
 	bool HasAuthority() const;
 
 	//-----------------------------------------------------------------------------
-	// ÃÊ±âÈ­
+	// ï¿½Ê±ï¿½È­
 	//-----------------------------------------------------------------------------
 
-	/** Definition¿¡¼­ FragmentµéÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù (¼­¹ö/Å¬¶óÀÌ¾ðÆ® ¸ðµÎ) */
+	/** Definitionï¿½ï¿½ï¿½ï¿½ Fragmentï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½/Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½) */
 	void InitializeFragmentsFromDefinition();
 
 	//-----------------------------------------------------------------------------
-	// Fragment API (Á¶È¸)
+	// Fragment API (ï¿½ï¿½È¸)
 	//-----------------------------------------------------------------------------
 
-	/** Fragment¸¦ °Ë»öÇÕ´Ï´Ù */
+	/** Fragmentï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Õ´Ï´ï¿½ */
 	template<typename T>
 	T* FindFragment()
 	{
@@ -71,7 +71,7 @@ public:
 		return nullptr;
 	}
 
-	/** Fragment¸¦ °Ë»öÇÕ´Ï´Ù (const) */
+	/** Fragmentï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Õ´Ï´ï¿½ (const) */
 	template<typename T>
 	const T* FindFragment() const
 	{
@@ -86,7 +86,7 @@ public:
 		return nullptr;
 	}
 
-	/** Æ¯Á¤ Å¸ÀÔÀÇ Fragment°¡ ÀÖ´ÂÁö È®ÀÎÇÕ´Ï´Ù */
+	/** Æ¯ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ Fragmentï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Õ´Ï´ï¿½ */
 	template<typename T>
 	bool HasFragment() const
 	{
@@ -94,29 +94,29 @@ public:
 	}
 
 
-	/** ÀÎµ¦½º·Î Fragment¸¦ °Ë»öÇÕ´Ï´Ù */
+	/** ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ Fragmentï¿½ï¿½ ï¿½Ë»ï¿½ï¿½Õ´Ï´ï¿½ */
 	FItemFragment* FindFragmentByIndex(int32 Index);
 
-	/** Fragment Å¸ÀÔÀÇ ÀÎµ¦½º¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** Fragment Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	int32 GetFragmentIndex(const UScriptStruct* InFragmentType) const;
 
-	/** Fragment¸¦ DefinitionÀÇ ±âº»°ªÀ¸·Î º¹¿øÇÕ´Ï´Ù */
+	/** Fragmentï¿½ï¿½ Definitionï¿½ï¿½ ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ */
 	void ResetFragmentToDefault(int32 FragmentIdx);
 
 	//-----------------------------------------------------------------------------
-	// NetState API (¼­¹ö Àü¿ë - ³×Æ®¿öÅ© º¹Á¦)
+	// NetState API (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½)
 	//-----------------------------------------------------------------------------
 
 	/**
-	 * FragmentÀÇ NetState¸¦ ¼öÁ¤ÇÕ´Ï´Ù (¼­¹ö Àü¿ë)
+	 * Fragmentï¿½ï¿½ NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * NetState°¡ ¾øÀ¸¸é »ý¼ºÇÏ°í, ÀÖÀ¸¸é ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
-	 * ½ºÄÚÇÁ Á¾·á ½Ã ÀÚµ¿À¸·Î Fragment¿¡ Àû¿ë + MarkDirty µË´Ï´Ù.
+	 * NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½Õ´Ï´ï¿½.
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ Fragmentï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ + MarkDirty ï¿½Ë´Ï´ï¿½.
 	 * @code
 	 * if (auto Modifier = ItemInstance->ModifyNetStateAuth<FFragment_Stackable>())
 	 * {
 	 *     Modifier->CurrentStack = 50;
-	 * } // ½ºÄÚÇÁ Á¾·á ½Ã ÀÚµ¿À¸·Î Fragment Àû¿ë + ³×Æ®¿öÅ© º¹Á¦
+	 * } // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ Fragment ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½
 	 * @endcode
 	 */
 	template<typename TFragment>
@@ -131,12 +131,12 @@ public:
 	}
 
 	/**
-	 * FragmentÀÇ NetState¸¦ Á¦°ÅÇÕ´Ï´Ù (¼­¹ö Àü¿ë)
+	 * Fragmentï¿½ï¿½ NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * NetState¸¦ Á¦°ÅÇÏ¸é Å¬¶óÀÌ¾ðÆ®¿¡¼­ Fragment°¡ DefinitionÀÇ ±âº»°ªÀ¸·Î º¹¿øµË´Ï´Ù.
+	 * NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ Fragmentï¿½ï¿½ Definitionï¿½ï¿½ ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
 	 *
-	 * @tparam TFragment Fragment Å¸ÀÔ
-	 * @return NetState°¡ Á¸ÀçÇÏ¿© Á¦°ÅµÇ¾úÀ¸¸é true
+	 * @tparam TFragment Fragment Å¸ï¿½ï¿½
+	 * @return NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ÅµÇ¾ï¿½ï¿½ï¿½ï¿½ï¿½ true
 	 */
 	template<typename TFragment>
 	bool RemoveNetStateAuth()
@@ -150,10 +150,10 @@ public:
 	}
 
 	/**
-	 * Æ¯Á¤ ÅÂ±×ÀÇ TagStat NetState¸¦ ¼öÁ¤ÇÕ´Ï´Ù (¼­¹ö Àü¿ë)
+	 * Æ¯ï¿½ï¿½ ï¿½Â±ï¿½ï¿½ï¿½ TagStat NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * @param InStatTag Ã£À» ½ºÅÈ ÅÂ±×
-	 * @return ÇØ´ç ÅÂ±×ÀÇ TagStat Modifier (¾øÀ¸¸é ¹«È¿)
+	 * @param InStatTag Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½
+	 * @return ï¿½Ø´ï¿½ ï¿½Â±ï¿½ï¿½ï¿½ TagStat Modifier (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿)
 	 * @code
 	 * if (auto Modifier = ItemInstance->ModifyTagStatAuth(StatTag_Damage))
 	 * {
@@ -164,93 +164,93 @@ public:
 	TItemFragmentNetStateModifier<FNetState_TagStat> ModifyTagStatAuth(FGameplayTag InStatTag);
 
 	/**
-	 * Æ¯Á¤ ÅÂ±×ÀÇ TagStat NetState¸¦ Á¦°ÅÇÕ´Ï´Ù (¼­¹ö Àü¿ë)
+	 * Æ¯ï¿½ï¿½ ï¿½Â±ï¿½ï¿½ï¿½ TagStat NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * NetState¸¦ Á¦°ÅÇÏ¸é Å¬¶óÀÌ¾ðÆ®¿¡¼­ DefinitionÀÇ ±âº»°ªÀ¸·Î º¹¿øµË´Ï´Ù.
+	 * NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ Definitionï¿½ï¿½ ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
 	 *
-	 * @param InStatTag Ã£À» ½ºÅÈ ÅÂ±×
-	 * @return NetState°¡ Á¸ÀçÇÏ¿© Á¦°ÅµÇ¾úÀ¸¸é true
+	 * @param InStatTag Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½
+	 * @return NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ÅµÇ¾ï¿½ï¿½ï¿½ï¿½ï¿½ true
 	 */
 	bool RemoveTagStatAuth(FGameplayTag InStatTag);
 
 	//-----------------------------------------------------------------------------
-	// TagStat API (Á¶È¸)
+	// TagStat API (ï¿½ï¿½È¸)
 	//-----------------------------------------------------------------------------
 
 	/**
-	 * Æ¯Á¤ ÅÂ±×ÀÇ TagStat °ªÀ» ¹ÝÈ¯ÇÕ´Ï´Ù
+	 * Æ¯ï¿½ï¿½ ï¿½Â±ï¿½ï¿½ï¿½ TagStat ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½
 	 *
-	 * @param InStatTag Ã£À» ½ºÅÈ ÅÂ±×
-	 * @param OutValue Ã£Àº °ª (Ãâ·Â)
-	 * @return ÇØ´ç ÅÂ±×¸¦ °¡Áø TagStatÀÌ ÀÖÀ¸¸é true
+	 * @param InStatTag Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½
+	 * @param OutValue Ã£ï¿½ï¿½ ï¿½ï¿½ (ï¿½ï¿½ï¿½)
+	 * @return ï¿½Ø´ï¿½ ï¿½Â±×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ TagStatï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ true
 	 */
 	bool GetTagStatValue(FGameplayTag InStatTag, float& OutValue) const;
 
 	/**
-	 * Æ¯Á¤ ÅÂ±×ÀÇ TagStat °ªÀ» ·ÎÄÃ¿¡¼­ Á÷Á¢ ¼öÁ¤ÇÕ´Ï´Ù (³×Æ®¿öÅ© º¹Á¦ ¾øÀ½)
+	 * Æ¯ï¿½ï¿½ ï¿½Â±ï¿½ï¿½ï¿½ TagStat ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * Å¬¶óÀÌ¾ðÆ®/¼­¹ö°¡ °¢°¢ ·ÎÄÃ¿¡¼­ °è»êÇÏ´Â °ª¿¡ »ç¿ëÇÕ´Ï´Ù.
-	 * ¿¹: Åº¾à (¾îºô¸®Æ¼ ¾çÂÊ ½ÇÇà)
+	 * Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+	 * ï¿½ï¿½: Åºï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	 *
-	 * @param InStatTag Ã£À» ½ºÅÈ ÅÂ±×
-	 * @param NewValue »õ °ª
-	 * @return ÇØ´ç ÅÂ±×¸¦ °¡Áø TagStatÀÌ ÀÖÀ¸¸é true
+	 * @param InStatTag Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Â±ï¿½
+	 * @param NewValue ï¿½ï¿½ ï¿½ï¿½
+	 * @return ï¿½Ø´ï¿½ ï¿½Â±×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ TagStatï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ true
 	 */
 	bool SetTagStatValueLocal(FGameplayTag InStatTag, float NewValue);
 
 
 
 	//-----------------------------------------------------------------------------
-	// Equipment ÇïÆÛ
+	// Equipment ï¿½ï¿½ï¿½ï¿½
 	//-----------------------------------------------------------------------------
 
-	/** Equipment ½½·Ô ÅÂ±×¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** Equipment ï¿½ï¿½ï¿½ï¿½ ï¿½Â±×¸ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Item|Equipment")
 	FGameplayTag GetEquipmentSlotTag() const;
 
-	/** QuickBar ½½·Ô ÅÂ±×¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** QuickBar ï¿½ï¿½ï¿½ï¿½ ï¿½Â±×¸ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Item|Equipment")
 	FGameplayTag GetQuickBarSlotTag() const;
 
 private:
 	//-----------------------------------------------------------------------------
-	// NetState ³»ºÎ ÇïÆÛ
+	// NetState ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	//-----------------------------------------------------------------------------
 
 
-	/** Æ¯Á¤ StatTag¸¦ °¡Áø TagStat FragmentÀÇ ÀÎµ¦½º¸¦ Ã£½À´Ï´Ù */
+	/** Æ¯ï¿½ï¿½ StatTagï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ TagStat Fragmentï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	int32 FindTagStatIndex(FGameplayTag InStatTag) const;
 
-	/** Fragment ÀÎµ¦½º·Î NetState¸¦ ¼öÁ¤ÇÕ´Ï´Ù (Ã£°Å³ª »ý¼º) */
+	/** Fragment ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (Ã£ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	template<typename TNetState, typename TFragment>
 	TItemFragmentNetStateModifier<TNetState> ModifyNetStateByIndexAuth(int32 FragmentIdx);
 
-	/** Fragment ÀÎµ¦½º·Î NetState¸¦ Á¦°ÅÇÕ´Ï´Ù */
+	/** Fragment ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ NetStateï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ */
 	bool RemoveNetStateByIndex(int32 FragmentIdx);
 
-	/** InventoryComponentÀÇ ItemNetStates¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù (¼­¹ö Àü¿ë) */
+	/** InventoryComponentï¿½ï¿½ ItemNetStatesï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	FItemNetStateList* GetOwnerNetStates() const;
 
 public:
-	/** ¾ÆÀÌÅÛ Á¤ÀÇ (CDO) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (CDO) */
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	TObjectPtr<const UItemDefinition> Definition = nullptr;
 
-	/** °íÀ¯ ¾ÆÀÌÅÛ ID */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID */
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	int32 ItemId = INDEX_NONE;
 
-	/** ÀÎº¥Åä¸® ¹è¿­ ³» ÀÎµ¦½º */
+	/** ï¿½Îºï¿½ï¿½ä¸® ï¿½è¿­ ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ */
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	int32 ArrayIndex = INDEX_NONE;
 
 private:
-	/** Fragment ¸®½ºÆ® (¼­¹ö/Å¬¶óÀÌ¾ðÆ®°¡ µ¿ÀÏÇÑ Definition¿¡¼­ º¹»ç) */
+	/** Fragment ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½ï¿½ï¿½/Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Definitionï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	TArray<TInstancedStruct<FItemFragment>> Fragments;
 };
 
 //-----------------------------------------------------------------------------
-// ÅÛÇÃ¸´ ±¸Çö
+// ï¿½ï¿½ï¿½Ã¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 //-----------------------------------------------------------------------------
 
 template<typename TNetState, typename TFragment>
@@ -264,7 +264,7 @@ TItemFragmentNetStateModifier<TNetState> UItemInstance::ModifyNetStateByIndexAut
 
 	TFragment* Fragment = Fragments[FragmentIdx].GetMutablePtr<TFragment>();
 
-	// NetState Ã£°Å³ª »ý¼º (ItemId + FragmentIndex·Î °Ë»ö)
+	// NetState Ã£ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ (ItemId + FragmentIndexï¿½ï¿½ ï¿½Ë»ï¿½)
 	int32 EntryIndex = NetStates->FindIndex(ItemId, static_cast<uint8>(FragmentIdx));
 	TSharedPtr<TNetState> NetState;
 

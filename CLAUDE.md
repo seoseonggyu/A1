@@ -1,4 +1,4 @@
-# A1 — Unreal Engine 5.8 C++ 프로젝트
+# A1 — Unreal Engine 5.8 Iris 서버 기반 C++ 프로젝트
 
 **필요한 경우 주석·문서·응답은 한국어로 작성한다** 식별자는 영어 UpperCamelCase.
 
@@ -7,11 +7,12 @@
 - 헤더 추가/이동 시 **프로젝트 파일 재생성 → 빌드** 순서.
 - 사용자가 직접 빌드를 하기 때문에. Claude Code는 빌드를 하라고 제안한다.
 
-## 디렉터리
+## 프로젝트 구조
 
 ```
 Source/A1/                 게임 모듈 (A1_API, 클래스 접두사 A1)
   AbilitySystem/ Player/ System/ Weapon/ Cosmetic/ Actors/ UI/ DataAsset/
+  
 Plugins/
   CommonGame/              핵심 프레임워크: Experience, ActorExtension, GAS, Inventory,
                            Equipment, QuickBar, Camera, Input, AssetManager
@@ -21,6 +22,11 @@ Plugins/
   GameFeatures/Ark/        콘텐츠 전용 GameFeature (ExplicitlyLoaded, 기본 Registered)
 Config/                    DefaultEngine/Game/Input.ini
 ```
+## 프로젝트 세부 사항
+
+- 프로젝트는 TopDown 게임 기반 생존 게임이다.
+- 기본 이동은 WASD로 움직이고 QERT가 스킬 입력이고 마우스 좌클릭과 우클릭이 기본 공격 및 상호작용이다.
+- Inventroy 및 Equipment 그리고 GAS 같은 프로젝트에 핵심 부분들은 모두 Iris 기반 네트워크 서버 구조다.
 
 ## 코딩 규칙
 
@@ -45,6 +51,10 @@ Config/                    DefaultEngine/Game/Input.ini
 - `.uasset`(Blueprint, DataAsset)은 바이너리라 편집 불가. C++ 변경이 BP 참조를 깨뜨릴 수 있으면 **먼저 알리고** 진행한다.
   (`Plugins/GameFeatures/Ark/Content` 및 `/Game` 하위)
 - 복제 프로퍼티 추가 시 `GetLifetimeReplicatedProps` 갱신 필수.
+
+## 사용자 요청
+
+- 사용자 요청 중에 skill과 관련된 부분이 있으면 skill을 확인하고 진행한다.
 
 ## 작업 후
 

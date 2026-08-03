@@ -11,10 +11,10 @@
 DECLARE_LOG_CATEGORY_EXTERN(ItemDefinitionLog, Log, All);
 
 /**
- * ¾ÆÀÌÅÛÀÇ ºÒº¯ Á¤ÀÇ¸¦ ´ã´Â DataAsset
+ * ì•„ì´í…œì˜ ë¶ˆë³€ ì •ì˜ë¥¼ ë‹´ëŠ” DataAsset
  *
- * Fragment ¹è¿­·Î ¾ÆÀÌÅÛÀÇ Æ¯¼ºÀ» Á¶ÇÕÇÏ¿© Á¤ÀÇÇÕ´Ï´Ù.
- * CDO·Î °ü¸®µÇ¸ç, ·±Å¸ÀÓ¿¡ FItemInstance°¡ ÀÌ DefinitionÀ» ÂüÁ¶ÇÕ´Ï´Ù.
+ * Fragment ë°°ì—´ë¡œ ì•„ì´í…œì˜ íŠ¹ì„±ì„ ì¡°í•©í•˜ì—¬ ì •ì˜í•©ë‹ˆë‹¤.
+ * CDOë¡œ ê´€ë¦¬ë˜ë©°, ëŸ°íƒ€ì„ì— FItemInstanceê°€ ì´ Definitionì„ ì°¸ì¡°í•©ë‹ˆë‹¤.
  */
 UCLASS(BlueprintType, Const)
 class COMMONGAME_API UItemDefinition : public UCommonPrimaryDataAsset
@@ -23,21 +23,25 @@ class COMMONGAME_API UItemDefinition : public UCommonPrimaryDataAsset
 
 public:
 	//-----------------------------------------------------------------------------
-	// UPrimaryDataAsset ¿À¹ö¶óÀÌµå
+	// UPrimaryDataAsset ì˜¤ë²„ë¼ì´ë“œ
 	//-----------------------------------------------------------------------------
 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
 public:
-	/** ¾ÆÀÌÅÛ Ç¥½Ã ÀÌ¸§ */
+	/** 2d ê·¸ë¦¬ë“œ ì•„ì´í…œ Slot ì¹´ìš´íŠ¸ */
+	UPROPERTY(EditDefaultsOnly)
+	FIntPoint SlotCount = FIntPoint::ZeroValue;
+	
+	/** ì•„ì´í…œ í‘œì‹œ ì´ë¦„ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText DisplayName;
 
-	/** ¾ÆÀÌÅÛ ¼³¸í */
+	/** ì•„ì´í…œ ì„¤ëª… */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText Description;
 
-	/** Fragment ¸ñ·Ï */
+	/** Fragment ëª©ë¡ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fragments")
 	TArray<TInstancedStruct<FItemFragment>> Fragments;
 };

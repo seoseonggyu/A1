@@ -16,7 +16,7 @@ class UInventoryComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(InventoryComponentLog, Log, All);
 
-/** ¾ÆÀÌÅÛ »ý¼º ¹× ÃÊ±âÈ­ ¿Ï·á µ¨¸®°ÔÀÌÆ® */
+/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemReady, int32 /*ItemId*/, UItemInstance* /*Instance*/);
 
 //-----------------------------------------------------------------------------
@@ -24,9 +24,9 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemReady, int32 /*ItemId*/, UI
 //-----------------------------------------------------------------------------
 
 /**
- * ÃÊ±â ¾ÆÀÌÅÛ ¼³Á¤ Ç×¸ñ
+ * ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½
  *
- * °ÔÀÓ ½ÃÀÛ ½Ã ÀÚµ¿À¸·Î Ãß°¡µÉ ¾ÆÀÌÅÛÀ» Á¤ÀÇÇÕ´Ï´Ù.
+ * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
  */
 USTRUCT(BlueprintType)
 struct COMMONGAME_API FInitialItemEntry
@@ -37,15 +37,15 @@ public:
 	bool IsValid() const { return ItemDefinition != nullptr && Count > 0; }
 
 public:
-	/** Ãß°¡ÇÒ ¾ÆÀÌÅÛ Á¤ÀÇ */
+	/** ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	TObjectPtr<const UItemDefinition> ItemDefinition;
 
-	/** Ãß°¡ÇÒ °³¼ö */
+	/** ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = "1"))
 	int32 Count = 1;
 
-	/** QuickBar¿¡µµ Ãß°¡ÇÒÁö ¿©ºÎ */
+	/** QuickBarï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bAddToQuickBar = false;
 };
@@ -55,12 +55,12 @@ public:
 //-----------------------------------------------------------------------------
 
 /**
- * ÀÎº¥Åä¸® Ç×¸ñ
+ * ï¿½Îºï¿½ï¿½ä¸® ï¿½×¸ï¿½
  *
- * ¾ÆÀÌÅÛ µ¥ÀÌÅÍ¿Í ·±Å¸ÀÓ ÀÎ½ºÅÏ½º¸¦ ´ã½À´Ï´Ù.
- * ¸®ÇÃ¸®ÄÉÀÌ¼Ç µ¥ÀÌÅÍ(Definition, ItemId)´Â Entry¿¡ Á÷Á¢ Æ÷ÇÔµÇ°í,
- * UItemInstance´Â Å¬¶óÀÌ¾ðÆ®¿¡¼­ ·ÎÄÃ·Î »ý¼ºµË´Ï´Ù.
- * NetState´Â ÁßÃ¸ FastArraySerializer¸¦ ÇÇÇÏ±â À§ÇØ UInventoryComponent::ItemNetStates¿¡¼­ °ü¸®ÇÕ´Ï´Ù.
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
+ * ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(Definition, ItemId)ï¿½ï¿½ Entryï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ÔµÇ°ï¿½,
+ * UItemInstanceï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
+ * NetStateï¿½ï¿½ ï¿½ï¿½Ã¸ FastArraySerializerï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ UInventoryComponent::ItemNetStatesï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
  */
 USTRUCT(BlueprintType)
 struct COMMONGAME_API FInventoryEntry : public FFastArraySerializerItem
@@ -78,26 +78,26 @@ public:
 
 public:
 	//-----------------------------------------------------------------------------
-	// ¸®ÇÃ¸®ÄÉÀÌ¼Ç µ¥ÀÌÅÍ
+	// ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	//-----------------------------------------------------------------------------
 
-	/** ¾ÆÀÌÅÛ Á¤ÀÇ */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<const UItemDefinition> Definition = nullptr;
 
-	/** °íÀ¯ ¾ÆÀÌÅÛ ID */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID */
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	int32 ItemId = INDEX_NONE;
 
-	/** ½ºÅÃ ¼ö·® */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	int32 StackCount = 1;
 
 	//-----------------------------------------------------------------------------
-	// ·±Å¸ÀÓ µ¥ÀÌÅÍ (¸®ÇÃ¸®ÄÉÀÌ¼Ç ¾È ÇÔ)
+	// ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ ï¿½ï¿½)
 	//-----------------------------------------------------------------------------
 
-	/** ¾ÆÀÌÅÛ ÀÎ½ºÅÏ½º (¼­¹ö: Á÷Á¢ »ý¼º, Å¬¶óÀÌ¾ðÆ®: PostReplicatedAdd¿¡¼­ ·ÎÄÃ »ý¼º) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ (ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®: PostReplicatedAddï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	UPROPERTY(NotReplicated, Transient, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UItemInstance> Instance = nullptr;
 };
@@ -107,9 +107,9 @@ public:
 //-----------------------------------------------------------------------------
 
 /**
- * ÀÎº¥Åä¸® Ç×¸ñ ¹è¿­À» ´ã´Â FastArraySerializer ÄÁÅ×ÀÌ³Ê
+ * ï¿½Îºï¿½ï¿½ä¸® ï¿½×¸ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ FastArraySerializer ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½
  *
- * ³×Æ®¿öÅ© µ¨Å¸ Á÷·ÄÈ­¸¦ Áö¿øÇÕ´Ï´Ù.
+ * ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
  */
 USTRUCT(BlueprintType)
 struct COMMONGAME_API FInventoryList : public FIrisFastArraySerializer
@@ -122,18 +122,18 @@ public:
 		return FFastArraySerializer::FastArrayDeltaSerialize<FInventoryEntry, FInventoryList>(Entries, DeltaParms, *this);
 	}
 
-	/** Entry¸¦ Dirty·Î ¸¶Å·ÇÕ´Ï´Ù */
+	/** Entryï¿½ï¿½ Dirtyï¿½ï¿½ ï¿½ï¿½Å·ï¿½Õ´Ï´ï¿½ */
 	void MarkEntryDirty(FInventoryEntry& Entry)
 	{
 		MarkItemDirty(Entry);
 	}
 
 public:
-	/** ÀÎº¥Åä¸® Ç×¸ñ ¹è¿­ */
+	/** ï¿½Îºï¿½ï¿½ä¸® ï¿½×¸ï¿½ ï¿½è¿­ */
 	UPROPERTY()
 	TArray<FInventoryEntry> Entries;
 
-	/** ¼ÒÀ¯ ÄÄÆ÷³ÍÆ® (º¹Á¦µÇÁö ¾ÊÀ½) */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UInventoryComponent> Owner = nullptr;
 };
@@ -149,11 +149,11 @@ struct TStructOpsTypeTraits<FInventoryList> : public TStructOpsTypeTraitsBase2<F
 //-----------------------------------------------------------------------------
 
 /**
- * ÇÃ·¹ÀÌ¾î ÀÎº¥Åä¸® ÄÄÆ÷³ÍÆ®
+ * ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Îºï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
  *
- * PlayerController¿¡ ºÙ¾î¼­ ¾ÆÀÌÅÛÀ» °ü¸®ÇÕ´Ï´Ù.
- * ³×Æ®¿öÅ© º¹Á¦¸¦ Áö¿øÇÏ¸ç, Owner¿¡°Ô¸¸ º¹Á¦µË´Ï´Ù.
- * Experience ·Îµå ¿Ï·á ½Ã ÃÊ±â ¾ÆÀÌÅÛÀ» ÀÚµ¿À¸·Î Ãß°¡ÇÕ´Ï´Ù.
+ * PlayerControllerï¿½ï¿½ ï¿½Ù¾î¼­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+ * ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½, Ownerï¿½ï¿½ï¿½Ô¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ë´Ï´ï¿½.
+ * Experience ï¿½Îµï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½.
  */
 UCLASS(ClassGroup = (Inventory), meta = (BlueprintSpawnableComponent))
 class COMMONGAME_API UInventoryComponent : public UControllerComponent
@@ -175,68 +175,68 @@ public:
 	virtual void BeginPlay() override;
 
 	//-----------------------------------------------------------------------------
-	// ¾ÆÀÌÅÛ °ü¸® (¼­¹ö Àü¿ë)
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	//-----------------------------------------------------------------------------
 
-	/** ¾ÆÀÌÅÛÀ» Ãß°¡ÇÕ´Ï´Ù (¼­¹ö Àü¿ë, ÄÚ·çÆ¾) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½Ú·ï¿½Æ¾) */
 	TCoroTask<UItemInstance*> AddItemAuthCoroutine(const UItemDefinition* Definition, int32 Count = 1);
 
-	/** ¾ÆÀÌÅÛÀ» Á¦°ÅÇÕ´Ï´Ù (¼­¹ö Àü¿ë) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool RemoveItemAuth(UItemInstance* Instance);
 
-	/** ½ºÅÃ ¼ö·®À» º¯°æÇÕ´Ï´Ù (¼­¹ö Àü¿ë) */
+	/** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool ModifyStackCountAuth(UItemInstance* Instance, int32 NewCount);
 
-	/** TagStat °ªÀ» º¯°æÇÕ´Ï´Ù (Å¬¶óÀÌ¾ðÆ® ¡æ ¼­¹ö RPC) */
+	/** TagStat ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ RPC) */
 	UFUNCTION(Server, Reliable)
 	void ModifyTagStatServer(int32 ItemId, FGameplayTag StatTag, float NewValue);
 
 	//-----------------------------------------------------------------------------
-	// ÃÊ±â ¾ÆÀÌÅÛ (¼­¹ö Àü¿ë)
+	// ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	//-----------------------------------------------------------------------------
 
-	/** ÃÊ±â ¾ÆÀÌÅÛÀ» Áö±ÞÇÕ´Ï´Ù (¼­¹ö Àü¿ë, Pawn Possess ½Ã È£Ãâ) */
+	/** ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, Pawn Possess ï¿½ï¿½ È£ï¿½ï¿½) */
 	UFUNCTION()
 	void GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn);
 
 	//-----------------------------------------------------------------------------
-	// ¾ÆÀÌÅÛ Á¶È¸
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸
 	//-----------------------------------------------------------------------------
 
-	/** Æ¯Á¤ ½½·ÔÀÇ ¾ÆÀÌÅÛÀ» Ã£½À´Ï´Ù */
+	/** Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UItemInstance* FindItemAtSlot(int32 SlotIndex) const;
 
-	/** ID·Î ¾ÆÀÌÅÛÀ» Ã£½À´Ï´Ù */
+	/** IDï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UItemInstance* FindItemById(int32 ItemId) const;
 
-	/** ¸ðµç ¾ÆÀÌÅÛÀ» ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void GetAllItems(TArray<UItemInstance*>& OutItems) const;
 
-	/** ¾ÆÀÌÅÛ °³¼ö¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	int32 GetItemCount() const { return InventoryList.Entries.Num(); }
 
-	/** ÃÖ´ë ½½·Ô ¼ö¸¦ ¹ÝÈ¯ÇÕ´Ï´Ù */
+	/** ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	int32 GetMaxSlots() const { return MaxSlots; }
 
-	/** ½½·ÔÀÌ °¡µæ Ã¡´ÂÁö È®ÀÎÇÕ´Ï´Ù */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã¡ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Õ´Ï´ï¿½ */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool IsSlotFull() const { return GetItemCount() >= MaxSlots; }
 
-	/** ¾ÆÀÌÅÛÀÇ Entry¸¦ Ã£½À´Ï´Ù */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Entryï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	FInventoryEntry* FindEntry(const UItemInstance* Instance);
 	const FInventoryEntry* FindEntry(const UItemInstance* Instance) const;
 
-	/** ¾ÆÀÌÅÛ »ý¼º ¹× ÃÊ±âÈ­ ¿Ï·á µ¨¸®°ÔÀÌÆ® (¼­¹ö/Å¬¶óÀÌ¾ðÆ® ¸ðµÎ) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½ï¿½ï¿½/Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½) */
 	FOnInventoryItemReady OnItemReady;
 
-	/** Æ¯Á¤ Fragment¸¦ °¡Áø ¾ÆÀÌÅÛÀ» Ã£½À´Ï´Ù */
+	/** Æ¯ï¿½ï¿½ Fragmentï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	template<typename T>
 	UItemInstance* FindItemWithFragment() const
 	{
@@ -250,7 +250,7 @@ public:
 		return nullptr;
 	}
 
-	/** Æ¯Á¤ Fragment¸¦ °¡Áø ¸ðµç ¾ÆÀÌÅÛÀ» Ã£½À´Ï´Ù */
+	/** Æ¯ï¿½ï¿½ Fragmentï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½ */
 	template<typename T>
 	TArray<UItemInstance*> FindAllItemsWithFragment() const
 	{
@@ -265,41 +265,41 @@ public:
 		return Result;
 	}
 
-	/** º¹Á¦µÈ Entry¿¡ ´ëÇØ ·ÎÄÃ ItemInstance¸¦ »ý¼ºÇÏ°í ÃÊ±âÈ­ÇÕ´Ï´Ù (Å¬¶óÀÌ¾ðÆ® Àü¿ë) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Entryï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ItemInstanceï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ê±ï¿½È­ï¿½Õ´Ï´ï¿½ (Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½) */
 	TCoroTask<void> InitializeReplicatedItemCoroutine(FInventoryEntry* Entry);
 
 private:
 	/**
-	 * ½ÇÁ¦ ¾ÆÀÌÅÛ Ãß°¡ ·ÎÁ÷ (¹øµé ·Îµù ¿Ï·á »óÅÂ¿¡¼­ È£Ãâ)
-	 * @param ReservedIndex ¹Ì¸® ¿¹¾àµÈ ½½·Ô ÀÎµ¦½º
+	 * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½Â¿ï¿½ï¿½ï¿½ È£ï¿½ï¿½)
+	 * @param ReservedIndex ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½
 	 */
 	UItemInstance* AddItemAuthInternal(const UItemDefinition* Definition, int32 Count, int32 ReservedIndex);
 
 protected:
-	/** »õ·Î¿î ¾ÆÀÌÅÛ ID¸¦ »ý¼ºÇÕ´Ï´Ù (¼­¹ö Àü¿ë, ¼­¹ö ÀüÃ¼¿¡¼­ °íÀ¯) */
+	/** ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IDï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) */
 	static int32 GenerateItemId();
 
 protected:
-	/** ÀÎº¥Åä¸® ¸ñ·Ï */
+	/** ï¿½Îºï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ */
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
 
-	/** ¾ÆÀÌÅÛ NetState ¸ñ·Ï (ÃÖ»óÀ§ FastArraySerializer·Î µ¨Å¸ º¹Á¦) */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ NetState ï¿½ï¿½ï¿½ (ï¿½Ö»ï¿½ï¿½ï¿½ FastArraySerializerï¿½ï¿½ ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½) */
 	UPROPERTY(Replicated)
 	FItemNetStateList ItemNetStates;
 
-	/** ÃÖ´ë ½½·Ô ¼ö */
+	/** ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ */
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 MaxSlots = 36;
 
-	/** ÃÊ±â ¾ÆÀÌÅÛ ¸ñ·Ï */
+	/** ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ */
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Initial Items")
 	TArray<FInitialItemEntry> InitialItems;
 
-	/** ¾ÆÀÌÅÛ ID -> Instance ¸Ê */
+	/** ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID -> Instance ï¿½ï¿½ */
 	TMap<int32, TObjectPtr<UItemInstance>> ItemMap;
 
 private:
-	/** ÃÊ±â ¾ÆÀÌÅÛ Áö±Þ ¿Ï·á ¿©ºÎ */
+	/** ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 	bool bInitialItemsGiven = false;
 };

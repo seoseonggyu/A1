@@ -10,7 +10,7 @@ description: A1 프로젝트의 Experience, GameFeature, GameFeatureAction, Acto
 ```
 ACommonWorldSettings (맵별 기본 Experience)
       ↓
-ACommonGameModeBase  ── Experience 결정, 로드 완료까지 Pawn 스폰 대기
+ACommonGameModeBase  ── Experience 결정, 로드 완료까지 Pawn 스폰 대기[a1-coroutine](../a1-coroutine)
       ↓
 UExperienceManagerComponent (GameState)
       ↓  GameFeature 플러그인 활성화
