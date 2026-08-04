@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Equipment/QuickBarComponent.h"
+
+#include "EquipmentInstance.h"
 #include "Equipment/EquipmentComponent.h"
 #include "Inventory/ItemInstance.h"
 #include "Inventory/InventoryComponent.h"
@@ -138,6 +140,12 @@ bool UQuickBarComponent::AddItemToSlotAuth(UItemInstance* Item)
 	// 슬롯 맵에 추가합니다
 	AddToSlotMap(Item, SlotTag, NewSlotIndex);
 
+	// QuickBar에 등록된 아이템은 인벤토리 그리드에서 제외합니다 (장착된 것으로 취급)
+	// if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(Cast<AController>(GetOwner())))
+	// {
+	// 	Inventory->UnplaceItemAuth(Item->ItemId);
+	// }
+
 	// 현재 장착된 아이템이 없으면 자동 장착합니다
 	if (!ActiveSlot.IsValid())
 	{
@@ -176,6 +184,12 @@ bool UQuickBarComponent::RemoveItemFromSlotAuth(UItemInstance* Item)
 	// Entry에서 제거합니다
 	QuickBarList.Entries.RemoveAtSwap(EntryIndex);
 	QuickBarList.MarkArrayDirty();
+
+	// QuickBar에서 빠진 아이템은 다시 인벤토리 그리드의 빈 칸에 배치합니다
+	// if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(Cast<AController>(GetOwner())))
+	// {
+	// 	Inventory->PlaceAtEmptySlotAuth(Item->ItemId);
+	// }
 
 	return true;
 }
@@ -356,8 +370,7 @@ void UQuickBarComponent::HandleActiveSlotChanged(const FQuickBarActiveSlot& OldS
 			}
 		}
 	}
-
-	// 새 아이템 장착
+	
 	if (NewSlot.IsValid())
 	{
 		if (const FQuickBarSlotData* NewSlotData = GetSlotData(NewSlot.SlotTag))

@@ -46,11 +46,23 @@ void FInventoryEntry::PostReplicatedChange(const FInventoryList& InArraySerializ
 	}
 
 	NotifyChanged(InArraySerializer.Owner);
+
+	// 그리드 위치/스택 변경을 UI에 알림 (이동·스택 변경 모두 위젯 갱신으로 처리)
+	if (InArraySerializer.Owner && Instance)
+	{
+		InArraySerializer.Owner->OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Changed, ItemId, Instance, SlotPosition, StackCount);
+	}
 }
 
 void FInventoryEntry::PreReplicatedRemove(const FInventoryList& InArraySerializer)
 {
 	NotifyRemoved(InArraySerializer.Owner);
+
+	// 그리드에서 제거됨을 UI에 알림 (Instance는 아직 유효)
+	if (InArraySerializer.Owner && Instance)
+	{
+		InArraySerializer.Owner->OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Removed, ItemId, Instance, SlotPosition, 0);
+	}
 
 	// ItemMap에서 제거
 	if (InArraySerializer.Owner && Instance)
@@ -114,6 +126,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME_WITH_PARAMS_FAST(UInventoryComponent, InventoryList, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(UInventoryComponent, ItemNetStates, Params);
+	DOREPLIFETIME_CONDITION(UInventoryComponent, GridSize, COND_OwnerOnly);
 }
 
 void UInventoryComponent::BeginPlay()
@@ -148,7 +161,7 @@ static TCoroTask<void> GiveInitialItemsCoroutine(UInventoryComponent* Component,
 			continue;
 		}
 
-		if (Entry.bAddToQuickBar)
+ 		if (Entry.bAddToQuickBar)
 		{
 			if (UQuickBarComponent* QuickBar = Component->GetOwner()->FindComponentByClass<UQuickBarComponent>())
 			{
@@ -182,9 +195,12 @@ TCoroTask<UItemInstance*> UInventoryComponent::AddItemAuthCoroutine(const UItemD
 		co_return nullptr;
 	}
 
-	if (IsSlotFull())
+	// 그리드에 놓을 빈 공간 확보 (Definition->SlotCount 기준)
+	const FIntPoint Size = GetSizeFromDefinition(Definition);
+	FIntPoint SlotPos;
+	if (!FindEmptySlot(Size, SlotPos))
 	{
-		UE_LOG(InventoryComponentLog, Warning, TEXT("인벤토리가 가득 찼습니다 (Max: %d)"), MaxSlots);
+		UE_LOG(InventoryComponentLog, Warning, TEXT("AddItemAuthCoroutine: 그리드에 빈 공간이 없습니다 (%dx%d)"), Size.X, Size.Y);
 		co_return nullptr;
 	}
 
@@ -195,22 +211,23 @@ TCoroTask<UItemInstance*> UInventoryComponent::AddItemAuthCoroutine(const UItemD
 	// 번들 비동기 로딩
 	co_await Coro::Async::LoadCommonDataAsset<UItemDefinition>(this, Definition);
 
-	// 아이템 생성
-	UItemInstance* Instance = AddItemAuthInternal(Definition, Count, ReservedIndex);
+	// 아이템 인스턴스 생성
+	UItemInstance* Instance = AddItemAuthInternal(Definition, Count, SlotPos, ReservedIndex);
 	co_return Instance;
 }
 
-UItemInstance* UInventoryComponent::AddItemAuthInternal(const UItemDefinition* Definition, int32 Count, int32 ReservedIndex)
+UItemInstance* UInventoryComponent::AddItemAuthInternal(const UItemDefinition* Definition, int32 Count, FIntPoint SlotPos,  int32 ReservedIndex)
 {
 	// Entry 설정 (리플리케이션 데이터)
 	FInventoryEntry& Entry = InventoryList.Entries[ReservedIndex];
 	Entry.Definition = Definition;
 	Entry.ItemId = GenerateItemId();
 	Entry.StackCount = Count;
+	Entry.SlotPosition = SlotPos;
 
 	// Instance 생성
 	UItemInstance* NewInstance = NewObject<UItemInstance>(this);
-	NewInstance->Definition = Definition;
+	NewInstance->Definition = Entry.Definition;
 	NewInstance->ItemId = Entry.ItemId;
 	NewInstance->ArrayIndex = ReservedIndex;
 
@@ -226,6 +243,9 @@ UItemInstance* UInventoryComponent::AddItemAuthInternal(const UItemDefinition* D
 
 	// 아이템 준비 완료 알림
 	OnItemReady.Broadcast(NewInstance->ItemId, NewInstance);
+
+	// 그리드 배치를 UI에 알림
+	OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Added, Entry.ItemId, NewInstance, Entry.SlotPosition, Entry.StackCount);
 
 	return NewInstance;
 }
@@ -245,6 +265,10 @@ bool UInventoryComponent::RemoveItemAuth(UItemInstance* Instance)
 
 	const int32 LastIndex = InventoryList.Entries.Num() - 1;
 
+	// 제거될 그리드 위치/ID (브로드캐스트용)
+	const FIntPoint RemovedSlotPos = InventoryList.Entries[Index].SlotPosition;
+	const int32 RemovedItemId = Instance->ItemId;
+
 	InventoryList.Entries[Index].NotifyRemoved(this);
 
 	// 해당 아이템의 NetState 정리
@@ -261,6 +285,9 @@ bool UInventoryComponent::RemoveItemAuth(UItemInstance* Instance)
 
 	InventoryList.Entries.RemoveAtSwap(Index);
 	InventoryList.MarkArrayDirty();
+
+	// 그리드에서 제거됨을 UI에 알림 (Instance는 아직 유효)
+	OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Removed, RemovedItemId, Instance, RemovedSlotPos, 0);
 
 	return true;
 }
@@ -411,4 +438,222 @@ TCoroTask<void> UInventoryComponent::InitializeReplicatedItemCoroutine(FInventor
 
 	// 아이템 준비 완료 알림
 	OnItemReady.Broadcast(NewInstance->ItemId, NewInstance);
+
+	// 그리드 배치를 UI에 알림 (클라이언트)
+	OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Added, Entry->ItemId, NewInstance, Entry->SlotPosition, Entry->StackCount);
+}
+
+//-----------------------------------------------------------------------------
+// 2D 그리드
+//-----------------------------------------------------------------------------
+
+namespace
+{
+	/** 두 사각 영역([Min, Min+Size))이 겹치는지 검사합니다 */
+	FORCEINLINE bool RegionsOverlap(const FIntPoint& AMin, const FIntPoint& ASize, const FIntPoint& BMin, const FIntPoint& BSize)
+	{
+		return AMin.X < BMin.X + BSize.X && BMin.X < AMin.X + ASize.X
+			&& AMin.Y < BMin.Y + BSize.Y && BMin.Y < AMin.Y + ASize.Y;
+	}
+}
+
+FIntPoint UInventoryComponent::GetSizeFromDefinition(const UItemDefinition* InDefinition)
+{
+	const FIntPoint Size = InDefinition ? InDefinition->SlotCount : FIntPoint::ZeroValue;
+
+	// SlotCount가 설정되지 않은 아이템은 최소 1x1로 취급
+	return FIntPoint(FMath::Max(Size.X, 1), FMath::Max(Size.Y, 1));
+}
+
+bool UInventoryComponent::IsValidSlot(FIntPoint SlotPos) const
+{
+	return SlotPos.X >= 0 && SlotPos.Y >= 0 && SlotPos.X < GridSize.X && SlotPos.Y < GridSize.Y;
+}
+
+UItemInstance* UInventoryComponent::GetItemAtSlot(FIntPoint SlotPos) const
+{
+	if (!IsValidSlot(SlotPos))
+	{
+		return nullptr;
+	}
+
+	for (const FInventoryEntry& Entry : InventoryList.Entries)
+	{
+		if (Entry.SlotPosition.X < 0)
+		{
+			continue;
+		}
+
+		const FIntPoint Size = GetSizeFromDefinition(Entry.Definition);
+		if (SlotPos.X >= Entry.SlotPosition.X && SlotPos.X < Entry.SlotPosition.X + Size.X
+			&& SlotPos.Y >= Entry.SlotPosition.Y && SlotPos.Y < Entry.SlotPosition.Y + Size.Y)
+		{
+			return Entry.Instance;
+		}
+	}
+
+	return nullptr;
+}
+
+FIntPoint UInventoryComponent::GetSlotPosition(const UItemInstance* Instance) const
+{
+	if (const FInventoryEntry* Entry = FindEntry(Instance))
+	{
+		return Entry->SlotPosition;
+	}
+
+	return FIntPoint(-1, -1);
+}
+
+bool UInventoryComponent::IsRegionEmpty(FIntPoint SlotPos, FIntPoint Size, int32 IgnoreItemId) const
+{
+	// 그리드 경계 검사
+	if (SlotPos.X < 0 || SlotPos.Y < 0)
+	{
+		return false;
+	}
+	if (SlotPos.X + Size.X > GridSize.X || SlotPos.Y + Size.Y > GridSize.Y)
+	{
+		return false;
+	}
+
+	// 배치된 다른 아이템과의 겹침 검사
+	for (const FInventoryEntry& Entry : InventoryList.Entries)
+	{
+		if (Entry.SlotPosition.X < 0 || Entry.ItemId == IgnoreItemId)
+		{
+			continue;
+		}
+
+		const FIntPoint EntrySize = GetSizeFromDefinition(Entry.Definition);
+		if (RegionsOverlap(SlotPos, Size, Entry.SlotPosition, EntrySize))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool UInventoryComponent::FindEmptySlot(FIntPoint Size, FIntPoint& OutSlotPos) const
+{
+	for (int32 Y = 0; Y <= GridSize.Y - Size.Y; ++Y)
+	{
+		for (int32 X = 0; X <= GridSize.X - Size.X; ++X)
+		{
+			const FIntPoint Candidate(X, Y);
+			if (IsRegionEmpty(Candidate, Size, INDEX_NONE))
+			{
+				OutSlotPos = Candidate;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool UInventoryComponent::CanPlaceItemAt(int32 ItemId, FIntPoint SlotPos) const
+{
+	const UItemInstance* Instance = FindItemById(ItemId);
+	const FInventoryEntry* Entry = FindEntry(Instance);
+	if (!Entry)
+	{
+		return false;
+	}
+
+	// 자기 자신과의 겹침은 허용 (제자리/일부 이동 대비)
+	const FIntPoint Size = GetSizeFromDefinition(Entry->Definition);
+	return IsRegionEmpty(SlotPos, Size, ItemId);
+}
+
+bool UInventoryComponent::MoveItemAuth(int32 ItemId, FIntPoint NewSlotPos)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	UItemInstance* Instance = FindItemById(ItemId);
+	FInventoryEntry* Entry = FindEntry(Instance);
+	if (!Entry)
+	{
+		return false;
+	}
+
+	const FIntPoint OldSlotPos = Entry->SlotPosition;
+	if (OldSlotPos == NewSlotPos)
+	{
+		return true;
+	}
+
+	// 자기 자신은 제외하고 새 위치가 비어 있는지 확인
+	const FIntPoint Size = GetSizeFromDefinition(Entry->Definition);
+	if (!IsRegionEmpty(NewSlotPos, Size, ItemId))
+	{
+		return false;
+	}
+
+	Entry->SlotPosition = NewSlotPos;
+	InventoryList.MarkEntryDirty(*Entry);
+
+	// 새 위치로 이동을 UI에 알림 (위젯은 ItemId로 매핑되므로 단일 브로드캐스트로 충분)
+	OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Moved, ItemId, Instance, NewSlotPos, Entry->StackCount);
+
+	return true;
+}
+
+void UInventoryComponent::MoveItemServer_Implementation(int32 ItemId, FIntPoint NewSlotPos)
+{
+	MoveItemAuth(ItemId, NewSlotPos);
+}
+
+bool UInventoryComponent::UnplaceItemAuth(int32 ItemId)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	UItemInstance* Instance = FindItemById(ItemId);
+	FInventoryEntry* Entry = FindEntry(Instance);
+	if (!Entry || Entry->SlotPosition.X < 0)
+	{
+		// 이미 미배치 상태
+		return false;
+	}
+
+	const FIntPoint OldSlotPos = Entry->SlotPosition;
+	Entry->SlotPosition = FIntPoint(-1, -1);
+	InventoryList.MarkEntryDirty(*Entry);
+
+	// 그리드에서 제거됨을 UI에 알림 (Instance는 계속 유효, 인벤토리 목록에는 남아있음)
+	OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Removed, ItemId, Instance, OldSlotPos, 0);
+
+	return true;
+}
+
+bool UInventoryComponent::PlaceAtEmptySlotAuth(int32 ItemId)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	UItemInstance* Instance = FindItemById(ItemId);
+	FInventoryEntry* Entry = FindEntry(Instance);
+	if (!Entry)
+	{
+		return false;
+	}
+
+	const FIntPoint Size = GetSizeFromDefinition(Entry->Definition);
+	FIntPoint SlotPos;
+	if (!FindEmptySlot(Size, SlotPos))
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("PlaceAtEmptySlotAuth: 그리드에 빈 공간이 없습니다 (ItemId=%d)"), ItemId);
+		return false;
+	}
+
+	return MoveItemAuth(ItemId, SlotPos);
 }

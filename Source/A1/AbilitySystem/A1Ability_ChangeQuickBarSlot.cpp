@@ -19,20 +19,20 @@ bool UA1Ability_ChangeQuickBarSlot::CanActivateAbility(const FGameplayAbilitySpe
 		return false;
 	}
 
-	// SlotTag°¡ ¼³Á¤µÇ¾î ÀÖ´ÂÁö È®ÀÎ
+	// SlotTagê°€ ì„¤ì •ë˜ì–´ ìˆëŠ”ì§€ í™•ì¸
 	if (!SlotTag.IsValid())
 	{
 		return false;
 	}
 
-	// QuickBarComponent°¡ ÀÖ´ÂÁö È®ÀÎ
+	// QuickBarComponentê°€ ìˆëŠ”ì§€ í™•ì¸
 	const UQuickBarComponent* QuickBarComponent = GetQuickBarComponent(ActorInfo);
 	if (!QuickBarComponent)
 	{
 		return false;
 	}
 
-	// ½½·Ô º¯°æÀÌ °¡´ÉÇÑÁö È®ÀÎ
+	// ìŠ¬ë¡¯ ë³€ê²½ì´ ê°€ëŠ¥í•œì§€ í™•ì¸
 	return QuickBarComponent->CanSetActiveSlot(SlotTag, SlotIndex);
 }
 
@@ -40,13 +40,11 @@ void UA1Ability_ChangeQuickBarSlot::ActivateAbility(const FGameplayAbilitySpecHa
 {
 	if (UQuickBarComponent* QuickBarComponent = GetQuickBarComponent(ActorInfo))
 	{
-		// CanActivateAbility¿¡¼­ ÀÌ¹Ì °ËÁõ ¿Ï·á, ¹Ù·Î ¼­¹ö RPC È£Ãâ
+		// CanActivateAbilityì—ì„œ ì´ë¯¸ ê²€ì¦ ì™„ë£Œ, ë°”ë¡œ ì„œë²„ RPC í˜¸ì¶œ
 		QuickBarComponent->SetActiveSlotServer(SlotTag, SlotIndex);
 	}
 
-	// TODO: ¿©±â¼­ ¾ÆÀÌÅÛ ÀåÂøÇÏ´Â ¾Ö´Ï¸ŞÀÌ¼Ç ½ÇÇà?
-
-	// ½½·Ô º¯°æÀº Áï½Ã Á¾·á
+	// ìŠ¬ë¡¯ ë³€ê²½ì€ ì¦‰ì‹œ ì¢…ë£Œ
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 }
 
@@ -57,11 +55,11 @@ UQuickBarComponent* UA1Ability_ChangeQuickBarSlot::GetQuickBarComponent(const FG
 		return nullptr;
 	}
 
-	// QuickBarComponent´Â PlayerController¿¡ ºÎÂøµÊ
+	// QuickBarComponentëŠ” PlayerControllerì— ë¶€ì°©ë¨
 	AController* Controller = Cast<AController>(ActorInfo->OwnerActor.Get());
 	if (!Controller)
 	{
-		// AvatarActorÀÇ Controller¿¡¼­ Ã£±â
+		// AvatarActorì˜ Controllerì—ì„œ ì°¾ê¸°
 		if (APawn* Pawn = Cast<APawn>(ActorInfo->AvatarActor.Get()))
 		{
 			Controller = Pawn->GetController();

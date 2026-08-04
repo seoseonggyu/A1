@@ -10,11 +10,7 @@ enum class EEquipmentSlotType : uint8
 	Primary_LeftHand,
 	Primary_RightHand,
 	Primary_TwoHand,
-
-	Secondary_LeftHand,
-	Secondary_RightHand,
-	Secondary_TwoHand,
-
+	
 	Utility_Primary,
 	Utility_Secondary,
 	Utility_Tertiary,

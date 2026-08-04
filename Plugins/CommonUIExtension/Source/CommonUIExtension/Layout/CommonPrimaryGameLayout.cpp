@@ -2,8 +2,12 @@
 
 #include "Layout/CommonPrimaryGameLayout.h"
 #include "Layout/CommonUIManagerSubsystem.h"
+#include "CommonUIExtensionTags.h"
 #include "CommonActivatableWidget.h"
+#include "CommonInputModeTypes.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "ViewModel/CommonViewModelBase.h"
 #include "View/MVVMView.h"
@@ -71,7 +75,98 @@ void UCommonPrimaryGameLayout::RegisterLayer(FGameplayTag LayerTag, UCommonActiv
 		return;
 	}
 
+	// 전환이 끝날 때마다 입력 모드를 재계산하도록 구독 (기존엔 이 구독이 없어 입력 모드가 전혀 적용되지 않았음)
+	Container->OnTransitioningChanged.AddUObject(this, &UCommonPrimaryGameLayout::HandleWidgetStackTransitioning);
+
 	Layers.Add(LayerTag, Container);
+}
+
+void UCommonPrimaryGameLayout::HandleWidgetStackTransitioning(UCommonActivatableWidgetContainerBase* Container, bool bIsTransitioning)
+{
+	if (!bIsTransitioning)
+	{
+		RefreshInputConfig();
+	}
+}
+
+void UCommonPrimaryGameLayout::RefreshInputConfig()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC)
+	{
+		return;
+	}
+
+	// 우선순위: Modal(팝업) > Menu(메인 메뉴) > GameMenu(인벤토리 등) > Game(HUD)
+	static const FGameplayTag PriorityOrder[] =
+	{
+		CommonUIExtensionTags::UI_Layer_Modal,
+		CommonUIExtensionTags::UI_Layer_Menu,
+		CommonUIExtensionTags::UI_Layer_GameMenu,
+		CommonUIExtensionTags::UI_Layer_Game,
+	};
+
+	TOptional<FUIInputConfig> DesiredConfig;
+
+	for (const FGameplayTag& LayerTag : PriorityOrder)
+	{
+		UCommonActivatableWidgetContainerBase* Container = Layers.FindRef(LayerTag);
+		if (!Container)
+		{
+			continue;
+		}
+
+		UCommonActivatableWidget* ActiveWidget = Container->GetActiveWidget();
+		if (!ActiveWidget)
+		{
+			continue;
+		}
+
+		DesiredConfig = ActiveWidget->GetDesiredInputConfig();
+		if (DesiredConfig.IsSet())
+		{
+			break;
+		}
+	}
+
+	if (!DesiredConfig.IsSet())
+	{
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->SetShowMouseCursor(false);
+		return;
+	}
+
+	const FUIInputConfig& Config = DesiredConfig.GetValue();
+
+	switch (Config.GetInputMode())
+	{
+	case ECommonInputMode::Menu:
+		{
+			FInputModeUIOnly InputMode;
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PC->SetInputMode(InputMode);
+			PC->SetShowMouseCursor(true);
+			break;
+		}
+
+	case ECommonInputMode::All:
+		{
+			FInputModeGameAndUI InputMode;
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			InputMode.SetHideCursorDuringCapture(Config.HideCursorDuringViewportCapture());
+			PC->SetInputMode(InputMode);
+			PC->SetShowMouseCursor(true);
+			break;
+		}
+
+	case ECommonInputMode::Game:
+	default:
+		{
+			PC->SetInputMode(FInputModeGameOnly());
+			PC->SetShowMouseCursor(false);
+			break;
+		}
+	}
 }
 
 UCommonActivatableWidgetContainerBase* UCommonPrimaryGameLayout::GetLayerContainer(FGameplayTag LayerTag) const

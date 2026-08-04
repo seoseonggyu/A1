@@ -303,4 +303,5 @@ protected:
 
 	/** 캐싱된 EquipmentComponent */
 	mutable TObjectPtr<UEquipmentComponent> CachedEquipmentComponent = nullptr;
+	
 };

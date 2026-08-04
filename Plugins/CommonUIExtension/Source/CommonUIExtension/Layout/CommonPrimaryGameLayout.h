@@ -109,6 +109,17 @@ public:
 	void FindAndRemoveWidgetFromLayer(UCommonActivatableWidget* ActivatableWidget);
 
 	//-----------------------------------------------------------------------------
+	// 입력 모드 자동 적용
+	//-----------------------------------------------------------------------------
+
+	/**
+	 * 모든 레이어를 우선순위(Modal > Menu > GameMenu > Game) 순으로 확인해,
+	 * 활성 위젯이 있는 가장 우선순위 높은 레이어의 GetDesiredInputConfig()를 PlayerController에 적용합니다.
+	 * 어떤 레이어에도 활성 위젯이 없으면 기본 Game Only 모드로 되돌립니다.
+	 */
+	void RefreshInputConfig();
+
+	//-----------------------------------------------------------------------------
 	// ViewModel 관리
 	//-----------------------------------------------------------------------------
 	
@@ -176,7 +187,11 @@ protected:
 	/** ViewModel을 생성하여 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Common UI|ViewModel", meta = (DeterminesOutputType = "ViewModelClass"))
 	UCommonViewModelBase* GetOrCreateViewModelByClass(FName ViewModelName, TSubclassOf<UCommonViewModelBase> ViewModelClass);
-	
+
+private:
+	/** 레이어 컨테이너의 전환이 끝났을 때 호출되어 입력 모드를 재계산합니다 */
+	void HandleWidgetStackTransitioning(UCommonActivatableWidgetContainerBase* Container, bool bIsTransitioning);
+
 protected:
 	/** 등록된 레이어 맵 */
 	UPROPERTY(Transient, meta = (Categories = "UI.Layer"))

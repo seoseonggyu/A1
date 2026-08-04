@@ -10,10 +10,10 @@
 class UQuickBarComponent;
 
 /**
- * QuickBar ½½·Ô º¯°æ Ability
+ * QuickBar ìŠ¬ë¡¯ ë³€ê²½ Ability
  *
- * ÀÔ·Â ½Ã ÁöÁ¤µÈ SlotTagÀÇ ½½·ÔÀ» È°¼ºÈ­ÇÕ´Ï´Ù.
- * ºí·çÇÁ¸°Æ®¿¡¼­ SlotTag¸¦ ¼³Á¤ÇÏ¿© °¢ ¼ıÀÚÅ°º°·Î ´Ù¸¥ ½½·ÔÀ» ¼±ÅÃÇÏµµ·Ï ±¸¼ºÇÕ´Ï´Ù.
+ * ì…ë ¥ ì‹œ ì§€ì •ëœ SlotTagì˜ ìŠ¬ë¡¯ì„ í™œì„±í™”í•©ë‹ˆë‹¤.
+ * ë¸”ë£¨í”„ë¦°íŠ¸ì—ì„œ SlotTagë¥¼ ì„¤ì •í•˜ì—¬ ê° ìˆ«ìí‚¤ë³„ë¡œ ë‹¤ë¥¸ ìŠ¬ë¡¯ì„ ì„ íƒí•˜ë„ë¡ êµ¬ì„±í•©ë‹ˆë‹¤.
  */
 UCLASS()
 class A1_API UA1Ability_ChangeQuickBarSlot : public UCommonGameplayAbility
@@ -24,22 +24,22 @@ public:
 	UA1Ability_ChangeQuickBarSlot(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	//-----------------------------------------------------------------------------
-	// UGameplayAbility ¿À¹ö¶óÀÌµå
+	// UGameplayAbility ì˜¤ë²„ë¼ì´ë“œ
 	//-----------------------------------------------------------------------------
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	/** QuickBarComponent¸¦ °¡Á®¿É´Ï´Ù */
+	/** QuickBarComponentë¥¼ ê°€ì ¸ì˜µë‹ˆë‹¤ */
 	UQuickBarComponent* GetQuickBarComponent(const FGameplayAbilityActorInfo* ActorInfo) const;
 
 protected:
-	/** È°¼ºÈ­ÇÒ QuickBar ½½·Ô ÅÂ±× */
+	/** í™œì„±í™”í•  QuickBar ìŠ¬ë¡¯ íƒœê·¸ */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuickBar", meta = (Categories = "QuickBar.Slot"))
 	FGameplayTag SlotTag;
-
-	/** ½½·Ô ³» ÀÎµ¦½º (±âº»°ª: 0) */
+	
+	/** ìŠ¬ë¡¯ ë‚´ ì¸ë±ìŠ¤ (ê¸°ë³¸ê°’: 0) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuickBar")
 	int32 SlotIndex = 0;
 };

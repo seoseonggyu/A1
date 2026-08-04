@@ -54,7 +54,14 @@ public:
 	// 런타임 데이터 (리플리케이션 안 함)
 	//-----------------------------------------------------------------------------
 
-	/** 장비 인스턴스 (서버: 직접 생성, 클라이언트: PostReplicatedAdd에서 로컬 생성) */
+	/**
+	 * 장비 인스턴스 (서버: EquipItemAuthInternal에서 즉시 생성 / 클라이언트: PostReplicatedAdd가
+	 * 시작하는 InitializeReplicatedEquipmentCoroutine에서 에셋 로딩 후 로컬 생성).
+	 *
+	 * 클라이언트에서는 비동기 로딩이 끝나기 전까지 nullptr입니다. 따라서 초기화 도중 장비가
+	 * 해제되면 PreReplicatedRemove 시점에 이 값이 아직 null일 수 있는데, 그 경우 스폰된 액터도
+	 * 없으므로(코루틴의 re-find 가드가 스폰을 막음) 정리할 대상도 없습니다.
+	 */
 	UPROPERTY(NotReplicated, Transient)
 	TObjectPtr<UEquipmentInstance> Instance = nullptr;
 };
@@ -160,6 +167,9 @@ private:
 
 	/** 복제된 Entry에 대해 로컬 EquipmentInstance를 생성하고 초기화합니다 (클라이언트 전용) */
 	TCoroTask<void> InitializeReplicatedEquipmentCoroutine(FEquipmentEntry* Entry);
+
+	/** SourceItemId로 Entry를 찾습니다 (비동기 대기 후 재조회용, 없으면 nullptr) */
+	FEquipmentEntry* FindEntryBySourceItemId(int32 SourceItemId);
 
 	/** 장비를 슬롯 맵에 등록합니다 */
 	void AddToSlotMap(UEquipmentInstance* Instance);

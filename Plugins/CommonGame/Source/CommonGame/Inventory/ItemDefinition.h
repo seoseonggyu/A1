@@ -8,6 +8,8 @@
 #include "Inventory/Fragment/ItemFragment.h"
 #include "ItemDefinition.generated.h"
 
+class UTexture2D;
+
 DECLARE_LOG_CATEGORY_EXTERN(ItemDefinitionLog, Log, All);
 
 /**
@@ -33,6 +35,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	FIntPoint SlotCount = FIntPoint::ZeroValue;
 	
+	/** 인벤토리 UI 아이콘 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	TObjectPtr<UTexture2D> Icon = nullptr;
+
 	/** 아이템 표시 이름 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText DisplayName;
