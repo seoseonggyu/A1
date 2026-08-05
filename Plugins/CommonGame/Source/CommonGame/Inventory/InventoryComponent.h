@@ -45,15 +45,8 @@ enum class EInventoryGridChangeType : uint8
  */
 DECLARE_MULTICAST_DELEGATE_FiveParams(FOnInventoryGridChanged, EInventoryGridChangeType /*ChangeType*/, int32 /*ItemId*/, UItemInstance* /*Instance*/, const FIntPoint& /*SlotPos*/, int32 /*StackCount*/);
 
-//-----------------------------------------------------------------------------
-// FInitialItemEntry
-//-----------------------------------------------------------------------------
 
-/**
- * 초기 아이템 설정 항목
- *
- * 게임 시작 시 자동으로 추가될 아이템을 정의합니다.
- */
+/** 초기 아이템 설정 항목, 게임 시작 시 자동으로 추가될 아이템을 정의. */
 USTRUCT(BlueprintType)
 struct COMMONGAME_API FInitialItemEntry
 {
@@ -76,9 +69,6 @@ public:
 	bool bAddToQuickBar = false;
 };
 
-//-----------------------------------------------------------------------------
-// FInventoryEntry
-//-----------------------------------------------------------------------------
 
 /**
  * 인벤토리 항목
@@ -131,10 +121,6 @@ public:
 	UPROPERTY(NotReplicated, Transient, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UItemInstance> Instance = nullptr;
 };
-
-//-----------------------------------------------------------------------------
-// FInventoryList
-//-----------------------------------------------------------------------------
 
 /**
  * 인벤토리 항목 배열을 담는 FastArraySerializer 컨테이너
@@ -211,7 +197,7 @@ public:
 	/** 아이템을 추가합니다 (서버 전용, 코루틴) */
 	TCoroTask<UItemInstance*> AddItemAuthCoroutine(const UItemDefinition* Definition, int32 Count = 1);
 
-	/** 아이템을 제거합니다 (서버 전용) */
+	/** 실제 아이템을 제거합니다 (서버 전용) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool RemoveItemAuth(UItemInstance* Instance);
 
@@ -222,11 +208,7 @@ public:
 	/** TagStat 값을 변경합니다 (클라이언트 → 서버 RPC) */
 	UFUNCTION(Server, Reliable)
 	void ModifyTagStatServer(int32 ItemId, FGameplayTag StatTag, float NewValue);
-
-	//-----------------------------------------------------------------------------
-	// 초기 아이템 (서버 전용)
-	//-----------------------------------------------------------------------------
-
+	
 	/** 초기 아이템을 지급합니다 (서버 전용, Pawn Possess 시 호출) */
 	UFUNCTION()
 	void GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn);
@@ -234,11 +216,7 @@ public:
 	//-----------------------------------------------------------------------------
 	// 아이템 조회
 	//-----------------------------------------------------------------------------
-
-	/** 특정 슬롯의 아이템을 찾습니다 */
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	UItemInstance* FindItemAtSlot(int32 SlotIndex) const;
-
+	
 	/** ID로 아이템을 찾습니다 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UItemInstance* FindItemById(int32 ItemId) const;
@@ -248,63 +226,33 @@ public:
 	void GetAllItems(TArray<UItemInstance*>& OutItems) const;
 
 	//-----------------------------------------------------------------------------
+	// Cell 관리
+	//-----------------------------------------------------------------------------
+
+	/** 서버 전용 */
+	void SetOccupiedCellsAuth(int32 CellPos, bool Value);
+	
+	/** 서버 전용. 실제로 아이템을 제거하지는 않고 UI 상에서만 제거 */
+	void UnplaceItemAuth(int32 ItemId);
+	
+	/** 크기 Size(칸 수)의 아이템이 들어갈 수 있는 빈 앵커 위치를 찾는다 */
+	bool FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlotPos) const;
+	
+	/** 앵커 위치에 Size 사각형이 모두 빈 칸인지 검사 */
+	bool CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size) const;
+	
+	//-----------------------------------------------------------------------------
 	// 2D 그리드
 	//-----------------------------------------------------------------------------
 
 	/** 그리드 크기(칸 수)를 반환합니다 */
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	FIntPoint GetGridSize() const { return GridSize; }
 	
-	/** 좌표가 그리드 범위 내인지 확인합니다 */
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
-	bool IsValidSlot(FIntPoint SlotPos) const;
-
-	/** 해당 셀을 점유 중인 아이템을 반환합니다 (없으면 nullptr) */
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
-	UItemInstance* GetItemAtSlot(FIntPoint SlotPos) const;
-
 	/** 아이템의 그리드 앵커 위치를 반환합니다 (미배치 시 (-1,-1)) */
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	FIntPoint GetSlotPosition(const UItemInstance* Instance) const;
-
-	/**
-	 * 지정 영역(Pos ~ Pos+Size)이 모두 비어 있는지 확인합니다.
-	 * @param IgnoreItemId 겹침 검사에서 제외할 아이템 ID (이동 중인 자기 자신)
-	 */
-	bool IsRegionEmpty(FIntPoint SlotPos, FIntPoint Size, int32 IgnoreItemId = INDEX_NONE) const;
-
-	/** 지정 크기의 아이템을 놓을 수 있는 첫 번째 빈 위치를 찾습니다 (서버 배치용) */
-	bool FindEmptySlot(FIntPoint Size, FIntPoint& OutSlotPos) const;
-
-	/**
-	 * 아이템을 특정 위치에 놓을 수 있는지 판정합니다 (UI 초록/빨강 미리보기).
-	 * 자기 자신과의 겹침은 허용합니다.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
-	bool CanPlaceItemAt(int32 ItemId, FIntPoint SlotPos) const;
-
-	/** 아이템을 새 그리드 위치로 이동합니다 (서버 전용) */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory|Grid")
-	bool MoveItemAuth(int32 ItemId, FIntPoint NewSlotPos);
-
-	/** 아이템 이동을 요청합니다 (클라이언트 → 서버 RPC) */
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory|Grid")
-	void MoveItemServer(int32 ItemId, FIntPoint NewSlotPos);
-
-	/**
-	 * 아이템을 그리드에서 미배치 상태로 만듭니다 (서버 전용).
-	 *
-	 * 인벤토리 목록/ItemId 조회는 그대로 유지한 채 그리드 표시에서만 제외합니다.
-	 * QuickBar 등록·장비 장착 등 "아이템의 실체는 유지하되 그리드 칸을 비워야 하는" 경우에 사용합니다.
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory|Grid")
-	bool UnplaceItemAuth(int32 ItemId);
-
-	/** 미배치 상태인 아이템을 빈 칸을 찾아 그리드에 다시 배치합니다 (서버 전용) */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory|Grid")
-	bool PlaceAtEmptySlotAuth(int32 ItemId);
-
-	/** 아이템이 차지하는 그리드 크기를 반환합니다 (Definition->SlotCount, 최소 1x1) */
+	
+	/** 아이템이 차지하는 그리드 크기를 반환합니다 */
 	static FIntPoint GetSizeFromDefinition(const UItemDefinition* InDefinition);
 
 	/** 그리드 슬롯 변경 델리게이트 (UI 갱신용) */
@@ -350,12 +298,7 @@ public:
 	TCoroTask<void> InitializeReplicatedItemCoroutine(FInventoryEntry* Entry);
 
 private:
-	/**
-	 * 실제 아이템 인스턴스 생성 로직 (번들 로딩 완료 상태에서 호출)
-	 *
-	 * Entry의 Definition/ItemId/StackCount/SlotPosition은 호출 전에 이미 채워져 있어야 합니다.
-	 * @param ReservedIndex 미리 예약된 Entry 인덱스
-	 */
+	/**	 * 실제 아이템 인스턴스 생성 로직 (번들 로딩 완료 상태에서 호출) */
 	UItemInstance* AddItemAuthInternal(const UItemDefinition* Definition, int32 Count, FIntPoint SlotPos, int32 ReservedIndex);
 
 protected:
@@ -363,10 +306,6 @@ protected:
 	static int32 GenerateItemId();
 
 protected:
-	/** 인벤토리 2D 그리드 크기(칸 수) */
-	UPROPERTY(Replicated)
-	FIntPoint GridSize = FIntPoint(10, 8);
-
 	/** 인벤토리 목록 */
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
@@ -374,6 +313,10 @@ protected:
 	/** 아이템 NetState 목록 (최상위 FastArraySerializer로 델타 복제) */
 	UPROPERTY(Replicated)
 	FItemNetStateList ItemNetStates;
+	
+	/** 2D 그리드 점유 상태 */
+	UPROPERTY(Replicated)
+	TArray<bool> OccupiedCells;
 
 	/** 초기 아이템 목록 */
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Initial Items")
@@ -381,6 +324,10 @@ protected:
 
 	/** 아이템 ID -> Instance 맵 */
 	TMap<int32, TObjectPtr<UItemInstance>> ItemMap;
+
+	/** 인벤토리 2D 그리드 크기(칸 수) */
+	UPROPERTY()
+	FIntPoint GridSize = FIntPoint(10, 8);
 
 private:
 	/** 초기 아이템 지급 완료 여부 */

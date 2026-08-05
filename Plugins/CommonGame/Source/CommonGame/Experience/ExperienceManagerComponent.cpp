@@ -43,7 +43,7 @@ void UExperienceManagerComponent::SetCurrentExperienceAuth(FPrimaryAssetId Exper
 	check(GetOwner()->HasAuthority());
 	check(LoadState == EExperienceLoadState::Unloaded);
 
-	UE_LOG(ExperienceManagerLog, Log, TEXT("Experience ¼³Á¤: %s"), *ExperienceId.ToString());
+	UE_LOG(ExperienceManagerLog, Log, TEXT("Experience ï¿½ï¿½ï¿½ï¿½: %s"), *ExperienceId.ToString());
 
 	CurrentExperienceId = ExperienceId;
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, CurrentExperienceId, this);
@@ -70,24 +70,24 @@ TCoroTask<void> UExperienceManagerComponent::LoadExperienceCoroutine()
 	check(LoadState == EExperienceLoadState::Unloaded || LoadState == EExperienceLoadState::Deactivating);
 	check(CurrentExperienceId.IsValid());
 
-	// ´ÙÀ½ Æ½±îÁö ´ë±â (µ¨¸®°ÔÀÌÆ® ¿ì¼±¼øÀ§ ¹®Á¦) // Chef: ¹«½¼ ¼Ò¸®Áö?
+	// ï¿½ï¿½ï¿½ï¿½ Æ½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) // Chef: ï¿½ï¿½ï¿½ï¿½ ï¿½Ò¸ï¿½ï¿½ï¿½?
 	co_await Coro::Latent::NextTick(this);
 
 	const TCHAR* NetRole = FDeveloperStatics::GetNetRoleString(GetOwner());
 
 	LoadState = EExperienceLoadState::Loading;
 
-	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ¿¡¼Â ·Îµå ½ÃÀÛ: %s"), NetRole, *CurrentExperienceId.ToString());
+	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½: %s"), NetRole, *CurrentExperienceId.ToString());
 
 	CurrentExperience = co_await Coro::Async::LoadPrimaryAsset<UExperienceDefinition>(this, CurrentExperienceId, {});
 
 	if (!CurrentExperience)
 	{
-		UE_LOG(ExperienceManagerLog, Error, TEXT("%s Experience ¿¡¼Â ·Îµå ½ÇÆÐ: %s"), NetRole, *CurrentExperienceId.ToString());
+		UE_LOG(ExperienceManagerLog, Error, TEXT("%s Experience ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½: %s"), NetRole, *CurrentExperienceId.ToString());
 		co_return;
 	}
 
-	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ¿¡¼Â ·Îµå ¿Ï·á: %s"), NetRole, *CurrentExperience->GetName());
+	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½Ï·ï¿½: %s"), NetRole, *CurrentExperience->GetName());
 	
 	LoadState = EExperienceLoadState::LoadingGameFeatures;
 	GameFeaturePluginURLs.Reset();
@@ -96,7 +96,7 @@ TCoroTask<void> UExperienceManagerComponent::LoadExperienceCoroutine()
 	{
 		UGameFeaturesSubsystem& GFS = UGameFeaturesSubsystem::Get();
 
-		UE_LOG(ExperienceManagerLog, Log, TEXT("%s GameFeature º´·Ä ·Îµå ½ÃÀÛ: %d°³"), NetRole, CurrentExperience->GameFeaturesToEnable.Num());
+		UE_LOG(ExperienceManagerLog, Log, TEXT("%s GameFeature ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½: %dï¿½ï¿½"), NetRole, CurrentExperience->GameFeaturesToEnable.Num());
 
 		TArray<TCoroTask<void>> FeatureTasks;
 		for (const FPrimaryAssetId& GameFeatureId : CurrentExperience->GameFeaturesToEnable)
@@ -106,7 +106,7 @@ TCoroTask<void> UExperienceManagerComponent::LoadExperienceCoroutine()
 			FString PluginURL;
 			if (!GFS.GetPluginURLByName(PluginName, PluginURL))
 			{
-				UE_LOG(ExperienceManagerLog, Error, TEXT("%s GameFeature ÇÃ·¯±×ÀÎÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: %s"), NetRole, *PluginName);
+				UE_LOG(ExperienceManagerLog, Error, TEXT("%s GameFeature ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½: %s"), NetRole, *PluginName);
 				continue;
 			}
 
@@ -119,7 +119,7 @@ TCoroTask<void> UExperienceManagerComponent::LoadExperienceCoroutine()
 
 	LoadState = EExperienceLoadState::Loaded;
 
-	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ·Îµå ¿Ï·á: %s"), NetRole, *CurrentExperience->GetName());
+	UE_LOG(ExperienceManagerLog, Log, TEXT("%s Experience ï¿½Îµï¿½ ï¿½Ï·ï¿½: %s"), NetRole, *CurrentExperience->GetName());
 
 
 	OnExperienceLoaded_High.Broadcast(CurrentExperience);
@@ -139,11 +139,11 @@ TCoroTask<void> UExperienceManagerComponent::LoadGameFeatureCoroutine(FString Pl
 
 	if (!bSuccess)
 	{
-		UE_LOG(ExperienceManagerLog, Error, TEXT("%s GameFeature ·Îµå ½ÇÆÐ: %s"), NetRole, *PluginURL);
+		UE_LOG(ExperienceManagerLog, Error, TEXT("%s GameFeature ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½: %s"), NetRole, *PluginURL);
 	}
 	else
 	{
-		UE_LOG(ExperienceManagerLog, Log, TEXT("%s GameFeature ·Îµå ¿Ï·á: %s"), NetRole, *PluginURL);
+		UE_LOG(ExperienceManagerLog, Log, TEXT("%s GameFeature ï¿½Îµï¿½ ï¿½Ï·ï¿½: %s"), NetRole, *PluginURL);
 	}
 }
 
@@ -160,7 +160,7 @@ void UExperienceManagerComponent::DeactivateExperience()
 
 	for (const FString& PluginURL : GameFeaturePluginURLs)
 	{
-		UE_LOG(ExperienceManagerLog, Log, TEXT("GameFeature ºñÈ°¼ºÈ­: %s"), *PluginURL);
+		UE_LOG(ExperienceManagerLog, Log, TEXT("GameFeature ï¿½ï¿½È°ï¿½ï¿½È­: %s"), *PluginURL);
 		GFS.DeactivateGameFeaturePlugin(PluginURL);
 	}
 
@@ -170,7 +170,7 @@ void UExperienceManagerComponent::DeactivateExperience()
 }
 
 //-----------------------------------------------------------------------------
-// Experience ´ë±â ÄÚ·çÆ¾ (Static)
+// Experience ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½Æ¾ (Static)
 //-----------------------------------------------------------------------------
 
 
@@ -196,7 +196,7 @@ TCoroTask<const UExperienceDefinition*> UExperienceManagerComponent::WaitForExpe
 		co_return nullptr;
 	}
 
-	// GameState¿¡¼­ ExperienceManagerComponent Ã£±â
+	// GameStateï¿½ï¿½ï¿½ï¿½ ExperienceManagerComponent Ã£ï¿½ï¿½
 	UExperienceManagerComponent* Manager = nullptr;
 	while (!Manager)
 	{
@@ -222,7 +222,7 @@ TCoroTask<const UExperienceDefinition*> UExperienceManagerComponent::WaitForExpe
 		co_return Manager->GetCurrentExperienceChecked();
 	}
 
-	// ¿ì¼±¼øÀ§º° µ¨¸®°ÔÀÌÆ® ´ë±â
+	// ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½
 	switch (Priority)
 	{
 	case 0:

@@ -37,6 +37,7 @@
 *.sln
 *.slnx
 *.suo
+*.DotSettings.user
 *.opensdf
 *.sdf
 *.VC.db

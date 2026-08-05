@@ -53,9 +53,9 @@ protected:
 	virtual void NativeOnDeactivated() override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
-	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	//-----------------------------------------------------------------------------
+	// 드래그 & 드롭
+	//-----------------------------------------------------------------------------
 
 private:
 	//-----------------------------------------------------------------------------
@@ -86,19 +86,7 @@ private:
 
 	/** ItemId의 아이템 위젯을 제거합니다 */
 	void RemoveItemWidget(int32 ItemId);
-
-	/** 모든 셀 하이라이트를 기본 상태로 되돌립니다 */
-	void ResetCellStates();
-
-	/** 드래그 이벤트의 마우스 위치와 GrabOffset으로 목표 앵커 셀을 계산합니다 */
-	FIntPoint CalcAnchorSlot(const FDragDropEvent& InDragDropEvent, const FVector2D& GrabOffset) const;
-
-	/** 아이템 크기만큼 셀을 초록/빨강으로 표시합니다 */
-	void PreviewPlacement(int32 ItemId, const FIntPoint& AnchorSlot);
-
-	/** 아이템 위치 계산 기준이 되는 캔버스 지오메트리 */
-	const FGeometry& GetItemCanvasGeometry() const;
-
+	
 	/** (x, y) → 셀 배열 인덱스 */
 	int32 CellIndex(int32 X, int32 Y) const;
 

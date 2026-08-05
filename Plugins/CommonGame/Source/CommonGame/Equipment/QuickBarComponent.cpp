@@ -93,14 +93,12 @@ bool UQuickBarComponent::AddItemToSlotAuth(UItemInstance* Item)
 
 	const FGameplayTag SlotTag = Item->GetQuickBarSlotTag();
 
-	// 슬롯 태그가 유효한지 확인합니다
 	if (!SlotTag.IsValid())
 	{
 		UE_LOG(QuickBarComponentLog, Warning, TEXT("AddItemToSlotAuth: 아이템에 QuickBarSlotTag가 없습니다"));
 		return false;
 	}
 
-	// 슬롯이 등록되어 있는지 확인합니다
 	if (!QuickBarSlots.Contains(SlotTag))
 	{
 		UE_LOG(QuickBarComponentLog, Warning, TEXT("AddItemToSlotAuth: 등록되지 않은 슬롯입니다 (%s)"), *SlotTag.ToString());
@@ -139,13 +137,7 @@ bool UQuickBarComponent::AddItemToSlotAuth(UItemInstance* Item)
 
 	// 슬롯 맵에 추가합니다
 	AddToSlotMap(Item, SlotTag, NewSlotIndex);
-
-	// QuickBar에 등록된 아이템은 인벤토리 그리드에서 제외합니다 (장착된 것으로 취급)
-	// if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(Cast<AController>(GetOwner())))
-	// {
-	// 	Inventory->UnplaceItemAuth(Item->ItemId);
-	// }
-
+	
 	// 현재 장착된 아이템이 없으면 자동 장착합니다
 	if (!ActiveSlot.IsValid())
 	{
@@ -185,18 +177,14 @@ bool UQuickBarComponent::RemoveItemFromSlotAuth(UItemInstance* Item)
 	QuickBarList.Entries.RemoveAtSwap(EntryIndex);
 	QuickBarList.MarkArrayDirty();
 
-	// QuickBar에서 빠진 아이템은 다시 인벤토리 그리드의 빈 칸에 배치합니다
-	// if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(Cast<AController>(GetOwner())))
-	// {
-	// 	Inventory->PlaceAtEmptySlotAuth(Item->ItemId);
-	// }
+	// TODO: QuickBar에서 빠진 아이템은 다시 인벤토리 그리드의 빈 칸에 배치합니다
+
 
 	return true;
 }
 
 void UQuickBarComponent::SetActiveSlotAuth(FGameplayTag SlotTag, int32 Index)
 {
-	// 슬롯이 등록되어 있는지 확인합니다
 	if (!QuickBarSlots.Contains(SlotTag))
 	{
 		UE_LOG(QuickBarComponentLog, Warning, TEXT("SetActiveSlotAuth: 등록되지 않은 슬롯입니다 (%s)"), *SlotTag.ToString());
@@ -204,8 +192,7 @@ void UQuickBarComponent::SetActiveSlotAuth(FGameplayTag SlotTag, int32 Index)
 	}
 
 	const FQuickBarSlotData& SlotData = QuickBarSlots[SlotTag];
-
-	// 인덱스가 유효한지 확인합니다
+	
 	if (Index < 0 || Index >= SlotData.Num())
 	{
 		UE_LOG(QuickBarComponentLog, Warning, TEXT("SetActiveSlotAuth: 유효하지 않은 인덱스입니다 (%s, Index: %d, Count: %d)"), *SlotTag.ToString(), Index, SlotData.Num());

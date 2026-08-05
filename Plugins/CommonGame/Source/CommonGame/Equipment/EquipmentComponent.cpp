@@ -7,6 +7,7 @@
 #include "Inventory/Fragment/ItemFragment_Equipment.h"
 #include "Experience/ExperienceManagerComponent.h"
 #include "Coroutine/CommonAssetAwaiters.h"
+#include "Inventory/InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EquipmentComponent)
 
@@ -18,9 +19,6 @@ DEFINE_LOG_CATEGORY(EquipmentComponentLog);
 
 void FEquipmentEntry::PostReplicatedAdd(const FEquipmentList& InArraySerializer)
 {
-	UE_LOG(EquipmentComponentLog, Warning, TEXT("[DEBUG] PostReplicatedAdd: Definition=%s Instance=%s NetMode=%d"),
-		*GetNameSafe(Definition), *GetNameSafe(Instance), InArraySerializer.Owner && InArraySerializer.Owner->GetWorld() ? (int32)InArraySerializer.Owner->GetWorld()->GetNetMode() : -1);
-
 	if (!Definition)
 	{
 		return;
@@ -189,7 +187,7 @@ TCoroTask<void> UEquipmentComponent::InitializeReplicatedEquipmentCoroutine(FEqu
 	AddToSlotMap(NewInstance);
 	NewInstance->SpawnEquipmentActors();
 	NewInstance->OnEquipped();
-
+	
 	// 완료된 태스크 정리
 	PendingInitTasks.Remove(SlotTag);
 }
@@ -282,7 +280,7 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	FEquipmentEntry& NewEntry = EquipmentList.Entries.AddDefaulted_GetRef();
 	NewEntry.Definition = Definition;
 	NewEntry.SourceItemId = Item->ItemId;
-
+	
 	// Instance 생성 및 초기화
 	UEquipmentInstance* NewInstance = CreateEquipmentInstance(Definition, Item->ItemId);
 	NewEntry.Instance = NewInstance;
@@ -292,14 +290,14 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	AddToSlotMap(NewInstance);
 
 	// 서버에서도 장비 액터를 스폰합니다.
-	// 서버 권한에서 도는 히트 판정(예: UA1AnimNotifyState_PerformTrace)이 무기 액터의
-	// CollisionBox 트랜스폼을 사용하므로, 서버에도 로컬 장비 액터가 존재해야 합니다.
+	// 서버 권한에서 도는 히트 판정(예: UA1AnimNotifyState_PerformTrace)을 위해
+	// 서버에도 로컬 장비 액터가 존재해야 합니다.
 	// (클라이언트는 PostReplicatedAdd 코루틴에서 각자 로컬 스폰 — 장비 액터는 비복제 로컬 액터 전제)
 	NewInstance->SpawnEquipmentActors();
 
 	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PostReplicatedAdd에서 호출됨)
 	NewInstance->OnEquipped();
-
+	
 	return NewInstance;
 }
 

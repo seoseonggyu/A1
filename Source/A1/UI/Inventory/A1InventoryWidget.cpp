@@ -60,7 +60,7 @@ void UA1InventoryWidget::NativeOnDeactivated()
 
 FReply UA1InventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-	if (InKeyEvent.GetKey() == EKeys::Escape)
+	if (InKeyEvent.GetKey() == EKeys::Escape ||InKeyEvent.GetKey() == EKeys::Tab)
 	{
 		DeactivateWidget();
 		return FReply::Handled();
@@ -264,121 +264,7 @@ void UA1InventoryWidget::RemoveItemWidget(int32 ItemId)
 // 드래그 & 드롭
 //-----------------------------------------------------------------------------
 
-bool UA1InventoryWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
-{
-	Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
 
-	UA1ItemDragDrop* DragDrop = Cast<UA1ItemDragDrop>(InOperation);
-	if (!DragDrop || !InventoryComponent)
-	{
-		return false;
-	}
-
-	const FIntPoint Anchor = CalcAnchorSlot(InDragDropEvent, DragDrop->GrabOffset);
-	if (Anchor == PrevPreviewAnchor)
-	{
-		return true;
-	}
-	PrevPreviewAnchor = Anchor;
-
-	ResetCellStates();
-	PreviewPlacement(DragDrop->ItemId, Anchor);
-	return true;
-}
-
-void UA1InventoryWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
-{
-	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
-
-	ResetCellStates();
-	PrevPreviewAnchor = FIntPoint(-999, -999);
-}
-
-bool UA1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
-{
-	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
-
-	UA1ItemDragDrop* DragDrop = Cast<UA1ItemDragDrop>(InOperation);
-	if (!DragDrop || !InventoryComponent)
-	{
-		return false;
-	}
-
-	ResetCellStates();
-	PrevPreviewAnchor = FIntPoint(-999, -999);
-
-	// 드래그 시작 위젯의 반투명 복구
-	if (DragDrop->FromItemWidget)
-	{
-		DragDrop->FromItemWidget->SetDragVisualOpacity(false);
-	}
-
-	const FIntPoint Anchor = CalcAnchorSlot(InDragDropEvent, DragDrop->GrabOffset);
-
-	// 서버에 이동 요청 → 실제 반영은 복제(OnInventoryGridChanged::Moved)로 처리
-	InventoryComponent->MoveItemServer(DragDrop->ItemId, Anchor);
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// 헬퍼
-//-----------------------------------------------------------------------------
-
-void UA1InventoryWidget::ResetCellStates()
-{
-	for (UA1InventoryCellWidget* Cell : CellWidgets)
-	{
-		if (Cell)
-		{
-			Cell->SetSlotState(EA1InventorySlotState::Default);
-		}
-	}
-}
-
-FIntPoint UA1InventoryWidget::CalcAnchorSlot(const FDragDropEvent& InDragDropEvent, const FVector2D& GrabOffset) const
-{
-	const FVector2D LocalMouse = GetItemCanvasGeometry().AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
-	const FVector2D TopLeft = LocalMouse - GrabOffset;
-
-	return FIntPoint(
-		FMath::FloorToInt(TopLeft.X / UnitCellSize.X),
-		FMath::FloorToInt(TopLeft.Y / UnitCellSize.Y));
-}
-
-void UA1InventoryWidget::PreviewPlacement(int32 ItemId, const FIntPoint& AnchorSlot)
-{
-	if (!InventoryComponent)
-	{
-		return;
-	}
-
-	const UItemInstance* Instance = InventoryComponent->FindItemById(ItemId);
-	const FIntPoint Size = UInventoryComponent::GetSizeFromDefinition(Instance ? Instance->Definition : nullptr);
-
-	const bool bCanPlace = InventoryComponent->CanPlaceItemAt(ItemId, AnchorSlot);
-	const EA1InventorySlotState State = bCanPlace ? EA1InventorySlotState::Valid : EA1InventorySlotState::Invalid;
-
-	for (int32 Y = AnchorSlot.Y; Y < AnchorSlot.Y + Size.Y; ++Y)
-	{
-		for (int32 X = AnchorSlot.X; X < AnchorSlot.X + Size.X; ++X)
-		{
-			if (X < 0 || Y < 0 || X >= CachedGridSize.X || Y >= CachedGridSize.Y)
-			{
-				continue;
-			}
-
-			if (UA1InventoryCellWidget* Cell = CellWidgets[CellIndex(X, Y)])
-			{
-				Cell->SetSlotState(State);
-			}
-		}
-	}
-}
-
-const FGeometry& UA1InventoryWidget::GetItemCanvasGeometry() const
-{
-	return CanvasPanel_Items->GetCachedGeometry();
-}
 
 int32 UA1InventoryWidget::CellIndex(int32 X, int32 Y) const
 {

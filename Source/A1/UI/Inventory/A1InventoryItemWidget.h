@@ -41,14 +41,7 @@ public:
 	void SetDragVisualOpacity(bool bDragging);
 
 protected:
-	//-----------------------------------------------------------------------------
-	// UUserWidget 오버라이드
-	//-----------------------------------------------------------------------------
-
-	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
-	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-
+	
 	/** BP 비주얼 갱신 훅 (아이콘/이름/희귀도 등 추가 표현) */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void OnItemRefreshed(UItemInstance* InItemInstance, int32 InStackCount);

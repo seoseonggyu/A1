@@ -104,4 +104,6 @@ public:
 	/** Fragment 목록 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fragments")
 	TArray<TInstancedStruct<FEquipmentFragment>> Fragments;
+	
+	
 };

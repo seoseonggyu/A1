@@ -64,6 +64,7 @@ public:
 	 */
 	UPROPERTY(NotReplicated, Transient)
 	TObjectPtr<UEquipmentInstance> Instance = nullptr;
+	
 };
 
 //-----------------------------------------------------------------------------
