@@ -17,6 +17,14 @@ struct FEquipmentList;
 
 DECLARE_LOG_CATEGORY_EXTERN(EquipmentComponentLog, Log, All);
 
+/**
+ * 장비 슬롯 변경 델리게이트 (UI 갱신용)
+ *
+ * 특정 슬롯에 장비가 장착/해제될 때 브로드캐스트됩니다. Instance가 nullptr이면 해제된 것입니다.
+ * 서버·클라이언트 모두 슬롯 맵 갱신 경로(AddToSlotMap/RemoveFromSlotMap)에서 호출됩니다.
+ */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquipmentSlotChanged, FGameplayTag /*SlotTag*/, UEquipmentInstance* /*Instance*/);
+
 //-----------------------------------------------------------------------------
 // FEquipmentEntry
 //-----------------------------------------------------------------------------
@@ -155,7 +163,10 @@ public:
 	/** 슬롯에 장착된 스폰된 Actor를 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	AActor* GetEquipmentInstance(FGameplayTag SlotTag) const;
-	
+
+	/** 슬롯 장비 변경 델리게이트 (UI 갱신용, 서버/클라이언트 모두) */
+	FOnEquipmentSlotChanged OnEquipmentSlotChanged;
+
 private:
 	/** EquipmentInstance를 생성합니다 */
 	UEquipmentInstance* CreateEquipmentInstance(const UEquipmentDefinition* Definition, int32 SourceItemId) const;

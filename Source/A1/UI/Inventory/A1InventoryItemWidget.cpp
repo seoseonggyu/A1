@@ -131,8 +131,6 @@ void UA1InventoryItemWidget::InitializeItem(UA1InventoryWidget* InOwnerInventory
 	}
 
 	RefreshStackCount(InStackCount);
-
-	OnItemRefreshed(InItemInstance, InStackCount);
 }
 
 void UA1InventoryItemWidget::RefreshStackCount(int32 InStackCount)

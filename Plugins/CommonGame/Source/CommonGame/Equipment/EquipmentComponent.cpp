@@ -384,6 +384,9 @@ void UEquipmentComponent::AddToSlotMap(UEquipmentInstance* Instance)
 	if (SlotTag.IsValid() && EquipmentSlots.Contains(SlotTag))
 	{
 		EquipmentSlots[SlotTag] = Instance;
+
+		// UI가 슬롯 아이콘을 갱신하도록 알림 (서버/클라이언트 모두 이 경로를 지남)
+		OnEquipmentSlotChanged.Broadcast(SlotTag, Instance);
 	}
 }
 
@@ -401,6 +404,9 @@ void UEquipmentComponent::RemoveFromSlotMap(UEquipmentInstance* Instance)
 		if (EquipmentSlots[SlotTag] == Instance)
 		{
 			EquipmentSlots[SlotTag] = nullptr;
+
+			// UI가 슬롯 아이콘을 비우도록 알림 (서버/클라이언트 모두 이 경로를 지남)
+			OnEquipmentSlotChanged.Broadcast(SlotTag, nullptr);
 		}
 	}
 }

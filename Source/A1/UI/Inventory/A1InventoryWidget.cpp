@@ -20,7 +20,7 @@ DEFINE_LOG_CATEGORY(A1InventoryWidgetLog);
 UA1InventoryWidget::UA1InventoryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// 기본값 false라 SetFocus()가 무시됨 - Esc 등 키 입력을 받으려면 반드시 켜야 함
+	// 키 입력을 받기 위한 설정
 	SetIsFocusable(true);
 }
 
@@ -195,7 +195,15 @@ void UA1InventoryWidget::HandleGridChanged(EInventoryGridChangeType ChangeType, 
 	case EInventoryGridChangeType::Added:
 	case EInventoryGridChangeType::Changed:
 	case EInventoryGridChangeType::Moved:
-		PlaceItemWidget(ItemId, Instance, SlotPos, StackCount);
+		if (SlotPos.X < 0 || SlotPos.Y < 0)
+		{
+			// 그리드에서 내려진(미배치) 아이템 → 예: 장착되어 인벤토리 UI에서 제거
+			RemoveItemWidget(ItemId);
+		}
+		else
+		{
+			PlaceItemWidget(ItemId, Instance, SlotPos, StackCount);
+		}
 		break;
 
 	case EInventoryGridChangeType::Removed:
@@ -314,8 +322,17 @@ bool UA1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 		return false;
 	}
 
-	// 실제 이동은 서버 권위로 검증 후 처리되고, 결과가 리플리케이션되면 위젯이 갱신된다
-	InventoryComponent->MoveItemServer(DragOp->ItemId, Anchor);
+	// 실제 이동은 서버 권위로 검증 후 처리되고, 결과가 리플리케이션되면 위젯이 갱신된다.
+	if (DragOp->FromEquipmentSlotTag.IsValid())
+	{
+		// 장비창에서 온 드래그: 서버에서 장착 해제 후 인벤토리 그리드에 배치
+		InventoryComponent->UnequipToInventoryServer(DragOp->ItemId, DragOp->FromEquipmentSlotTag, Anchor);
+	}
+	else
+	{
+		// 인벤토리 내부 이동
+		InventoryComponent->MoveItemServer(DragOp->ItemId, Anchor);
+	}
 
 	return true;
 }

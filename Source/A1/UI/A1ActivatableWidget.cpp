@@ -1,5 +1,4 @@
 #include "A1ActivatableWidget.h"
-#include "ViewModel/CommonViewModelBase.h"
 #include "View/MVVMView.h"
 #include "View/MVVMViewClass.h"
 
@@ -28,7 +27,7 @@ void UA1ActivatableWidget::NativeOnInitialized()
 
 	//for (const FMVVMViewClass_Source& Source : ViewClass->GetSources())
 	//{
-	//	// ViewModel Å¸ÀÔÀÎ °æ¿ì¸¸ Ã³¸®
+	//	// ViewModel Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì¸¸ Ã³ï¿½ï¿½
 	//	if (!Source.IsViewModel())
 	//	{
 	//		continue;
@@ -37,7 +36,7 @@ void UA1ActivatableWidget::NativeOnInitialized()
 	//	FName ViewModelName = Source.GetName();
 	//	UClass* ViewModelClass = Source.GetSourceClass();
 
-	//	// UCommonViewModelBase ¼­ºêÅ¬·¡½ºÀÎÁö È®ÀÎ
+	//	// UCommonViewModelBase ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	//	if (!ViewModelClass || !ViewModelClass->IsChildOf(UCommonViewModelBase::StaticClass()))
 	//	{
 	//		continue;
@@ -51,7 +50,7 @@ void UA1ActivatableWidget::NativeOnInitialized()
 	//	UCommonViewModelBase* ViewModel = NewObject<UCommonViewModelBase>(this, ViewModelClass);
 	//	if (ViewModel)
 	//	{
-	//		// WidgetÀÇ MVVMView¿¡ ViewModel ¼³Á¤
+	//		// Widgetï¿½ï¿½ MVVMViewï¿½ï¿½ ViewModel ï¿½ï¿½ï¿½ï¿½
 	//		View->SetViewModel(ViewModelName, ViewModel);
 	//	}
 	//}

@@ -55,10 +55,6 @@ protected:
 	UFUNCTION()
 	UWidget* HandleGetTooltipWidget();
 
-	/** BP 비주얼 갱신 훅 (아이콘/이름/희귀도 등 추가 표현) */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void OnItemRefreshed(UItemInstance* InItemInstance, int32 InStackCount);
-
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UItemInstance> ItemInstance = nullptr;

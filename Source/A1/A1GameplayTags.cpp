@@ -11,6 +11,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Unarmed_RightHand, "Equipment.Slot.Unarmed.RightHand");
 
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Weapon, "Equipment.Slot.Weapon");
+	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Shield, "Equipment.Slot.Shield");
 
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Secondary_LeftHand, "Equipment.Slot.Secondary.LeftHand");
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Secondary_RightHand, "Equipment.Slot.Secondary.RightHand");

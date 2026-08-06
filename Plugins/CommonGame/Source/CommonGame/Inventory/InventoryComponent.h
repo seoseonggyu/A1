@@ -252,6 +252,21 @@ public:
 	UFUNCTION(Server, Reliable)
 	void MoveItemServer(int32 ItemId, FIntPoint NewAnchor);
 
+	/**
+	 * 장착된 아이템을 해제하고 인벤토리 앵커 위치에 배치합니다 (클라이언트 → 서버 RPC).
+	 * 아이템은 장착 중에도 인벤토리에 남아있으므로(미배치 상태), 여기서 그리드에 다시 배치합니다.
+	 */
+	UFUNCTION(Server, Reliable)
+	void UnequipToInventoryServer(int32 ItemId, FGameplayTag EquipmentSlotTag, FIntPoint NewAnchor);
+
+	/**
+	 * 인벤토리 아이템을 장비 슬롯에 장착합니다 (클라이언트 → 서버 RPC).
+	 * EquipmentSlotTag는 드롭한 장비 슬롯으로, 아이템의 장비 슬롯과 일치할 때만 장착합니다.
+	 * 장착에 성공하면 아이템은 인벤토리 그리드에서 내려집니다(미배치).
+	 */
+	UFUNCTION(Server, Reliable)
+	void EquipFromInventoryServer(int32 ItemId, FGameplayTag EquipmentSlotTag);
+
 	//-----------------------------------------------------------------------------
 	// 2D 그리드
 	//-----------------------------------------------------------------------------
