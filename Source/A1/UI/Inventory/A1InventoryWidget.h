@@ -11,6 +11,8 @@ class UInventoryComponent;
 class UItemInstance;
 class UA1InventoryCellWidget;
 class UA1InventoryItemWidget;
+class UA1ItemDragDrop;
+class UDragDropOperation;
 enum class EInventoryGridChangeType : uint8;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1InventoryWidgetLog, Log, All);
@@ -57,6 +59,10 @@ protected:
 	// 드래그 & 드롭
 	//-----------------------------------------------------------------------------
 
+	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
 private:
 	//-----------------------------------------------------------------------------
 	// 그리드 구성
@@ -86,9 +92,18 @@ private:
 
 	/** ItemId의 아이템 위젯을 제거합니다 */
 	void RemoveItemWidget(int32 ItemId);
-	
+
 	/** (x, y) → 셀 배열 인덱스 */
 	int32 CellIndex(int32 X, int32 Y) const;
+
+	/** 드래그 이벤트의 스크린 좌표 + GrabOffset으로 아이템이 놓일 그리드 앵커 좌표를 계산합니다 */
+	FIntPoint ComputeDropAnchor(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, const FVector2D& GrabOffset) const;
+
+	/** Anchor~Anchor+Size 범위의 셀 하이라이트를 초록/빨강으로 갱신합니다 */
+	void UpdateDropPreview(const FIntPoint& Anchor, const FIntPoint& Size, bool bCanPlace);
+
+	/** 직전에 하이라이트한 셀들을 기본 상태로 되돌립니다 */
+	void ClearDropPreview();
 
 protected:
 	//-----------------------------------------------------------------------------
@@ -130,6 +145,10 @@ private:
 	/** ItemId → 아이템 위젯 */
 	UPROPERTY()
 	TMap<int32, TObjectPtr<UA1InventoryItemWidget>> ItemWidgets;
+
+	/** 드래그 미리보기용으로 CanvasPanel_Items에 추가한 하이라이트 셀 위젯 (아이템 아이콘보다 위에 그려짐) */
+	UPROPERTY()
+	TArray<TObjectPtr<UA1InventoryCellWidget>> DropPreviewCellWidgets;
 
 	/** 캐싱된 그리드 크기 */
 	FIntPoint CachedGridSize = FIntPoint::ZeroValue;

@@ -78,6 +78,12 @@ void FInventoryEntry::NotifyChanged(UInventoryComponent* Owner) const
 	{
 		Instance->OnChanged(Owner, StackCount);
 	}
+
+	// UI(클라이언트)가 위치/스택 변경을 그리드에 반영하도록 알림. Added는 InitializeReplicatedItemCoroutine에서 별도 처리
+	if (Owner)
+	{
+		Owner->OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Changed, ItemId, Instance, SlotPosition, StackCount);
+	}
 }
 
 void FInventoryEntry::NotifyRemoved(UInventoryComponent* Owner) const
@@ -575,13 +581,39 @@ bool UInventoryComponent::FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlo
 	return false;
 }
 
-bool UInventoryComponent::CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size) const
+bool UInventoryComponent::CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size, const UItemInstance* IgnoreInstance) const
 {
+	if (Size.X <= 0 || Size.Y <= 0 ||
+		Anchor.X < 0 || Anchor.Y < 0 ||
+		Anchor.X + Size.X > GridSize.X || Anchor.Y + Size.Y > GridSize.Y)
+	{
+		return false;
+	}
+
+	// IgnoreInstance가 이미 차지한 칸은 점유로 치지 않는다 (같은 아이템을 겹치는 위치로 옮기는 경우의 오탐 방지)
+	FIntPoint IgnoreAnchor(-1, -1);
+	FIntPoint IgnoreSize = FIntPoint::ZeroValue;
+	if (const FInventoryEntry* IgnoreEntry = FindEntry(IgnoreInstance))
+	{
+		IgnoreAnchor = IgnoreEntry->SlotPosition;
+		IgnoreSize = GetSizeFromDefinition(IgnoreEntry->Definition);
+	}
+
 	for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
 	{
 		for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
 		{
-			const int32 CellIndex = (Anchor.Y + OffsetY) * GridSize.X + (Anchor.X + OffsetX);
+			const int32 X = Anchor.X + OffsetX;
+			const int32 Y = Anchor.Y + OffsetY;
+
+			if (IgnoreAnchor.X >= 0 &&
+				X >= IgnoreAnchor.X && X < IgnoreAnchor.X + IgnoreSize.X &&
+				Y >= IgnoreAnchor.Y && Y < IgnoreAnchor.Y + IgnoreSize.Y)
+			{
+				continue;
+			}
+
+			const int32 CellIndex = Y * GridSize.X + X;
 			if (OccupiedCells[CellIndex])
 			{
 				return false;
@@ -590,4 +622,64 @@ bool UInventoryComponent::CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& S
 	}
 
 	return true;
+}
+
+bool UInventoryComponent::MoveItemAuth(UItemInstance* Instance, const FIntPoint& NewAnchor)
+{
+	if (!Instance || !GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	FInventoryEntry* Entry = FindEntry(Instance);
+	if (!Entry)
+	{
+		return false;
+	}
+
+	const FIntPoint Size = GetSizeFromDefinition(Entry->Definition);
+	if (!CanPlaceAt(NewAnchor, Size, Instance))
+	{
+		return false;
+	}
+
+	const FIntPoint OldAnchor = Entry->SlotPosition;
+	if (OldAnchor.X >= 0 && OldAnchor.Y >= 0)
+	{
+		for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
+		{
+			for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
+			{
+				const int32 CellIndex = (OldAnchor.Y + OffsetY) * GridSize.X + (OldAnchor.X + OffsetX);
+				SetOccupiedCellsAuth(CellIndex, false);
+			}
+		}
+	}
+
+	for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
+	{
+		for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
+		{
+			const int32 CellIndex = (NewAnchor.Y + OffsetY) * GridSize.X + (NewAnchor.X + OffsetX);
+			SetOccupiedCellsAuth(CellIndex, true);
+		}
+	}
+
+	Entry->SlotPosition = NewAnchor;
+	Entry->NotifyChanged(this);
+	InventoryList.MarkEntryDirty(*Entry);
+
+	return true;
+}
+
+void UInventoryComponent::MoveItemServer_Implementation(int32 ItemId, FIntPoint NewAnchor)
+{
+	UItemInstance* Instance = FindItemById(ItemId);
+	if (!Instance)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("MoveItemServer: ItemId=%d 아이템을 찾을 수 없습니다"), ItemId);
+		return;
+	}
+
+	MoveItemAuth(Instance, NewAnchor);
 }

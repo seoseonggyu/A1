@@ -237,10 +237,21 @@ public:
 	
 	/** 크기 Size(칸 수)의 아이템이 들어갈 수 있는 빈 앵커 위치를 찾는다 */
 	bool FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlotPos) const;
-	
-	/** 앵커 위치에 Size 사각형이 모두 빈 칸인지 검사 */
-	bool CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size) const;
-	
+
+	/**
+	 * 앵커 위치에 Size 사각형이 그리드 범위 안에서 모두 빈 칸인지 검사합니다.
+	 * @param IgnoreInstance 지정하면 이 아이템이 이미 차지한 칸은 점유로 치지 않습니다 (같은 아이템의 이동 검사용)
+	 */
+	bool CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size, const UItemInstance* IgnoreInstance = nullptr) const;
+
+	/** 아이템을 새 앵커 위치로 이동합니다 (서버 전용). 범위를 벗어나거나 다른 아이템과 겹치면 실패합니다 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
+	bool MoveItemAuth(UItemInstance* Instance, const FIntPoint& NewAnchor);
+
+	/** 아이템을 새 위치로 옮깁니다 (클라이언트 → 서버 RPC) */
+	UFUNCTION(Server, Reliable)
+	void MoveItemServer(int32 ItemId, FIntPoint NewAnchor);
+
 	//-----------------------------------------------------------------------------
 	// 2D 그리드
 	//-----------------------------------------------------------------------------

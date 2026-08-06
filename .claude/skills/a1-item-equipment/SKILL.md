@@ -96,7 +96,7 @@ Instance->ModifyTagStatServer(...);                    // 클라 → 서버 RPC
 ## 규칙
 
 - **상태 변경은 전부 서버(`...Auth`)에서.** 클라이언트에서는 조회·표시만 한다.
-- `UItemInstance`는 클라이언트에서 `PostReplicatedAdd` 시 로컬 생성된다. 복제되는 것은 `Definition`, `ItemId`, `NetState`뿐 — Fragment 자체는 복제되지 않는다.
+- `UItemInstance`는 클라이언트에서 `PostReplicatedAdd` 시 로컬 생성된다. 복제되는 것은 `Definition`, `ItemId`, `NetState`... 뿐 — Fragment 자체는 복제되지 않는다. UEquipmentInstance도 클라이언트에서 자체 생성된다.
 - Fragment 배열 인덱스는 **최대 16개**(NetState의 `FragmentIndex`가 uint8/비트 제한). 초과 설계 금지.
 - 복제 상태가 필요한 Fragment는 `FItemFragmentNetState` 파생이 필요하다 → `a1-replication` 참조.
 - 슬롯 태그는 `Equipment.Slot.*`, `QuickBar.Slot.*`. `EEquipmentSlotType` / `EArmorType`(`A1Define.h`)와 대응 관계를 깨지 말 것.
