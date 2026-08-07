@@ -42,10 +42,6 @@ public:
 protected:
 	virtual void NativeOnInitialized() override;
 
-	/** BP 비주얼 갱신 훅 (Image_Valid 자동 처리 외에 추가 연출이 필요할 때) */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void OnSlotStateChanged(EA1InventorySlotState NewState);
-
 protected:
 	/** 초록/빨강 하이라이트용 이미지 (선택). 없으면 BP OnSlotStateChanged로 처리 */
 	UPROPERTY(meta = (BindWidgetOptional))

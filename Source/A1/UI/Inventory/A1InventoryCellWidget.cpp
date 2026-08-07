@@ -38,5 +38,4 @@ void UA1InventoryCellWidget::SetSlotState(EA1InventorySlotState NewState)
 		}
 	}
 
-	OnSlotStateChanged(NewState);
 }
