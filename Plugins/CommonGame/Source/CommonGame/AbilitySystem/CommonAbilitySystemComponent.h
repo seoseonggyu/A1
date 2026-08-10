@@ -31,6 +31,21 @@ public:
 	virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 	virtual void NotifyAbilityEnded(FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, bool bWasCancelled) override;
 
+	/** 아바타(Pawn)가 세팅되는 시점에 클라이언트 전용 OnSpawn 어빌리티를 활성화 시도합니다 */
+	virtual void InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor) override;
+
+	/** 어빌리티 스펙이 클라이언트로 복제된 시점에 클라이언트 전용 OnSpawn 어빌리티를 활성화 시도합니다 */
+	virtual void OnRep_ActivateAbilities() override;
+
+	/**
+	 * ActivationPolicy가 OnSpawn이고 NetExecutionPolicy가 LocalOnly인 어빌리티를 클라이언트에서 활성화합니다
+	 *
+	 * 서버는 GiveAbility 시점(UCommonGameplayAbility::OnGiveAbility)에 이미 처리하므로 여기서는 아무것도 하지 않습니다.
+	 * 클라이언트는 스펙 복제와 아바타 세팅 순서가 상황에 따라 달라지므로 두 시점 모두에서 호출합니다.
+	 * LocalPredicted 계열은 서버가 이미 활성화한 뒤이므로 중복 실행을 막기 위해 제외합니다.
+	 */
+	void TryActivateLocalOnlyAbilitiesOnSpawn();
+
 	//-----------------------------------------------------------------------------
 	// 초기화
 	//-----------------------------------------------------------------------------

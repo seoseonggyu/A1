@@ -68,6 +68,8 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
 
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Test, "Ability.Test");
+
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------

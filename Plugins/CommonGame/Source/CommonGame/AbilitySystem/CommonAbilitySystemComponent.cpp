@@ -61,6 +61,68 @@ void UCommonAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHandl
 	}
 }
 
+void UCommonAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)
+{
+	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
+
+	// 캐릭터(아바타)가 붙은 시점 — 스펙이 이미 복제되어 있었다면 여기서 활성화된다.
+	TryActivateLocalOnlyAbilitiesOnSpawn();
+}
+
+void UCommonAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+
+	// 스펙이 아바타 세팅보다 늦게 복제된 경우를 위한 경로.
+	TryActivateLocalOnlyAbilitiesOnSpawn();
+}
+
+void UCommonAbilitySystemComponent::TryActivateLocalOnlyAbilitiesOnSpawn()
+{
+	// 서버 측은 GiveAbility 시점에 이미 처리했다.
+	if (IsOwnerActorAuthoritative())
+	{
+		return;
+	}
+
+	if (!AbilityActorInfo.IsValid() || !AbilityActorInfo->AvatarActor.IsValid() || !AbilityActorInfo->IsLocallyControlled())
+	{
+		return;
+	}
+
+	// 활성화 도중 스펙 배열이 변경될 수 있으므로 핸들을 먼저 모은다.
+	TArray<FGameplayAbilitySpecHandle> HandlesToActivate;
+	{
+		ABILITYLIST_SCOPE_LOCK();
+		for (const FGameplayAbilitySpec& Spec : ActivatableAbilities.Items)
+		{
+			const UCommonGameplayAbility* AbilityCDO = Cast<UCommonGameplayAbility>(Spec.Ability);
+			if (AbilityCDO == nullptr || Spec.IsActive())
+			{
+				continue;
+			}
+
+			if (AbilityCDO->GetActivationPolicy() != ECommonAbilityActivationPolicy::OnSpawn)
+			{
+				continue;
+			}
+
+			// LocalPredicted/ServerOnly 등은 서버 주도로 이미 활성화되므로 중복 실행을 막기 위해 제외한다.
+			if (AbilityCDO->GetNetExecutionPolicy() != EGameplayAbilityNetExecutionPolicy::LocalOnly)
+			{
+				continue;
+			}
+
+			HandlesToActivate.Add(Spec.Handle);
+		}
+	}
+
+	for (const FGameplayAbilitySpecHandle& Handle : HandlesToActivate)
+	{
+		TryActivateAbility(Handle);
+	}
+}
+
 void UCommonAbilitySystemComponent::AbilityInputTagStarted(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid())
