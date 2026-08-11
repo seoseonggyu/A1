@@ -9,6 +9,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(A1AbilityInteractScanLog, Log, All);
 
 class UPrimitiveComponent;
+class UInteractionPromptViewModel;
 
 /**
  * UA1Ability_Interact_Scan
@@ -58,6 +59,12 @@ private:
 	/** 대상 하이라이트(CustomDepth 외곽선)를 켜고 끈다. 로컬 전용. */
 	void SetInteractableHighlightLocal(AActor* InteractableActor, bool bHighlight) const;
 
+	/** 현재 대상에 맞춰 상호작용 프롬프트("줍기" 등) UI를 갱신한다. 대상이 없으면 숨긴다. 로컬 전용. */
+	void UpdateInteractionPromptLocal(AActor* Target) const;
+
+	/** 소유 클라의 PrimaryGameLayout에서 프롬프트 ViewModel을 찾아 캐시한다. (아직 없으면 nullptr) */
+	UInteractionPromptViewModel* GetPromptViewModelLocal() const;
+
 	/** 상호작용 입력(GameCustom1)을 1회 대기하도록 태스크를 (재)생성한다. */
 	void WaitForInputStart();
 
@@ -68,6 +75,9 @@ private:
 private:
 	/** 현재 하이라이트/트리거 대상. 비복제(로컬 전용). */
 	TWeakObjectPtr<AActor> CurrentTarget;
+
+	/** 프롬프트 ViewModel 캐시. 비복제(로컬 전용). */
+	mutable TWeakObjectPtr<UInteractionPromptViewModel> CachedPromptViewModel;
 
 	/** 스캔 타이머 핸들. */
 	FTimerHandle ScanTimerHandle;

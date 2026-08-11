@@ -51,6 +51,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Quaternary, "Input.Ability.QuickBar.Quaternary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Sprint, "Input.Ability.Sprint");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Interact, "Input.Ability.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_DropItem, "Input.Ability.DropItem");
 
 	//-----------------------------------------------------------------------------
 	// Ability
@@ -68,6 +69,8 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Scan, "Ability.Interact.Scan");
+
+	UE_DEFINE_GAMEPLAY_TAG(Ability_DropItem, "Ability.DropItem");
 
 
 	//-----------------------------------------------------------------------------

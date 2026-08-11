@@ -50,6 +50,7 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Quaternary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Sprint);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Interact);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_DropItem);
 
 	//-----------------------------------------------------------------------------
 	// Ability
@@ -67,6 +68,8 @@ namespace A1GameplayTags
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Scan);
+
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_DropItem);
 
 	//-----------------------------------------------------------------------------
 	// Status
