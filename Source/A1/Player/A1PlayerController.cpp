@@ -25,24 +25,14 @@ AA1PlayerController::AA1PlayerController(const FObjectInitializer& ObjectInitial
 
 void AA1PlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)
 {
-	// 커서 호버는 순수 로컬 연출이므로 소유 클라에서만 갱신한다. (데디케이티드 서버 불필요)
-	if (IsLocalController())
-	{
-		UpdateInteractionHoverLocal();
-	}
+	// 커서 호버 하이라이트는 주변 스캔 어빌리티(UA1Ability_Interact_Scan)로 대체되었다.
+	// 하이라이트 중복/충돌을 막기 위해 여기서는 갱신하지 않는다. (코드는 참고용으로 남겨둠)
+	// if (IsLocalController())
+	// {
+	// 	UpdateInteractionHoverLocal();
+	// }
 
 	Super::PostProcessInput(DeltaTime, bGamePaused);
-}
-
-
-void AA1PlayerController::OnInteractionRightClickLocal()
-{
-	AActor* Hovered = HoveredInteractable.Get();
-	if (Hovered == nullptr)
-		return;
-
-	// TODO: 실제 상호작용 발동(UA1Ability_Interact 활성화)으로 교체.
-	UE_LOG(A1PlayerControllerLog, Log, TEXT("[TODO] 상호작용 우클릭: %s"), *Hovered->GetName());
 }
 
 void AA1PlayerController::UpdateInteractionHoverLocal()

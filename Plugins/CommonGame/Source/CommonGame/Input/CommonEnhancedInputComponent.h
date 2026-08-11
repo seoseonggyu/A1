@@ -8,7 +8,7 @@
 #include "Input/InputTypes.h"
 #include "CommonEnhancedInputComponent.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(CommonEnhancedInputComponentLog, Log, All);
+COMMONGAME_API DECLARE_LOG_CATEGORY_EXTERN(CommonEnhancedInputComponentLog, Log, All);
 
 //-----------------------------------------------------------------------------
 // FAbilityInputBindingHandles

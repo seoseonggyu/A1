@@ -67,8 +67,8 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint_Active, "Ability.Sprint.Active");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Scan, "Ability.Interact.Scan");
 
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Test, "Ability.Test");
 
 	//-----------------------------------------------------------------------------
 	// Status

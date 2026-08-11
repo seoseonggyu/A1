@@ -66,8 +66,7 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint_Active);
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
-
-	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Test);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Scan);
 
 	//-----------------------------------------------------------------------------
 	// Status

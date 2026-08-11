@@ -137,7 +137,7 @@ bool UQuickBarComponent::AddItemToSlotAuth(UItemInstance* Item)
 
 	// 슬롯 맵에 추가합니다
 	AddToSlotMap(Item, SlotTag, NewSlotIndex);
-	
+
 	// 현재 장착된 아이템이 없으면 자동 장착합니다
 	if (!ActiveSlot.IsValid())
 	{
@@ -192,7 +192,7 @@ void UQuickBarComponent::SetActiveSlotAuth(FGameplayTag SlotTag, int32 Index)
 	}
 
 	const FQuickBarSlotData& SlotData = QuickBarSlots[SlotTag];
-	
+
 	if (Index < 0 || Index >= SlotData.Num())
 	{
 		UE_LOG(QuickBarComponentLog, Warning, TEXT("SetActiveSlotAuth: 유효하지 않은 인덱스입니다 (%s, Index: %d, Count: %d)"), *SlotTag.ToString(), Index, SlotData.Num());

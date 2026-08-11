@@ -47,12 +47,6 @@ private:
 	/** 대상 Interactable의 하이라이트(CustomDepth 외곽선)를 켜고 끈다. 로컬 전용. */
 	void SetInteractableHighlightLocal(AActor* InteractableActor, bool bHighlight);
 
-	/**
-	 * 우클릭 시 호출. 현재는 검증용 TODO 스텁 — 호버 중인 대상을 로그로만 확인한다.
-	 * TODO: IA_Interact 입력 액션/GA_Interact 어빌리티 연동이 준비되면 실제 상호작용 발동으로 교체.
-	 */
-	void OnInteractionRightClickLocal();
-
 	/** 현재 호버 중인 Interactable. 비복제. */
 	TWeakObjectPtr<AActor> HoveredInteractable;
 	
