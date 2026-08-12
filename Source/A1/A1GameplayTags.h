@@ -103,6 +103,13 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Door);
 	
 	//-----------------------------------------------------------------------------
+	// Cooldown.Skill
+	//-----------------------------------------------------------------------------
+
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_1);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_2);
+
+	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage
 	//-----------------------------------------------------------------------------
 

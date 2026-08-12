@@ -18,7 +18,7 @@
 
 DEFINE_LOG_CATEGORY(A1Ability_Skill_GroundBreakerLog);
 
-// TODO: Cooldown 및 Mana Check 및 몽타주 Notify
+// TODO: 몽타주 Notify
 
 UA1Ability_Skill_GroundBreaker::UA1Ability_Skill_GroundBreaker(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

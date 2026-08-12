@@ -89,4 +89,7 @@ git diff origin/main --stat          # 마지막 push 이후 누적 변경 (원�
 *.umap   filter=lfs diff=lfs merge=lfs -text
 ```
 
+## 7. Commit 후
+- Commit 후에는 작성한 제목과 내용들을 사용자에게 알려준다.
+
 이미 설정돼 있거나 사용자가 필요 없다고 하면 다시 언급하지 않는다.

@@ -105,10 +105,17 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Door, "GameplayEvent.Interact.Door");
 		
 	//-----------------------------------------------------------------------------
+	// Cooldown.Skill
+	//-----------------------------------------------------------------------------
+
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_1, "Cooldown.Skill.1");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_2, "Cooldown.Skill.2");
+
+	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage
 	//-----------------------------------------------------------------------------
 
 	/** 데미지 값 (SetByCaller) */
 	A1_API UE_DEFINE_GAMEPLAY_TAG(SetByCaller_BaseDamage, "SetByCaller.BaseDamage");
-	
+
 }

@@ -8,7 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_Skill_WhirlwindSlash)
 
-// TODO: Cooldown 및 Mana Check 및 몽타주 Notify 및 
+// TODO: 몽타주 Notify
 
 UA1Ability_Skill_WhirlwindSlash::UA1Ability_Skill_WhirlwindSlash(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
