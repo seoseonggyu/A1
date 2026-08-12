@@ -1,5 +1,7 @@
 #include "A1Interactable_Pickup.h"
 
+#include "A1GameplayTags.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Interactable_Pickup)
 
 AA1Interactable_Pickup::AA1Interactable_Pickup(const FObjectInitializer& ObjectInitializer)
@@ -7,7 +9,8 @@ AA1Interactable_Pickup::AA1Interactable_Pickup(const FObjectInitializer& ObjectI
 {
 	InteractionTitle = NSLOCTEXT("A1Interaction", "Pickup", "줍기");
 	HighlightStencil = 3;
-	InteractEventTag = FGameplayTag();
+	// UA1Ability_Interact가 이 태그로 UA1Ability_Interact_Pickup(줍기 모션)에 결과 처리를 위임한다.
+	InteractEventTag = A1GameplayTags::GameplayEvent_Interact_Pickup;
 	// 1회 획득 후 제거되므로 소모형으로 취급.
 	bConsumeOnUse = true;
 }

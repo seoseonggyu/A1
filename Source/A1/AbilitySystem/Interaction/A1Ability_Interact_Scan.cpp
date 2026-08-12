@@ -7,12 +7,9 @@
 #include "Components/PrimitiveComponent.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
-#include "GameFramework/PlayerController.h"
 #include "Interaction/A1Interactable.h"
-#include "Layout/CommonPrimaryGameLayout.h"
 #include "Physics/A1CollisionChannels.h"
 #include "TimerManager.h"
-#include "UI/Interaction/InteractionPromptViewModel.h"
 
 #if ENABLE_DRAW_DEBUG
 #include "DrawDebugHelpers.h"
@@ -147,13 +144,12 @@ void UA1Ability_Interact_Scan::SetCurrentTargetLocal(AActor* NewTarget)
 		return;
 	}
 
-	// 이전 대상 하이라이트 해제 후 새 대상 하이라이트.
+	// 이전 대상 하이라이트/프롬프트 해제 후 새 대상 하이라이트/프롬프트 표시.
 	SetInteractableHighlightLocal(CurrentTarget.Get(), false);
+	SetInteractionPromptVisibleLocal(CurrentTarget.Get(), false);
 	CurrentTarget = NewTarget;
 	SetInteractableHighlightLocal(NewTarget, true);
-
-	// 하이라이트와 함께 상호작용 프롬프트("줍기" 등) UI도 갱신한다.
-	UpdateInteractionPromptLocal(NewTarget);
+	SetInteractionPromptVisibleLocal(NewTarget, true);
 }
 
 void UA1Ability_Interact_Scan::SetInteractableHighlightLocal(AActor* InteractableActor, bool bHighlight) const
@@ -197,61 +193,12 @@ void UA1Ability_Interact_Scan::SetInteractableHighlightLocal(AActor* Interactabl
 	}
 }
 
-void UA1Ability_Interact_Scan::UpdateInteractionPromptLocal(AActor* Target) const
+void UA1Ability_Interact_Scan::SetInteractionPromptVisibleLocal(AActor* InteractableActor, bool bVisible) const
 {
-	UInteractionPromptViewModel* PromptViewModel = GetPromptViewModelLocal();
-	if (PromptViewModel == nullptr)
+	if (IA1Interactable* Interactable = Cast<IA1Interactable>(InteractableActor))
 	{
-		// 아직 HUD 위젯(ViewModel)이 준비되지 않았으면 다음 스캔에서 다시 시도한다.
-		return;
+		Interactable->SetInteractionPromptVisible(bVisible);
 	}
-
-	IA1Interactable* Interactable = Cast<IA1Interactable>(Target);
-	if (Interactable == nullptr)
-	{
-		PromptViewModel->HidePrompt();
-		return;
-	}
-
-	// 대상이 제공하는 첫 옵션의 문구(Title)를 프롬프트로 표시한다. (예: "줍기")
-	FA1InteractionQuery Query;
-	Query.RequestingAvatar = GetAvatarActorFromActorInfo();
-	Query.RequestingController = GetControllerFromActorInfo();
-
-	TArray<FA1InteractionOption> Options;
-	Interactable->GatherInteractionOptions(Query, Options);
-	if (Options.Num() > 0)
-	{
-		PromptViewModel->ShowPrompt(Options[0].Title);
-	}
-	else
-	{
-		PromptViewModel->HidePrompt();
-	}
-}
-
-UInteractionPromptViewModel* UA1Ability_Interact_Scan::GetPromptViewModelLocal() const
-{
-	if (CachedPromptViewModel.IsValid())
-	{
-		return CachedPromptViewModel.Get();
-	}
-
-	const APlayerController* PC = Cast<APlayerController>(GetControllerFromActorInfo());
-	if (PC == nullptr || PC->IsLocalController() == false)
-	{
-		return nullptr;
-	}
-
-	UCommonPrimaryGameLayout* Layout = UCommonPrimaryGameLayout::GetPrimaryGameLayout(PC->GetLocalPlayer());
-	if (Layout == nullptr)
-	{
-		return nullptr;
-	}
-
-	// HUD 위젯이 이 ViewModel에 바인딩되어 있어야 레이아웃이 생성해 둔다. (없으면 nullptr)
-	CachedPromptViewModel = Layout->GetViewModel<UInteractionPromptViewModel>(UInteractionPromptViewModel::ViewModelName);
-	return CachedPromptViewModel.Get();
 }
 
 void UA1Ability_Interact_Scan::WaitForInputStart()

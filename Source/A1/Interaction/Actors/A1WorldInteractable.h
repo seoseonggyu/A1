@@ -7,6 +7,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(A1WorldInteractableLog, Log, All);
 
 class UStaticMeshComponent;
+class UWidgetComponent;
 
 /**
  * AA1WorldInteractable
@@ -15,6 +16,9 @@ class UStaticMeshComponent;
  * 스태틱 메시 하나를 가지며, EditDefaultsOnly 프로퍼티로 표시/발동 정보를 구성한다.
  *
  * - 호버 하이라이트 대상: Mesh (로컬 CustomDepth)
+ * - 상호작용 프롬프트("줍기" 등): PromptWidgetComponent (월드 스페이스, 대상 근처에 표시).
+ *   Scan 어빌리티가 대상을 갱신할 때 SetInteractionPromptVisible로 켜고 끈다. 위젯 클래스는
+ *   BP에서 컴포넌트의 Widget Class로 지정한다.
  * - 상호작용 결과 처리: OnInteractAuth (서버 전용). 하위 클래스가 오버라이드하거나
  *   BP에서 K2_OnInteractAuth로 처리한다.
  * - bConsumeOnUse=true면 1회 사용 후 bIsUsed(복제)가 true가 되어 더 이상 상호작용 불가.
@@ -36,6 +40,7 @@ public:
 	virtual void GetHighlightComponents(TArray<UPrimitiveComponent*>& OutComponents) const override;
 	virtual void GatherInteractionOptions(const FA1InteractionQuery& Query, TArray<FA1InteractionOption>& OutOptions) const override;
 	virtual bool CanInteract(const FA1InteractionQuery& Query) const override;
+	virtual void SetInteractionPromptVisible(bool bVisible) override;
 	virtual void OnInteractAuth(AActor* Interactor) override;
 
 protected:
@@ -49,6 +54,13 @@ protected:
 	/** 상호작용 대상 메시. 호버 하이라이트/커서 트레이스 대상. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "A1|Interactable")
 	TObjectPtr<UStaticMeshComponent> Mesh;
+
+	/**
+	 * 상호작용 프롬프트("줍기" 등) 위젯. 월드 스페이스로 렌더링되어 대상 근처에 표시된다.
+	 * 기본은 숨김 상태이며, Widget Class는 BP에서 UA1InteractionPromptWidget 파생 위젯으로 지정한다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "A1|Interactable")
+	TObjectPtr<UWidgetComponent> PromptWidgetComponent;
 
 	/** 커서 툴팁/UI에 표시할 문구. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "A1|Interactable")

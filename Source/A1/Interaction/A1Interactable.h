@@ -38,6 +38,12 @@ public:
 	virtual bool CanInteract(const FA1InteractionQuery& Query) const { return true; }
 
 	/**
+	 * 상호작용 프롬프트("줍기" 등) UI를 켜고 끈다. 대상 액터 근처에 붙는 월드 스페이스 UI 전용.
+	 * 로컬 전용 연출이며, Scan 어빌리티가 현재 대상을 갱신할 때 호출한다.
+	 */
+	virtual void SetInteractionPromptVisible(bool bVisible) {}
+
+	/**
 	 * 실제 상호작용 결과를 처리한다. 문 열기, 아이템 획득, 데미지 등.
 	 * 반드시 서버(Authority)에서만 호출된다. (C++ 인터페이스라 UFUNCTION 미부여, 호출측이 권한을 보장)
 	 */

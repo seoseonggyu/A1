@@ -36,6 +36,8 @@ void UA1Ability_DropItem::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		SpawnDropActorAuth();
 	}
 
+	// TODO: To many Spawn
+	DropActorClass = nullptr;
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 

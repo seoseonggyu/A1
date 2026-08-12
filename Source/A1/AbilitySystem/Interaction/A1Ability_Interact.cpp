@@ -50,11 +50,14 @@ void UA1Ability_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		// 서버 재검증: 클라 예측 시점과 달라졌을 수 있으므로 다시 확인한다.
 		if (Interactable->CanInteract(Query))
 		{
-			// 대상이 확장 이벤트 태그를 제공하면, 후속 어빌리티(줍기/문 열기 등)를 소유자 ASC에서 실행하도록 보낸다.
 			TArray<FA1InteractionOption> Options;
 			Interactable->GatherInteractionOptions(Query, Options);
+
 			if (Options.Num() > 0 && Options[0].InteractEventTag.IsValid())
 			{
+				// 대상이 확장 이벤트 태그를 제공하면, 결과 처리 자체를 전용 어빌리티(줍기/문 열기 등)에 위임한다.
+				// 여기서는 OnInteractAuth를 부르지 않는다. 전용 어빌리티가 자신의 흐름(홀드/몽타주 등)이
+				// 끝난 시점에 알아서 호출한다.
 				if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 				{
 					FGameplayEventData Payload;
@@ -64,9 +67,11 @@ void UA1Ability_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 					ASC->HandleGameplayEvent(Options[0].InteractEventTag, &Payload);
 				}
 			}
-
-			// 기본 결과 처리.
-			Interactable->OnInteractAuth(Interactor);
+			else
+			{
+				// 태그가 없는 단순 케이스는 여기서 즉시 결과를 처리한다.
+				Interactable->OnInteractAuth(Interactor);
+			}
 
 			UE_LOG(A1AbilityInteractLog, Log, TEXT("Interact 실행: Interactor=%s Target=%s"), *GetNameSafe(Interactor), *GetNameSafe(TargetActor));
 		}

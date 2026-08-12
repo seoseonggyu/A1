@@ -69,6 +69,8 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact, "Ability.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Scan, "Ability.Interact.Scan");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Pickup, "Ability.Interact.Pickup");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Door, "Ability.Interact.Door");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_DropItem, "Ability.DropItem");
 

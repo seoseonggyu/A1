@@ -68,6 +68,8 @@ namespace A1GameplayTags
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Scan);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Pickup);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Door);
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_DropItem);
 
