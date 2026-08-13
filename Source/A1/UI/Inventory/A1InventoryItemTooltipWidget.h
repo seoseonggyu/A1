@@ -26,11 +26,6 @@ public:
 	void SetItem(UItemInstance* InItemInstance);
 
 protected:
-	/** BP 비주얼 갱신 훅 (스탯/희귀도 등 추가 표현) */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void OnItemSet(UItemInstance* InItemInstance);
-
-protected:
 	//-----------------------------------------------------------------------------
 	// BindWidget (BP에서 배치)
 	//-----------------------------------------------------------------------------

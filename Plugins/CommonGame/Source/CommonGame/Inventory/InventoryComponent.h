@@ -27,13 +27,9 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemReady, int32 /*ItemId*/, UI
 UENUM(BlueprintType)
 enum class EInventoryGridChangeType : uint8
 {
-	/** 새로 배치됨 → 위젯 생성 */
 	Added,
-	/** 스택/상태 변경 → 위젯 갱신 */
 	Changed,
-	/** 위치 이동 → 위젯 위치 이동 */
 	Moved,
-	/** 제거됨 → 위젯 제거 (Instance는 아직 유효) */
 	Removed
 };
 

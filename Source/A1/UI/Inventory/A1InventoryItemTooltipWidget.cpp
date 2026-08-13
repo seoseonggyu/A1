@@ -29,6 +29,4 @@ void UA1InventoryItemTooltipWidget::SetItem(UItemInstance* InItemInstance)
 	{
 		Text_Description->SetText(Definition->Description);
 	}
-
-	OnItemSet(InItemInstance);
 }

@@ -20,8 +20,6 @@ DEFINE_LOG_CATEGORY(A1InventoryWidgetLog);
 UA1InventoryWidget::UA1InventoryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// 키 입력을 받기 위한 설정
-	SetIsFocusable(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -42,38 +40,10 @@ void UA1InventoryWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UA1InventoryWidget::NativeOnActivated()
-{
-	Super::NativeOnActivated();
-
-	// 키보드 포커스를 가져와야 NativeOnKeyDown이 호출된다.
-	// 포커스가 없으면 Esc 등 입력이 그대로 새어나가 에디터 단축키(PIE 종료 등)로 흘러간다.
-	SetFocus();
-}
-
-void UA1InventoryWidget::NativeOnDeactivated()
-{
-	Super::NativeOnDeactivated();
-
-	OnInventoryWindowClosed.Broadcast();
-}
-
-FReply UA1InventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
-{
-	if (InKeyEvent.GetKey() == EKeys::Escape ||InKeyEvent.GetKey() == EKeys::Tab)
-	{
-		DeactivateWidget();
-		return FReply::Handled();
-	}
-
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
-}
-
 void UA1InventoryWidget::SetupInventory()
 {
 	if (InventoryComponent)
 	{
-		// 이미 구성됨 (재활성화 등)
 		return;
 	}
 

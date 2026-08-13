@@ -9,17 +9,12 @@ class UImage;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1InventoryCellWidgetLog, Log, All);
 
-/**
- * 인벤토리 그리드 한 칸의 상태
- */
+/** 인벤토리 그리드 한 칸의 상태 */
 UENUM(BlueprintType)
 enum class EA1InventorySlotState : uint8
 {
-	/** 기본(하이라이트 없음) */
 	Default,
-	/** 배치 가능(초록) */
 	Valid,
-	/** 배치 불가(빨강) */
 	Invalid
 };
 
@@ -27,7 +22,6 @@ enum class EA1InventorySlotState : uint8
  * 인벤토리 그리드의 배경 셀 위젯
  *
  * 각 칸의 배경을 그리며, 드래그 중 배치 가능 여부를 초록/빨강으로 표시합니다.
- * 시각 요소는 BP에서 디자인하고, 상태 전환은 SetSlotState로 제어합니다.
  */
 UCLASS(Abstract)
 class A1_API UA1InventoryCellWidget : public UCommonExtensionUserWidget

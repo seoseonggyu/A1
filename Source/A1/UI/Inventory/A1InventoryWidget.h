@@ -40,9 +40,6 @@ public:
 	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	FVector2D GetUnitCellSize() const { return UnitCellSize; }
 
-	/** 창이 닫힐 때(비활성화) 브로드캐스트. Ability BP에서 바인딩해 EndAbility를 트리거하는 용도 */
-	UPROPERTY(BlueprintAssignable, Category = "Inventory")
-	FOnA1InventoryWindowClosed OnInventoryWindowClosed;
 
 protected:
 	//-----------------------------------------------------------------------------
@@ -51,9 +48,6 @@ protected:
 
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
-	virtual void NativeOnActivated() override;
-	virtual void NativeOnDeactivated() override;
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	//-----------------------------------------------------------------------------
 	// 드래그 & 드롭
