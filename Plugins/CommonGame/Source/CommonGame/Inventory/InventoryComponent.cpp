@@ -4,11 +4,7 @@
 
 #include "IPropertyTable.h"
 #include "Inventory/ItemDefinition.h"
-#include "Equipment/QuickBarComponent.h"
 #include "Equipment/EquipmentComponent.h"
-#include "Equipment/EquipmentInstance.h"
-#include "Equipment/EquipmentDefinition.h"
-#include "Inventory/Fragment/ItemFragment_Equipment.h"
 #include "Coroutine/CommonAssetAwaiters.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
@@ -104,6 +100,32 @@ void FInventoryEntry::NotifyRemoved(UInventoryComponent* Owner) const
 // UInventoryComponent
 //-----------------------------------------------------------------------------
 
+static TCoroTask<void> GiveInitialItemsCoroutine(UInventoryComponent* Component, TArray<FInitialItemEntry> Items)
+{
+	for (const FInitialItemEntry& Entry : Items)
+	{
+		if (!Entry.IsValid())
+		{
+			UE_LOG(InventoryComponentLog, Warning, TEXT("Invalid initial item entry"));
+			continue;
+		}
+
+		UItemInstance* Instance = co_await Component->AddItemAuthCoroutine(Entry.ItemDefinition, Entry.Count);
+
+		if (!Instance)
+		{
+			UE_LOG(InventoryComponentLog, Warning, TEXT("초기 아이템 추가 실패: %s"), *Entry.ItemDefinition->DisplayName.ToString());
+			continue;
+		}
+		
+		if (Entry.bAddToEquipment)
+		{
+			Component->ToEquipmentFromInventoryAuth(Instance);
+		}
+	}
+}
+
+
 UInventoryComponent::UInventoryComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	SetIsReplicatedByDefault(true);
@@ -151,80 +173,6 @@ void UInventoryComponent::BeginPlay()
 	}
 }
 
-static TCoroTask<void> GiveInitialItemsCoroutine(UInventoryComponent* Component, TArray<FInitialItemEntry> Items)
-{
-	for (const FInitialItemEntry& Entry : Items)
-	{
-		if (!Entry.IsValid())
-		{
-			UE_LOG(InventoryComponentLog, Warning, TEXT("Invalid initial item entry"));
-			continue;
-		}
-
-		UItemInstance* Instance = co_await Component->AddItemAuthCoroutine(Entry.ItemDefinition, Entry.Count);
-
-		if (!Instance)
-		{
-			UE_LOG(InventoryComponentLog, Warning, TEXT("초기 아이템 추가 실패: %s"), *Entry.ItemDefinition->DisplayName.ToString());
-			continue;
-		}
-
-		if (Entry.bAddToQuickBar)
-		{
-			if (UQuickBarComponent* QuickBar = Component->GetOwner()->FindComponentByClass<UQuickBarComponent>())
-			{
-				QuickBar->AddItemToSlotAuth(Instance);
-			}
-
-			// 장착하고 Inventory UI 작업처리
-			Component->UnplaceItemAuth(Instance->ItemId);
-		}
-	}
-}
-
-/**
- * 인벤토리 아이템을 장비 슬롯에 장착하는 서버 코루틴 (에셋 로딩 대기 포함).
- * 아이템의 장비 슬롯이 드롭한 슬롯과 일치할 때만 장착하고, 성공하면 인벤토리 그리드에서 내립니다.
- */
-static TCoroTask<void> EquipFromInventoryCoroutine(UInventoryComponent* Inventory, int32 ItemId, FGameplayTag ExpectedSlotTag)
-{
-	if (!Inventory)
-	{
-		co_return;
-	}
-
-	UItemInstance* Item = Inventory->FindItemById(ItemId);
-	if (!Item)
-	{
-		co_return;
-	}
-
-	// 아이템의 장비 슬롯이 드롭한 슬롯과 일치하는지 검증 (예: 헬멧을 무기 슬롯에 못 넣게)
-	const FItemFragment_Equipment* Fragment = Item->FindFragment<FItemFragment_Equipment>();
-	if (!Fragment || !Fragment->EquipmentDefinition || Fragment->EquipmentDefinition->SlotTag != ExpectedSlotTag)
-	{
-		co_return;
-	}
-
-	const AController* OwningController = Cast<AController>(Inventory->GetOwner());
-	APawn* Pawn = OwningController ? OwningController->GetPawn() : nullptr;
-	UEquipmentComponent* EquipmentComp = UEquipmentComponent::FindEquipmentComponent(Pawn);
-	if (!EquipmentComp)
-	{
-		co_return;
-	}
-
-	UEquipmentInstance* Equipped = co_await EquipmentComp->EquipItemAuthCoroutine(Item);
-
-	// co_await 이후 Owner/결과 유효성 재확인
-	if (!IsValid(Inventory) || !Equipped)
-	{
-		co_return;
-	}
-
-	// 장착 성공 → 인벤토리 그리드에서 내려 UI에서 제거
-	Inventory->UnplaceItemAuth(ItemId);
-}
 
 void UInventoryComponent::GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn)
 {
@@ -293,6 +241,7 @@ UItemInstance* UInventoryComponent::AddItemAuthInternal(const UItemDefinition* D
 	Entry.ItemId = GenerateItemId();
 	Entry.StackCount = Count;
 	Entry.SlotPosition = SlotPos;
+	Entry.bEquipment = false;
 
 	// Instance 생성
 	UItemInstance* NewInstance = NewObject<UItemInstance>(this);
@@ -428,41 +377,30 @@ void UInventoryComponent::GetAllItems(TArray<UItemInstance*>& OutItems) const
 	}
 }
 
-void UInventoryComponent::SetOccupiedCellsAuth(int32 CellPos, bool Value)
+void UInventoryComponent::ToEquipmentFromInventoryAuth(UItemInstance* Instance)
 {
-	if (!GetOwner()->HasAuthority())
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !Instance)
 	{
 		return;
 	}
-
-	if (CellPos < 0 || CellPos >= OccupiedCells.Num())
-	{
-		return;
-	}
-
-	OccupiedCells[CellPos] = Value;
-	MARK_PROPERTY_DIRTY_FROM_NAME(UInventoryComponent, OccupiedCells, this);
-}
-
-void UInventoryComponent::UnplaceItemAuth(int32 ItemId)
-{
-	if (!GetOwner() || !GetOwner()->HasAuthority())
-	{
-		return;
-	}
-
-	UItemInstance* Instance = FindItemById(ItemId);
-	if (!Instance)
-	{
-		return;
-	}
-
+	
 	const int32 Index = Instance->ArrayIndex;
 	if (!InventoryList.Entries.IsValidIndex(Index))
 	{
 		return;
 	}
+	
+	const AController* Controller = Cast<AController>(GetOwner());
+	UEquipmentComponent* EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn());
+	if (!EquipmentComponent)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("초기 아이템 장착 실패: EquipmentComponent를 찾을 수 없습니다"));
+		return;
+	}
 
+	// 아이템 장착
+	EquipmentComponent->HandleActiveEquipChangedAuth(Instance);
+	
 	const FIntPoint Size = GetSizeFromDefinition(InventoryList.Entries[Index].Definition);
 	const FIntPoint SlotPos = InventoryList.Entries[Index].SlotPosition;
 	if (SlotPos.X >= 0 && SlotPos.Y >= 0)
@@ -478,11 +416,20 @@ void UInventoryComponent::UnplaceItemAuth(int32 ItemId)
 	}
 
 	InventoryList.Entries[Index].SlotPosition = FIntPoint(-1, -1);
+	InventoryList.Entries[Index].bEquipment = true;
 	InventoryList.Entries[Index].NotifyChanged(this);
-	// 개별 엔트리를 dirty로 표시해야 SlotPosition 변경이 클라이언트로 복제되고
-	// PostReplicatedChange가 불려 인벤토리 UI가 아이콘을 제거한다.
-	// (MarkArrayDirty만으로는 배열 추가/제거만 감지되고 항목 내부 변경은 누락됨)
 	InventoryList.MarkEntryDirty(InventoryList.Entries[Index]);
+}
+
+void UInventoryComponent::SetOccupiedCellsAuth(int32 CellPos, bool Value)
+{
+	if (!GetOwner()->HasAuthority() || CellPos < 0 || CellPos >= OccupiedCells.Num())
+	{
+		return;
+	}
+
+	OccupiedCells[CellPos] = Value;
+	MARK_PROPERTY_DIRTY_FROM_NAME(UInventoryComponent, OccupiedCells, this);
 }
 
 FInventoryEntry* UInventoryComponent::FindEntry(const UItemInstance* Instance)
@@ -592,8 +539,7 @@ TCoroTask<void> UInventoryComponent::InitializeReplicatedItemCoroutine(FInventor
 
 FIntPoint UInventoryComponent::GetSizeFromDefinition(const UItemDefinition* InDefinition)
 {
-	const FIntPoint Size = InDefinition ? InDefinition->SlotCount : FIntPoint::ZeroValue;
-	return Size;
+	return InDefinition ? InDefinition->SlotCount : FIntPoint::ZeroValue;
 }
 
 FIntPoint UInventoryComponent::GetSlotPosition(const UItemInstance* Instance) const
@@ -636,7 +582,7 @@ bool UInventoryComponent::FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlo
 bool UInventoryComponent::CanPlaceAt(const FIntPoint& Anchor, const FIntPoint& Size, const UItemInstance* IgnoreInstance) const
 {
 	if (Size.X <= 0 || Size.Y <= 0
-		|| Anchor.X < 0 || Anchor.Y < 0 
+		|| Anchor.X < 0 || Anchor.Y < 0
 		|| Anchor.X + Size.X > GridSize.X || Anchor.Y + Size.Y > GridSize.Y)
 	{
 		return false;
@@ -734,41 +680,4 @@ void UInventoryComponent::MoveItemServer_Implementation(int32 ItemId, FIntPoint 
 	}
 
 	MoveItemAuth(Instance, NewAnchor);
-}
-
-void UInventoryComponent::UnequipToInventoryServer_Implementation(int32 ItemId, FGameplayTag EquipmentSlotTag, FIntPoint NewAnchor)
-{
-	UItemInstance* Instance = FindItemById(ItemId);
-	if (!Instance)
-	{
-		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: ItemId=%d 아이템을 찾을 수 없습니다"), ItemId);
-		return;
-	}
-
-	// 배치 가능 여부를 먼저 검증한다. 배치할 수 없으면 장착 해제도 하지 않아 상태를 그대로 유지한다.
-	const FIntPoint Size = GetSizeFromDefinition(Instance->Definition);
-	if (!CanPlaceAt(NewAnchor, Size, Instance))
-	{
-		return;
-	}
-
-	// Pawn의 EquipmentComponent에서 해당 슬롯의 장비를 찾아 해제한다.
-	const AController* OwningController = Cast<AController>(GetOwner());
-	APawn* Pawn = OwningController ? OwningController->GetPawn() : nullptr;
-	if (UEquipmentComponent* EquipmentComp = UEquipmentComponent::FindEquipmentComponent(Pawn))
-	{
-		if (UEquipmentInstance* Equipment = EquipmentComp->GetEquipmentInSlot(EquipmentSlotTag))
-		{
-			EquipmentComp->UnequipItemAuth(Equipment);
-		}
-	}
-
-	// 인벤토리 그리드에 배치한다 (장착 중에는 미배치 상태였음)
-	MoveItemAuth(Instance, NewAnchor);
-}
-
-void UInventoryComponent::EquipFromInventoryServer_Implementation(int32 ItemId, FGameplayTag EquipmentSlotTag)
-{
-	// 장착은 에셋 로딩 대기가 있어 코루틴으로 처리한다 (fire-and-forget, GiveInitialItems와 동일 패턴)
-	EquipFromInventoryCoroutine(this, ItemId, EquipmentSlotTag);
 }

@@ -62,14 +62,6 @@ public:
 	// 런타임 데이터 (리플리케이션 안 함)
 	//-----------------------------------------------------------------------------
 
-	/**
-	 * 장비 인스턴스 (서버: EquipItemAuthInternal에서 즉시 생성 / 클라이언트: PostReplicatedAdd가
-	 * 시작하는 InitializeReplicatedEquipmentCoroutine에서 에셋 로딩 후 로컬 생성).
-	 *
-	 * 클라이언트에서는 비동기 로딩이 끝나기 전까지 nullptr입니다. 따라서 초기화 도중 장비가
-	 * 해제되면 PreReplicatedRemove 시점에 이 값이 아직 null일 수 있는데, 그 경우 스폰된 액터도
-	 * 없으므로(코루틴의 re-find 가드가 스폰을 막음) 정리할 대상도 없습니다.
-	 */
 	UPROPERTY(NotReplicated, Transient)
 	TObjectPtr<UEquipmentInstance> Instance = nullptr;
 	
@@ -129,7 +121,7 @@ public:
 	/** Pawn에서 EquipmentComponent를 찾아 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static UEquipmentComponent* FindEquipmentComponent(const APawn* Pawn);
-
+	
 	//-----------------------------------------------------------------------------
 	// UActorComponent 오버라이드
 	//-----------------------------------------------------------------------------
@@ -141,12 +133,15 @@ public:
 	// 장비 관리 (서버 전용)
 	//-----------------------------------------------------------------------------
 
-	/** 아이템을 장착합니다 (서버 전용, 코루틴) */
-	TCoroTask<UEquipmentInstance*> EquipItemAuthCoroutine(UItemInstance* Item);
-
+	TCoroTask<void> HandleActiveEquipChangedAuth(UItemInstance* Instance);
+	
 	/** 장비를 해제합니다 (서버 전용) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
-	bool UnequipItemAuth(UEquipmentInstance* Instance);
+	void UnequipItemAuth(FGameplayTag SlotTag);
+	
+	/** 아이템을 장착합니다 (서버 전용, 코루틴) */
+	TCoroTask<UEquipmentInstance*> EquipItemAuthCoroutine(UItemInstance* Item);
+	
 
 	/** 모든 장비를 해제합니다 (서버 전용) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
@@ -206,4 +201,5 @@ protected:
 private:
 	/** 슬롯별 진행 중인 초기화 태스크 (새 요청 시 취소용) */
 	TMap<FGameplayTag, TCoroTask<void>> PendingInitTasks;
+
 };

@@ -101,6 +101,60 @@ void UEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+TCoroTask<void> UEquipmentComponent::HandleActiveEquipChangedAuth(UItemInstance* Item)
+{
+	if (!GetOwner()->HasAuthority()) co_return;
+	
+	const FItemFragment_Equipment* Fragment = Item->FindFragment<FItemFragment_Equipment>();
+	const UEquipmentDefinition* Definition = Fragment->EquipmentDefinition;
+	const FGameplayTag& SlotTag = Definition->SlotTag;
+	
+	UnequipItemAuth(SlotTag);
+	
+	// TODO: 현재 Main아이템 처리 필요
+	TObjectPtr<UEquipmentInstance> EquippedItem = nullptr;
+	EquippedItem = co_await EquipItemAuthCoroutine(Item);
+	
+}
+
+void UEquipmentComponent::UnequipItemAuth(FGameplayTag SlotTag)
+{
+	// 같은 슬롯에 장비가 있으면 해제
+	if (UEquipmentInstance* Instance = GetEquipmentInSlot(SlotTag))
+	{
+		if (!Instance)
+		{
+			return;
+		}
+
+		int32 EntryIndex = INDEX_NONE;
+		for (int32 i = 0; i < EquipmentList.Entries.Num(); ++i)
+		{
+			if (EquipmentList.Entries[i].Instance == Instance)
+			{
+				EntryIndex = i;
+				break;
+			}
+		}
+
+		if (EntryIndex == INDEX_NONE)
+		{
+			UE_LOG(EquipmentComponentLog, Warning, TEXT("UnequipItemAuth: 장착 목록에서 찾을 수 없습니다"));
+			return;
+		}
+
+		// 슬롯 맵에서 제거합니다
+		RemoveFromSlotMap(Instance);
+
+		// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PreReplicatedRemove에서 호출됨)
+		Instance->OnUnequipped();
+	
+		// 목록에서 제거합니다
+		EquipmentList.Entries.RemoveAtSwap(EntryIndex);
+		EquipmentList.MarkArrayDirty();
+	}
+}
+
 void UEquipmentComponent::StartReplicatedEquipmentInit(FEquipmentEntry* Entry)
 {
 	if (!Entry || !Entry->Definition)
@@ -269,13 +323,7 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	const FItemFragment_Equipment* Fragment = Item->FindFragment<FItemFragment_Equipment>();
 	const UEquipmentDefinition* Definition = Fragment->EquipmentDefinition;
 	const FGameplayTag& SlotTag = Definition->SlotTag;
-
-	// 같은 슬롯에 장비가 있으면 해제합니다
-	if (UEquipmentInstance* ExistingEquipment = GetEquipmentInSlot(SlotTag))
-	{
-		UnequipItemAuth(ExistingEquipment);
-	}
-
+	
 	// Entry 설정 (리플리케이션 데이터)
 	FEquipmentEntry& NewEntry = EquipmentList.Entries.AddDefaulted_GetRef();
 	NewEntry.Definition = Definition;
@@ -289,10 +337,7 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	// 슬롯 맵에 등록합니다
 	AddToSlotMap(NewInstance);
 
-	// 서버에서도 장비 액터를 스폰합니다.
-	// 서버 권한에서 도는 히트 판정(예: UA1AnimNotifyState_PerformTrace)을 위해
-	// 서버에도 로컬 장비 액터가 존재해야 합니다.
-	// (클라이언트는 PostReplicatedAdd 코루틴에서 각자 로컬 스폰 — 장비 액터는 비복제 로컬 액터 전제)
+	// 히트 판정을 위해 서버에서도 장비 액터를 스폰
 	NewInstance->SpawnEquipmentActors();
 
 	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PostReplicatedAdd에서 호출됨)
@@ -301,50 +346,13 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 	return NewInstance;
 }
 
-bool UEquipmentComponent::UnequipItemAuth(UEquipmentInstance* Instance)
-{
-	if (!Instance)
-	{
-		return false;
-	}
-
-	int32 EntryIndex = INDEX_NONE;
-	for (int32 i = 0; i < EquipmentList.Entries.Num(); ++i)
-	{
-		if (EquipmentList.Entries[i].Instance == Instance)
-		{
-			EntryIndex = i;
-			break;
-		}
-	}
-
-	if (EntryIndex == INDEX_NONE)
-	{
-		UE_LOG(EquipmentComponentLog, Warning, TEXT("UnequipItemAuth: 장착 목록에서 찾을 수 없습니다"));
-		return false;
-	}
-
-	// 슬롯 맵에서 제거합니다
-	RemoveFromSlotMap(Instance);
-
-	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PreReplicatedRemove에서 호출됨)
-	Instance->OnUnequipped();
-
-	// 서버에서 스폰한 장비 액터를 파괴합니다 (클라이언트는 PreReplicatedRemove에서 파괴됨)
-	Instance->DestroyEquipmentActors();
-
-	// 목록에서 제거합니다
-	EquipmentList.Entries.RemoveAtSwap(EntryIndex);
-	EquipmentList.MarkArrayDirty();
-
-	return true;
-}
 
 void UEquipmentComponent::UnequipAllAuth()
 {
 	while (EquipmentList.Entries.Num() > 0)
 	{
-		UnequipItemAuth(EquipmentList.Entries[0].Instance);
+		break;
+		// UnequipItemAuth(EquipmentList.Entries[0].Instance);
 	}
 }
 

@@ -296,7 +296,7 @@ bool UA1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 	if (DragOp->FromEquipmentSlotTag.IsValid())
 	{
 		// 장비창에서 온 드래그: 서버에서 장착 해제 후 인벤토리 그리드에 배치
-		InventoryComponent->UnequipToInventoryServer(DragOp->ItemId, DragOp->FromEquipmentSlotTag, Anchor);
+		//InventoryComponent->UnequipToInventoryServer(DragOp->ItemId, DragOp->FromEquipmentSlotTag, Anchor);
 	}
 	else
 	{

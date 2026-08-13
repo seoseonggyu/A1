@@ -19,11 +19,7 @@ DECLARE_LOG_CATEGORY_EXTERN(InventoryComponentLog, Log, All);
 /** 아이템 생성 및 초기화 완료 델리게이트 */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventoryItemReady, int32 /*ItemId*/, UItemInstance* /*Instance*/);
 
-/**
- * 그리드 변경 종류
- *
- * UI가 ItemId 기준으로 위젯을 생성/갱신/제거할 수 있도록 변경 유형을 구분합니다.
- */
+/** 그리드 변경 종류 */
 UENUM(BlueprintType)
 enum class EInventoryGridChangeType : uint8
 {
@@ -60,9 +56,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = "1"))
 	int32 Count = 1;
 
-	/** QuickBar에도 추가할지 여부 */
+	/** 실제로 장착할지 여부 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	bool bAddToQuickBar = false;
+	bool bAddToEquipment = false;
 };
 
 
@@ -108,6 +104,9 @@ public:
 	/** 2D 그리드 앵커 위치(좌상단 셀). (-1,-1) 이면 아직 배치되지 않은 상태 */
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	FIntPoint SlotPosition = FIntPoint(-1, -1);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
+	bool bEquipment = false;
 
 	//-----------------------------------------------------------------------------
 	// 런타임 데이터 (리플리케이션 안 함)
@@ -190,6 +189,10 @@ public:
 	// 아이템 관리 (서버 전용)
 	//-----------------------------------------------------------------------------
 
+	/** 초기 아이템을 지급합니다 (서버 전용, Pawn Possess 시 호출) */
+	UFUNCTION()
+	void GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn);
+	
 	/** 아이템을 추가합니다 (서버 전용, 코루틴) */
 	TCoroTask<UItemInstance*> AddItemAuthCoroutine(const UItemDefinition* Definition, int32 Count = 1);
 
@@ -204,10 +207,6 @@ public:
 	/** TagStat 값을 변경합니다 (클라이언트 → 서버 RPC) */
 	UFUNCTION(Server, Reliable)
 	void ModifyTagStatServer(int32 ItemId, FGameplayTag StatTag, float NewValue);
-	
-	/** 초기 아이템을 지급합니다 (서버 전용, Pawn Possess 시 호출) */
-	UFUNCTION()
-	void GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn);
 
 	//-----------------------------------------------------------------------------
 	// 아이템 조회
@@ -220,6 +219,13 @@ public:
 	/** 모든 아이템을 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void GetAllItems(TArray<UItemInstance*>& OutItems) const;
+	
+	//-----------------------------------------------------------------------------
+	// 장착 관리
+	//-----------------------------------------------------------------------------
+
+	void ToEquipmentFromInventoryAuth(UItemInstance* Instance);
+
 
 	//-----------------------------------------------------------------------------
 	// Cell 관리
@@ -228,8 +234,6 @@ public:
 	/** 서버 전용 */
 	void SetOccupiedCellsAuth(int32 CellPos, bool Value);
 	
-	/** 서버 전용. 실제로 아이템을 제거하지는 않고 UI 상에서만 제거 */
-	void UnplaceItemAuth(int32 ItemId);
 	
 	/** 크기 Size(칸 수)의 아이템이 들어갈 수 있는 빈 앵커 위치를 찾는다 */
 	bool FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlotPos) const;
@@ -248,21 +252,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void MoveItemServer(int32 ItemId, FIntPoint NewAnchor);
 
-	/**
-	 * 장착된 아이템을 해제하고 인벤토리 앵커 위치에 배치합니다 (클라이언트 → 서버 RPC).
-	 * 아이템은 장착 중에도 인벤토리에 남아있으므로(미배치 상태), 여기서 그리드에 다시 배치합니다.
-	 */
-	UFUNCTION(Server, Reliable)
-	void UnequipToInventoryServer(int32 ItemId, FGameplayTag EquipmentSlotTag, FIntPoint NewAnchor);
-
-	/**
-	 * 인벤토리 아이템을 장비 슬롯에 장착합니다 (클라이언트 → 서버 RPC).
-	 * EquipmentSlotTag는 드롭한 장비 슬롯으로, 아이템의 장비 슬롯과 일치할 때만 장착합니다.
-	 * 장착에 성공하면 아이템은 인벤토리 그리드에서 내려집니다(미배치).
-	 */
-	UFUNCTION(Server, Reliable)
-	void EquipFromInventoryServer(int32 ItemId, FGameplayTag EquipmentSlotTag);
-
+	
 	//-----------------------------------------------------------------------------
 	// 2D 그리드
 	//-----------------------------------------------------------------------------
@@ -346,7 +336,7 @@ protected:
 
 	/** 아이템 ID -> Instance 맵 */
 	TMap<int32, TObjectPtr<UItemInstance>> ItemMap;
-
+	
 	/** 인벤토리 2D 그리드 크기(칸 수) */
 	UPROPERTY()
 	FIntPoint GridSize = FIntPoint(10, 8);

@@ -26,6 +26,21 @@ enum class EEquipmentSlotType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EEquipState : uint8
+{
+	Unarmed,
+	
+	Weapon,
+
+	Utility_Primary,
+	Utility_Secondary,
+	Utility_Tertiary,
+	Utility_Quaternary,
+
+	Count	UMETA(Hidden)
+};
+
+UENUM(BlueprintType)
 enum class EArmorType : uint8
 {
 	Helmet,

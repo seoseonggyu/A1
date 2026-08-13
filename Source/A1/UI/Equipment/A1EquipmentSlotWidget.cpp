@@ -150,7 +150,7 @@ bool UA1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	}
 
 	// 실제 장착은 서버 권위로 처리되고, 결과가 리플리케이션되면 양쪽 UI가 갱신된다
-	Inventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
+	//Inventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
 	return true;
 }
 
