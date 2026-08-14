@@ -13,7 +13,6 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Unarmed_RightHand);
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Weapon);
-	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Shield);
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Primary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Secondary);

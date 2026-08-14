@@ -43,7 +43,7 @@ void FEquipmentFragment_AnimationData::OnUnequipped(UEquipmentInstance* Instance
 		return;
 	}
 
-	Character->ResetAnimationToDefault(); // TODO: Equipment 해제 후 기본 애니메이션 상태로?
+	Character->ResetAnimationToDefault();
 }
 
 TCoroTask<void> FEquipmentFragment_AnimationData::LoadAnimMontageCoroutine(ACommonCharacter* Character, TSoftObjectPtr<UAnimMontage> Montage)

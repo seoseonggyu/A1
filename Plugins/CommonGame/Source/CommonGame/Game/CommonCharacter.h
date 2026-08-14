@@ -38,12 +38,16 @@ public:
 	UCommonCameraComponent* GetCommonCameraComponent() const { return CameraComponent; }
 
 	void SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const;
-	void ResetAnimationToDefault() const;
+	virtual void ResetAnimationToDefault() const;
 
 
 protected:
 	/** Top-Down 카메라 컴포넌트 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCommonCameraComponent> CameraComponent;
+	
+	/** 적용할 애니메이션 데이터 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TSubclassOf<UAnimInstance> DefaultAnimInstanceClass;
 
 };

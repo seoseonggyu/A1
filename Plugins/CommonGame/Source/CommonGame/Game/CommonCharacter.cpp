@@ -16,6 +16,7 @@ ACommonCharacter::ACommonCharacter(const FObjectInitializer& ObjectInitializer)
 void ACommonCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	SetAnimationData(DefaultAnimInstanceClass);
 
 }
 
@@ -49,5 +50,6 @@ void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClas
 
 void ACommonCharacter::ResetAnimationToDefault() const
 {
-	// TODO: 
+	SetAnimationData(DefaultAnimInstanceClass);
 }
+
