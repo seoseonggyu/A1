@@ -32,6 +32,11 @@ void FEquipmentEntry::PostReplicatedAdd(const FEquipmentList& InArraySerializer)
 
 void FEquipmentEntry::PostReplicatedChange(const FEquipmentList& InArraySerializer)
 {
+	// 서버가 bActive를 토글하면(메인 장비 전환) 클라이언트도 액터를 스폰/제거해 맞춥니다.
+	if (InArraySerializer.Owner)
+	{
+		InArraySerializer.Owner->ReconcileReplicatedEntryActors(const_cast<FEquipmentEntry*>(this));
+	}
 }
 
 void FEquipmentEntry::PreReplicatedRemove(const FEquipmentList& InArraySerializer)
@@ -50,8 +55,8 @@ void FEquipmentEntry::PreReplicatedRemove(const FEquipmentList& InArraySerialize
 			InArraySerializer.Owner->RemoveFromSlotMap(Instance);
 		}
 
-		Instance->OnUnequipped();
-		Instance->DestroyEquipmentActors();
+		// 활성 상태였을 때만 실제 해제됩니다(멱등). 비활성(비메인) 엔트리면 무시됩니다.
+		Instance->DeactivateEquipment();
 	}
 }
 
@@ -103,56 +108,63 @@ void UEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 TCoroTask<void> UEquipmentComponent::HandleActiveEquipChangedAuth(UItemInstance* Item)
 {
-	if (!GetOwner()->HasAuthority()) co_return;
-	
+	if (!GetOwner()->HasAuthority())
+	{
+		co_return;
+	}
+	if (!Item)
+	{
+		co_return;
+	}
+
 	const FItemFragment_Equipment* Fragment = Item->FindFragment<FItemFragment_Equipment>();
-	const UEquipmentDefinition* Definition = Fragment->EquipmentDefinition;
-	const FGameplayTag& SlotTag = Definition->SlotTag;
-	
+	if (!Fragment || !Fragment->EquipmentDefinition)
+	{
+		co_return;
+	}
+
+	const FGameplayTag SlotTag = Fragment->EquipmentDefinition->SlotTag;
+
+	// 같은 Equipment 슬롯에 이미 장비가 있으면 먼저 해제합니다(방어구 교체 시나리오).
+	// 메인 장비류(검/물약)는 각자 고유한 Equipment 슬롯을 쓰므로 서로를 밀어내지 않고,
+	// 스폰 여부는 EquipItemAuthInternal의 메인 장비 전환 로직이 담당합니다.
 	UnequipItemAuth(SlotTag);
-	
-	// TODO: 현재 Main아이템 처리 필요
-	TObjectPtr<UEquipmentInstance> EquippedItem = nullptr;
-	EquippedItem = co_await EquipItemAuthCoroutine(Item);
-	
+
+	co_await EquipItemAuthCoroutine(Item);
 }
 
 void UEquipmentComponent::UnequipItemAuth(FGameplayTag SlotTag)
 {
-	// 같은 슬롯에 장비가 있으면 해제
-	if (UEquipmentInstance* Instance = GetEquipmentInSlot(SlotTag))
+	// 해당 Equipment 슬롯에 장비가 없으면 아무것도 하지 않습니다.
+	UEquipmentInstance* Instance = GetEquipmentInSlot(SlotTag);
+	if (!Instance)
 	{
-		if (!Instance)
-		{
-			return;
-		}
-
-		int32 EntryIndex = INDEX_NONE;
-		for (int32 i = 0; i < EquipmentList.Entries.Num(); ++i)
-		{
-			if (EquipmentList.Entries[i].Instance == Instance)
-			{
-				EntryIndex = i;
-				break;
-			}
-		}
-
-		if (EntryIndex == INDEX_NONE)
-		{
-			UE_LOG(EquipmentComponentLog, Warning, TEXT("UnequipItemAuth: 장착 목록에서 찾을 수 없습니다"));
-			return;
-		}
-
-		// 슬롯 맵에서 제거합니다
-		RemoveFromSlotMap(Instance);
-
-		// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PreReplicatedRemove에서 호출됨)
-		Instance->OnUnequipped();
-	
-		// 목록에서 제거합니다
-		EquipmentList.Entries.RemoveAtSwap(EntryIndex);
-		EquipmentList.MarkArrayDirty();
+		return;
 	}
+
+	FEquipmentEntry* Entry = FindEntryByInstance(Instance);
+	if (!Entry)
+	{
+		UE_LOG(EquipmentComponentLog, Warning, TEXT("UnequipItemAuth: 장착 목록에서 찾을 수 없습니다"));
+		return;
+	}
+
+	// 메인 장비였다면 참조를 정리합니다.
+	if (MainEquippedItem == Instance)
+	{
+		MainEquippedItem = nullptr;
+	}
+
+	// 슬롯 맵(데이터)에서 제거합니다.
+	RemoveFromSlotMap(Instance);
+
+	// 액터/Fragment 해제 (활성 상태였을 때만 실제 동작, 멱등).
+	Instance->DeactivateEquipment();
+
+	// 목록에서 제거합니다.
+	const int32 EntryIndex = static_cast<int32>(Entry - EquipmentList.Entries.GetData());
+	EquipmentList.Entries.RemoveAt(EntryIndex);
+	EquipmentList.MarkArrayDirty();
 }
 
 void UEquipmentComponent::StartReplicatedEquipmentInit(FEquipmentEntry* Entry)
@@ -237,11 +249,17 @@ TCoroTask<void> UEquipmentComponent::InitializeReplicatedEquipmentCoroutine(FEqu
 	UEquipmentInstance* NewInstance = CreateEquipmentInstance(Definition, SourceItemId);
 	CurrentEntry->Instance = NewInstance;
 
-	// 슬롯 맵에 등록 및 초기화
+	// 슬롯 맵(데이터)에는 항상 등록합니다 (UI/조회용).
 	AddToSlotMap(NewInstance);
-	NewInstance->SpawnEquipmentActors();
-	NewInstance->OnEquipped();
-	
+
+	// 활성(메인 또는 방어구)일 때만 액터를 스폰합니다.
+	// 비활성(비메인 메인 장비)이면 데이터만 유지하고, 이후 bActive가 true로 바뀌면
+	// PostReplicatedChange(ReconcileReplicatedEntryActors)에서 스폰됩니다.
+	if (CurrentEntry->bActive)
+	{
+		NewInstance->ActivateEquipment();
+	}
+
 	// 완료된 태스크 정리
 	PendingInitTasks.Remove(SlotTag);
 }
@@ -305,6 +323,41 @@ TCoroTask<UEquipmentInstance*> UEquipmentComponent::EquipItemAuthCoroutine(UItem
 	co_return Instance;
 }
 
+
+bool UEquipmentComponent::CanSetActiveSlot(FGameplayTag QuickBarSlotTag) const
+{
+	if (!QuickBarSlotTag.IsValid())
+	{
+		return false;
+	}
+
+	// 이미 활성화된 메인 장비의 슬롯이면 재선택을 무시합니다.
+	// (MainEquippedItem은 서버 전용이라 클라이언트에서는 항상 통과 후 서버가 최종 검증합니다.)
+	if (MainEquippedItem && MainEquippedItem->GetQuickBarSlotTag() == QuickBarSlotTag)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void UEquipmentComponent::SetActiveSlotServer_Implementation(FGameplayTag QuickBarSlotTag)
+{
+	if (!CanSetActiveSlot(QuickBarSlotTag))
+	{
+		return;
+	}
+
+	// 이미 장착(데이터 등록)된 장비 중 해당 QuickBar 슬롯을 쓰는 것을 메인으로 전환합니다.
+	UEquipmentInstance* Target = FindEquipmentByQuickBarSlot(QuickBarSlotTag);
+	if (!Target)
+	{
+		return;
+	}
+
+	SetMainEquippedAuth(Target);
+}
+
 UEquipmentInstance* UEquipmentComponent::CreateEquipmentInstance(const UEquipmentDefinition* Definition, int32 SourceItemId) const
 {
 	// InstanceClass 결정 (설정된 클래스가 없으면 기본 UEquipmentInstance 사용)
@@ -322,38 +375,147 @@ UEquipmentInstance* UEquipmentComponent::EquipItemAuthInternal(UItemInstance* It
 {
 	const FItemFragment_Equipment* Fragment = Item->FindFragment<FItemFragment_Equipment>();
 	const UEquipmentDefinition* Definition = Fragment->EquipmentDefinition;
-	const FGameplayTag& SlotTag = Definition->SlotTag;
-	
+
 	// Entry 설정 (리플리케이션 데이터)
 	FEquipmentEntry& NewEntry = EquipmentList.Entries.AddDefaulted_GetRef();
 	NewEntry.Definition = Definition;
 	NewEntry.SourceItemId = Item->ItemId;
-	
-	// Instance 생성 및 초기화
+
+	// Instance 생성
 	UEquipmentInstance* NewInstance = CreateEquipmentInstance(Definition, Item->ItemId);
 	NewEntry.Instance = NewInstance;
-	EquipmentList.MarkItemDirty(NewEntry);
 
-	// 슬롯 맵에 등록합니다
+	// 슬롯 맵(데이터)에 등록합니다.
 	AddToSlotMap(NewInstance);
 
-	// 히트 판정을 위해 서버에서도 장비 액터를 스폰
-	NewInstance->SpawnEquipmentActors();
+	if (NewInstance->GetQuickBarSlotTag().IsValid())
+	{
+		// 손에 드는 메인 장비: 데이터만 먼저 확정하고, 실제 스폰은 메인 전환 로직이 처리합니다.
+		// (한 번에 하나만 스폰되며, 이전 메인은 데이터 유지한 채 액터만 해제됩니다.)
+		NewEntry.bActive = false;
+		EquipmentList.MarkEntryDirty(NewEntry);
 
-	// 서버에서 Fragment 콜백을 호출합니다 (클라이언트는 PostReplicatedAdd에서 호출됨)
-	NewInstance->OnEquipped();
-	
+		SetMainEquippedAuth(NewInstance);
+	}
+	else
+	{
+		// 방어구류: 즉시 활성화하여 계속 착용합니다 (서버도 히트 판정 등을 위해 스폰).
+		NewEntry.bActive = true;
+		EquipmentList.MarkEntryDirty(NewEntry);
+
+		NewInstance->ActivateEquipment();
+	}
+
 	return NewInstance;
 }
 
-
-void UEquipmentComponent::UnequipAllAuth()
+void UEquipmentComponent::SetMainEquippedAuth(UEquipmentInstance* NewMain)
 {
-	while (EquipmentList.Entries.Num() > 0)
+	if (MainEquippedItem == NewMain)
 	{
-		break;
-		// UnequipItemAuth(EquipmentList.Entries[0].Instance);
+		return;
 	}
+
+	// 이전 메인 장비의 액터만 해제합니다. 데이터(엔트리/슬롯 맵)는 그대로 유지합니다.
+	if (MainEquippedItem)
+	{
+		if (FEquipmentEntry* OldEntry = FindEntryByInstance(MainEquippedItem))
+		{
+			SetEntryActiveAuth(*OldEntry, false);
+		}
+	}
+
+	MainEquippedItem = NewMain;
+
+	// 새 메인 장비의 액터를 스폰합니다.
+	if (NewMain)
+	{
+		if (FEquipmentEntry* NewEntry = FindEntryByInstance(NewMain))
+		{
+			SetEntryActiveAuth(*NewEntry, true);
+		}
+	}
+}
+
+void UEquipmentComponent::SetEntryActiveAuth(FEquipmentEntry& Entry, bool bNewActive)
+{
+	if (Entry.bActive == bNewActive)
+	{
+		return;
+	}
+
+	Entry.bActive = bNewActive;
+
+	// 서버에서 액터를 직접 스폰/제거합니다 (클라이언트는 PostReplicatedChange에서 반영).
+	if (Entry.Instance)
+	{
+		if (bNewActive)
+		{
+			Entry.Instance->ActivateEquipment();
+		}
+		else
+		{
+			Entry.Instance->DeactivateEquipment();
+		}
+	}
+
+	EquipmentList.MarkEntryDirty(Entry);
+}
+
+void UEquipmentComponent::ReconcileReplicatedEntryActors(FEquipmentEntry* Entry)
+{
+	// Instance가 아직 없으면(초기화 코루틴 진행 중) 무시합니다.
+	// 코루틴 완료 시 현재 bActive 값을 읽어 스폰 여부를 결정하므로 여기서 처리할 필요가 없습니다.
+	if (!Entry || !Entry->Instance)
+	{
+		return;
+	}
+
+	// 두 메서드 모두 멱등이라 중복 호출은 안전하게 무시됩니다.
+	if (Entry->bActive)
+	{
+		Entry->Instance->ActivateEquipment();
+	}
+	else
+	{
+		Entry->Instance->DeactivateEquipment();
+	}
+}
+
+FEquipmentEntry* UEquipmentComponent::FindEntryByInstance(const UEquipmentInstance* Instance)
+{
+	if (!Instance)
+	{
+		return nullptr;
+	}
+
+	for (FEquipmentEntry& Entry : EquipmentList.Entries)
+	{
+		if (Entry.Instance == Instance)
+		{
+			return &Entry;
+		}
+	}
+
+	return nullptr;
+}
+
+UEquipmentInstance* UEquipmentComponent::FindEquipmentByQuickBarSlot(FGameplayTag QuickBarSlotTag) const
+{
+	if (!QuickBarSlotTag.IsValid())
+	{
+		return nullptr;
+	}
+
+	for (const FEquipmentEntry& Entry : EquipmentList.Entries)
+	{
+		if (Entry.Instance && Entry.Instance->GetQuickBarSlotTag() == QuickBarSlotTag)
+		{
+			return Entry.Instance;
+		}
+	}
+
+	return nullptr;
 }
 
 UEquipmentInstance* UEquipmentComponent::GetEquipmentInSlot(FGameplayTag SlotTag) const
@@ -377,7 +539,7 @@ AActor* UEquipmentComponent::GetEquipmentInstance(FGameplayTag SlotTag) const
 			return SpawnedActors[0];
 		}
 	}
-	
+
 	return nullptr;
 }
 
@@ -408,12 +570,10 @@ void UEquipmentComponent::RemoveFromSlotMap(UEquipmentInstance* Instance)
 	const FGameplayTag& SlotTag = Instance->Definition->SlotTag;
 	if (SlotTag.IsValid() && EquipmentSlots.Contains(SlotTag))
 	{
-		// 현재 슬롯에 있는 장비가 제거하려는 장비와 같을 때만 nullptr로 설정합니다
 		if (EquipmentSlots[SlotTag] == Instance)
 		{
 			EquipmentSlots[SlotTag] = nullptr;
 
-			// UI가 슬롯 아이콘을 비우도록 알림 (서버/클라이언트 모두 이 경로를 지남)
 			OnEquipmentSlotChanged.Broadcast(SlotTag, nullptr);
 		}
 	}

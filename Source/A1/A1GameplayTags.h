@@ -18,7 +18,6 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Primary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Secondary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Tertiary);
-	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Utility_Quaternary);
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Helmet);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Chest);

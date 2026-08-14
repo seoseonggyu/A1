@@ -45,6 +45,30 @@ UItemInstance* UEquipmentInstance::GetSourceItemInstance() const
 	return nullptr;
 }
 
+void UEquipmentInstance::ActivateEquipment()
+{
+	if (bEquipmentActive)
+	{
+		return;
+	}
+	bEquipmentActive = true;
+
+	SpawnEquipmentActors();
+	OnEquipped();
+}
+
+void UEquipmentInstance::DeactivateEquipment()
+{
+	if (!bEquipmentActive)
+	{
+		return;
+	}
+	bEquipmentActive = false;
+
+	OnUnequipped();
+	DestroyEquipmentActors();
+}
+
 void UEquipmentInstance::OnEquipped()
 {
 	if (!Definition)

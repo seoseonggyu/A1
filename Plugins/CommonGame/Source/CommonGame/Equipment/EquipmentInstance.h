@@ -106,6 +106,21 @@ public:
 		return FindFragment<T>() != nullptr;
 	}
 
+public:
+	/**
+	 * 장비를 활성화합니다 (액터 스폰 + OnEquipped).
+	 *
+	 * 이미 활성 상태면 아무것도 하지 않습니다(멱등). 메인 장비 전환 시 데이터는 유지한 채
+	 * 액터/Fragment만 켜고 끄기 위해 사용합니다.
+	 */
+	void ActivateEquipment();
+
+	/** 장비를 비활성화합니다 (OnUnequipped + 액터 제거). 이미 비활성이면 무시(멱등). */
+	void DeactivateEquipment();
+
+	/** 현재 액터가 스폰되어 활성 상태인지 반환합니다 */
+	bool IsEquipmentActive() const { return bEquipmentActive; }
+
 protected:
 	/** 장착 시 호출됩니다 (Fragment 복사 및 콜백, 서버+클라이언트) */
 	virtual void OnEquipped();
@@ -138,4 +153,8 @@ protected:
 
 	/** Fragment 인스턴스 목록 (Definition에서 복사됨) */
 	TArray<TInstancedStruct<FEquipmentFragment>> Fragments;
+
+private:
+	/** 액터 스폰/Fragment 적용 여부 (중복 Activate/Deactivate 방지, 비복제 런타임 상태) */
+	bool bEquipmentActive = false;
 };

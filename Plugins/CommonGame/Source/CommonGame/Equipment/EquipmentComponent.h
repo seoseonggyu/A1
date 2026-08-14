@@ -58,13 +58,22 @@ public:
 	UPROPERTY()
 	int32 SourceItemId = INDEX_NONE;
 
+	/**
+	 * 액터 스폰 활성 여부
+	 *
+	 * 데이터(엔트리/슬롯 맵)는 유지한 채 액터만 켜고 끄기 위한 플래그입니다.
+	 * 방어구는 항상 true, 손에 드는 메인 장비는 현재 활성인 하나만 true입니다.
+	 * 서버가 값을 바꾸면 클라이언트는 PostReplicatedChange에서 액터를 스폰/제거합니다.
+	 */
+	UPROPERTY()
+	bool bActive = false;
+
 	//-----------------------------------------------------------------------------
 	// 런타임 데이터 (리플리케이션 안 함)
 	//-----------------------------------------------------------------------------
 
 	UPROPERTY(NotReplicated, Transient)
 	TObjectPtr<UEquipmentInstance> Instance = nullptr;
-	
 };
 
 //-----------------------------------------------------------------------------
@@ -84,6 +93,12 @@ public:
 	{
 		return FFastArraySerializer::FastArrayDeltaSerialize<FEquipmentEntry, FEquipmentList>(Entries, DeltaParms, *this);
 	}
+	
+	/** Entry를 Dirty로 마킹합니다 */
+	void MarkEntryDirty(FEquipmentEntry& Entry)
+	{
+		MarkItemDirty(Entry);
+	}
 
 public:
 	UPROPERTY()
@@ -93,7 +108,7 @@ public:
 	TObjectPtr<UEquipmentComponent> Owner = nullptr;
 };
 
-template<>
+template <>
 struct TStructOpsTypeTraits<FEquipmentList> : public TStructOpsTypeTraitsBase2<FEquipmentList>
 {
 	enum { WithNetDeltaSerializer = true };
@@ -121,7 +136,7 @@ public:
 	/** Pawn에서 EquipmentComponent를 찾아 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static UEquipmentComponent* FindEquipmentComponent(const APawn* Pawn);
-	
+
 	//-----------------------------------------------------------------------------
 	// UActorComponent 오버라이드
 	//-----------------------------------------------------------------------------
@@ -134,18 +149,13 @@ public:
 	//-----------------------------------------------------------------------------
 
 	TCoroTask<void> HandleActiveEquipChangedAuth(UItemInstance* Instance);
-	
+
 	/** 장비를 해제합니다 (서버 전용) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void UnequipItemAuth(FGameplayTag SlotTag);
-	
+
 	/** 아이템을 장착합니다 (서버 전용, 코루틴) */
 	TCoroTask<UEquipmentInstance*> EquipItemAuthCoroutine(UItemInstance* Item);
-	
-
-	/** 모든 장비를 해제합니다 (서버 전용) */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
-	void UnequipAllAuth();
 
 	//-----------------------------------------------------------------------------
 	// 장비 조회
@@ -154,20 +164,44 @@ public:
 	/** 슬롯에 장착된 장비를 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	UEquipmentInstance* GetEquipmentInSlot(FGameplayTag SlotTag) const;
-	
+
 	/** 슬롯에 장착된 스폰된 Actor를 반환합니다 */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	AActor* GetEquipmentInstance(FGameplayTag SlotTag) const;
 
 	/** 슬롯 장비 변경 델리게이트 (UI 갱신용, 서버/클라이언트 모두) */
 	FOnEquipmentSlotChanged OnEquipmentSlotChanged;
+	
+	//-----------------------------------------------------------------------------
+	// QuickBar
+	//-----------------------------------------------------------------------------
+	
+	bool CanSetActiveSlot(FGameplayTag SlotTag) const;
 
+	UFUNCTION(Server, Reliable)
+	void SetActiveSlotServer(FGameplayTag SlotTag);
+	
 private:
 	/** EquipmentInstance를 생성합니다 */
 	UEquipmentInstance* CreateEquipmentInstance(const UEquipmentDefinition* Definition, int32 SourceItemId) const;
 
 	/** 실제 장비 장착 로직 (번들 로딩 완료 상태에서 호출) */
 	UEquipmentInstance* EquipItemAuthInternal(UItemInstance* Item);
+
+	/** 손에 드는 메인 장비를 전환합니다 (이전 메인 액터 해제 → 새 메인 스폰, 데이터는 유지, 서버 전용) */
+	void SetMainEquippedAuth(UEquipmentInstance* NewMain);
+
+	/** 엔트리의 액터 활성 상태를 바꾸고 복제합니다 (데이터 유지, 서버 전용) */
+	void SetEntryActiveAuth(FEquipmentEntry& Entry, bool bNewActive);
+
+	/** 복제로 전달된 bActive 변경에 맞춰 클라이언트에서 액터를 스폰/제거합니다 */
+	void ReconcileReplicatedEntryActors(FEquipmentEntry* Entry);
+
+	/** Instance로 Entry를 찾습니다 (없으면 nullptr) */
+	FEquipmentEntry* FindEntryByInstance(const UEquipmentInstance* Instance);
+
+	/** QuickBar 슬롯 태그로 장착된 장비를 찾습니다 (없으면 nullptr) */
+	UEquipmentInstance* FindEquipmentByQuickBarSlot(FGameplayTag QuickBarSlotTag) const;
 
 	/** 복제된 Entry 초기화를 시작합니다 (기존 태스크 취소 후 새 태스크 시작) */
 	void StartReplicatedEquipmentInit(FEquipmentEntry* Entry);
@@ -198,8 +232,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment", meta = (Categories = "Equipment.Slot"))
 	TMap<FGameplayTag, TObjectPtr<UEquipmentInstance>> EquipmentSlots;
 
+
+	/** 현재 장착된 메인 장비 (서버 전용, 손에 들고 있는 것) */
+	UPROPERTY()
+	TObjectPtr<UEquipmentInstance> MainEquippedItem = nullptr;
+
 private:
 	/** 슬롯별 진행 중인 초기화 태스크 (새 요청 시 취소용) */
 	TMap<FGameplayTag, TCoroTask<void>> PendingInitTasks;
-
 };

@@ -20,7 +20,6 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Utility_Primary, "Equipment.Slot.Utility.Primary");
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Utility_Secondary, "Equipment.Slot.Utility.Secondary");
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Utility_Tertiary, "Equipment.Slot.Utility.Tertiary");
-	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Utility_Quaternary, "Equipment.Slot.Utility.Quaternary");
 
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Helmet, "Equipment.Slot.Helmet");
 	UE_DEFINE_GAMEPLAY_TAG(Equipment_Slot_Chest, "Equipment.Slot.Chest");
