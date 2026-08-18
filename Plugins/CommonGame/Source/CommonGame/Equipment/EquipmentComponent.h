@@ -188,6 +188,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	UEquipmentInstance* GetActiveMainEquippedItem() const;
 
+	/**
+	 * 손에 들고 있는지(활성/비활성)와 무관하게, 지정한 입력 태그로 Ability를 부여하는 장비를
+	 * 장착 목록(EquipmentSlots) 전체에서 찾습니다. 스킬 UI처럼 "장착만 되어 있어도 표시"해야
+	 * 하는 화면에서 사용합니다 (없으면 nullptr).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UEquipmentInstance* FindEquippedItemWithAbility(FGameplayTag InputTag) const;
+
 	//-----------------------------------------------------------------------------
 	// QuickBar
 	//-----------------------------------------------------------------------------

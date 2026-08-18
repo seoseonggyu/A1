@@ -3,6 +3,7 @@
 #include "Equipment/EquipmentComponent.h"
 #include "Equipment/EquipmentInstance.h"
 #include "Equipment/EquipmentDefinition.h"
+#include "Equipment/Fragment/EquipmentFragment_Ability.h"
 #include "Inventory/ItemInstance.h"
 #include "Inventory/Fragment/ItemFragment_Equipment.h"
 #include "Experience/ExperienceManagerComponent.h"
@@ -563,6 +564,40 @@ UEquipmentInstance* UEquipmentComponent::GetActiveMainEquippedItem() const
 		if (Instance && Instance->IsEquipmentActive() && Instance->GetQuickBarSlotTag().IsValid())
 		{
 			return Instance;
+		}
+	}
+
+	return nullptr;
+}
+
+UEquipmentInstance* UEquipmentComponent::FindEquippedItemWithAbility(FGameplayTag InputTag) const
+{
+	if (!InputTag.IsValid())
+	{
+		return nullptr;
+	}
+
+	for (const auto& Pair : EquipmentSlots)
+	{
+		UEquipmentInstance* Instance = Pair.Value;
+		if (!Instance)
+		{
+			continue;
+		}
+
+		const UEquipmentDefinition* Definition = Instance->GetDefinition();
+		const FEquipmentFragment_Ability* Fragment = Definition ? Definition->FindFragment<FEquipmentFragment_Ability>() : nullptr;
+		if (!Fragment)
+		{
+			continue;
+		}
+
+		for (const FCommonAbilityEntry& Entry : Fragment->Abilities)
+		{
+			if (Entry.InputTag == InputTag)
+			{
+				return Instance;
+			}
 		}
 	}
 

@@ -18,9 +18,11 @@ DECLARE_LOG_CATEGORY_EXTERN(A1SkillCooldownWidgetLog, Log, All);
 /**
  * 스킬 슬롯 하나(Q, E 등)를 표시하는 위젯
  *
- * 손에 든 메인 장비가 SkillInputTag(예: Input.Ability.Attack.Skill.1)로 바인딩된 Ability를 가지고
- * 있을 때만 아이콘을 보여줍니다(예: 검엔 스킬이 있고 물약엔 없음). 쿨타임 중에는 아이콘을 흐리게
- * 하고 남은 시간을 표시하다가, 끝나면 다시 선명해집니다.
+ * "손에 들고 있는지"가 아니라 "SkillInputTag(예: Input.Ability.Attack.Skill.1)로 바인딩된
+ * Ability를 가진 장비가 장착되어 있는지"로 아이콘 표시 여부를 판단합니다(예: 검엔 스킬이 있고
+ * 물약엔 없음). 그 장비를 장착만 하고 실제로 손에 들고 있지 않으면 아이콘을 흐리게, 손에 들고
+ * 있으면 선명하게 보여줍니다. 쿨타임 중에는 흐려지며 남은 시간을 표시합니다. 장착 자체를
+ * 해제하면 아이콘이 완전히 사라집니다(위젯 자체는 HUD에 그대로 남음).
  *
  * 파페돌처럼 이 위젯을 여러 번 배치하고, 인스턴스마다 SkillInputTag/CooldownTag를 다르게 지정합니다.
  * MVVM을 쓰지 않고 EquipmentComponent/ASC를 직접 구독합니다 (Equipment/Inventory 위젯과 동일한 방식).
@@ -53,8 +55,17 @@ private:
 	/** 구독을 해제합니다 (재시도 전 상태 초기화 용도로도 사용, RetryTimerHandle은 건드리지 않음) */
 	void TearDown();
 
-	/** 손에 든 메인 장비가 바뀔 때 호출되어 이 스킬의 보유 여부를 갱신합니다 */
+	/** 손에 든 메인 장비가 바뀔 때(활성/비활성 전환) 호출되어 보유 상태를 다시 계산합니다 */
 	void HandleMainEquippedItemChanged(UEquipmentInstance* NewMainItem);
+
+	/** 임의의 슬롯에 장비가 장착/해제될 때 호출되어 보유 상태를 다시 계산합니다 (활성 여부 무관) */
+	void HandleEquipmentSlotChanged(FGameplayTag SlotTag, UEquipmentInstance* Instance);
+
+	/**
+	 * 장착 목록 전체(EquipmentSlots)에서 SkillInputTag를 가진 장비를 찾아 bHasSkill/CurrentIcon을
+	 * 갱신하고, 그 장비가 현재 손에 들려 있는지(bIsHeld)까지 판단합니다.
+	 */
+	void RefreshSkillState();
 
 	/** CooldownTag의 부여(NewCount>0)·해제(NewCount==0)를 처리합니다 */
 	void HandleCooldownTagChanged(const FGameplayTag Tag, int32 NewCount);
@@ -65,7 +76,7 @@ private:
 	/** CooldownTag를 부여한 활성 GameplayEffect의 남은 시간을 초 단위로 반환합니다 (없으면 0) */
 	float GetRemainingCooldownSeconds() const;
 
-	/** 현재 상태(보유 여부/쿨타임)에 맞춰 아이콘·텍스트를 갱신합니다 */
+	/** 현재 상태(보유 여부/손에 든 여부/쿨타임)에 맞춰 아이콘·텍스트를 갱신합니다 */
 	void RefreshVisual();
 
 protected:
@@ -102,14 +113,20 @@ private:
 	TWeakObjectPtr<UEquipmentComponent> EquipmentComponent;
 
 	FDelegateHandle MainEquippedChangedHandle;
+	FDelegateHandle EquipmentSlotChangedHandle;
 	FTimerHandle CooldownTimerHandle;
 	FTimerHandle RetryTimerHandle;
 
-	/** 현재 보유 중인 스킬의 아이콘. 장착 아이템이 바뀌면 HandleMainEquippedItemChanged에서 갱신됩니다 */
+	/** 현재 보유 중인 스킬의 아이콘. RefreshSkillState에서 갱신됩니다 */
 	UPROPERTY()
 	TObjectPtr<UTexture2D> CurrentIcon = nullptr;
 
+	/** SkillInputTag를 가진 장비가 장착 목록에 하나라도 있는지 (손에 들었는지는 무관) */
 	bool bHasSkill = false;
+
+	/** bHasSkill인 장비가 현재 손에 들려(활성) 있는지 */
+	bool bIsHeld = false;
+
 	bool bOnCooldown = false;
 	int32 CooldownRemaining = 0;
 };

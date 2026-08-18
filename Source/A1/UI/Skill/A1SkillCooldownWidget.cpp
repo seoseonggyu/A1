@@ -82,9 +82,10 @@ bool UA1SkillCooldownWidget::SetupTracking()
 	}
 
 	MainEquippedChangedHandle = InEquipmentComponent->OnMainEquippedItemChanged.AddUObject(this, &ThisClass::HandleMainEquippedItemChanged);
+	EquipmentSlotChangedHandle = InEquipmentComponent->OnEquipmentSlotChanged.AddUObject(this, &ThisClass::HandleEquipmentSlotChanged);
 
-	// 초기 상태 반영 (이미 무언가 손에 들려 있을 수 있음)
-	HandleMainEquippedItemChanged(InEquipmentComponent->GetActiveMainEquippedItem());
+	// 초기 상태 반영 (이미 장착/손에 들려 있을 수 있음)
+	RefreshSkillState();
 
 	return true;
 }
@@ -102,8 +103,10 @@ void UA1SkillCooldownWidget::TearDown()
 	if (UEquipmentComponent* EquipmentComponentPtr = EquipmentComponent.Get())
 	{
 		EquipmentComponentPtr->OnMainEquippedItemChanged.Remove(MainEquippedChangedHandle);
+		EquipmentComponentPtr->OnEquipmentSlotChanged.Remove(EquipmentSlotChangedHandle);
 	}
 	MainEquippedChangedHandle.Reset();
+	EquipmentSlotChangedHandle.Reset();
 
 	if (UWorld* World = GetWorld())
 	{
@@ -116,10 +119,32 @@ void UA1SkillCooldownWidget::TearDown()
 
 void UA1SkillCooldownWidget::HandleMainEquippedItemChanged(UEquipmentInstance* NewMainItem)
 {
+	// 어떤 장비가 손에 들렸는지 자체는 필요 없고, "들었다/내려놨다"로 bIsHeld가 바뀔 수 있으므로 재계산합니다.
+	RefreshSkillState();
+}
+
+void UA1SkillCooldownWidget::HandleEquipmentSlotChanged(FGameplayTag SlotTag, UEquipmentInstance* Instance)
+{
+	// 어느 슬롯이 바뀌었는지와 무관하게, 이 스킬을 가진 장비가 장착/해제됐을 수 있으므로 재계산합니다.
+	RefreshSkillState();
+}
+
+void UA1SkillCooldownWidget::RefreshSkillState()
+{
 	bHasSkill = false;
+	bIsHeld = false;
 	CurrentIcon = nullptr;
 
-	const UEquipmentDefinition* Definition = NewMainItem ? NewMainItem->GetDefinition() : nullptr;
+	UEquipmentComponent* EquipmentComponentPtr = EquipmentComponent.Get();
+	if (!EquipmentComponentPtr)
+	{
+		RefreshVisual();
+		return;
+	}
+
+	// 손에 들었는지와 무관하게, 이 스킬(SkillInputTag)을 부여하는 장비가 장착 목록에 있는지부터 찾습니다.
+	UEquipmentInstance* SkillItem = EquipmentComponentPtr->FindEquippedItemWithAbility(SkillInputTag);
+	const UEquipmentDefinition* Definition = SkillItem ? SkillItem->GetDefinition() : nullptr;
 	if (const FEquipmentFragment_Ability* Fragment = Definition ? Definition->FindFragment<FEquipmentFragment_Ability>() : nullptr)
 	{
 		for (const FCommonAbilityEntry& Entry : Fragment->Abilities)
@@ -133,6 +158,9 @@ void UA1SkillCooldownWidget::HandleMainEquippedItemChanged(UEquipmentInstance* N
 			}
 		}
 	}
+
+	// 장착만 되어 있고 실제로 손에 들려 있지 않으면(다른 QuickBar 아이템이 활성) 흐리게 표시합니다.
+	bIsHeld = bHasSkill && (SkillItem == EquipmentComponentPtr->GetActiveMainEquippedItem());
 
 	RefreshVisual();
 }
@@ -210,9 +238,11 @@ void UA1SkillCooldownWidget::RefreshVisual()
 {
 	if (Image_Icon)
 	{
-		// 스킬이 없으면 완전히 숨기고, 있으면 쿨타임 여부에 따라 흐리게/선명하게 표시합니다.
+		// 스킬을 가진 장비가 장착되어 있지 않으면(해제됨) 완전히 숨깁니다.
 		Image_Icon->SetVisibility(bHasSkill ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-		Image_Icon->SetRenderOpacity(bOnCooldown ? CooldownOpacity : 1.f);
+
+		// 장착만 하고 손에 들지 않았거나(비활성) 쿨타임 중이면 흐리게, 손에 들고 쿨타임도 아니면 선명하게.
+		Image_Icon->SetRenderOpacity((bOnCooldown || !bIsHeld) ? CooldownOpacity : 1.f);
 
 		if (bHasSkill && CurrentIcon)
 		{
