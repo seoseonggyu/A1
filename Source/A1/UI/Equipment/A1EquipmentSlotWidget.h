@@ -7,9 +7,12 @@
 #include "A1EquipmentSlotWidget.generated.h"
 
 class UImage;
+class UWidget;
+class UTextBlock;
 class UEquipmentInstance;
 class UItemInstance;
 class UDragDropOperation;
+class UA1InventoryItemTooltipWidget;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1EquipmentSlotWidgetLog, Log, All);
 
@@ -48,12 +51,13 @@ protected:
 	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
+	/** UMG 툴팁 시스템이 호버 시 호출. 툴팁 위젯을 생성해 장착된 아이템 정보(이름/설명)를 채워 반환 */
+	UFUNCTION()
+	UWidget* HandleGetTooltipWidget();
+
 	/** 이 아이템을 이 슬롯에 장착할 수 있는지 (장비 프래그먼트가 있고 슬롯 태그가 일치) */
 	bool CanAcceptItem(const UItemInstance* Item) const;
 
-	/** BP 비주얼 갱신 훅 (아이콘 갱신 외 추가 연출이 필요할 때) */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Equipment")
-	void OnEquipmentChanged(UEquipmentInstance* InEquipmentInstance);
 
 protected:
 	//-----------------------------------------------------------------------------
@@ -63,6 +67,10 @@ protected:
 	/** 이 위젯이 나타내는 장비 슬롯 (파페돌에 배치한 인스턴스마다 다르게 지정) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (Categories = "Equipment.Slot"))
 	FGameplayTag SlotTag;
+
+	/** 호버 시 표시할 툴팁 위젯 클래스 (이름/설명). Inventory와 동일한 클래스를 공유합니다 */
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	TSubclassOf<UA1InventoryItemTooltipWidget> TooltipWidgetClass;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
 	TObjectPtr<UEquipmentInstance> EquipmentInstance = nullptr;
@@ -80,4 +88,8 @@ protected:
 	/** 장착된 아이템 아이콘 (비어 있으면 Collapsed) */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UImage> Image_Icon;
+
+	/** 장착된 아이템 수량 (1개 이하면 빈 텍스트) */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Text_Count;
 };

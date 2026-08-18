@@ -2,6 +2,7 @@
 
 #include "UI/Equipment/A1EquipmentSlotWidget.h"
 #include "UI/Inventory/A1ItemDragDrop.h"
+#include "UI/Inventory/A1InventoryItemTooltipWidget.h"
 
 #include "Equipment/EquipmentInstance.h"
 #include "Equipment/EquipmentDefinition.h"
@@ -12,6 +13,7 @@
 
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
+#include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1EquipmentSlotWidget)
@@ -21,6 +23,9 @@ DEFINE_LOG_CATEGORY(A1EquipmentSlotWidgetLog);
 void UA1EquipmentSlotWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+
+	// UMG 툴팁 시스템이 호버 시 HandleGetTooltipWidget을 호출해 툴팁을 생성하도록 바인딩
+	ToolTipWidgetDelegate.BindDynamic(this, &UA1EquipmentSlotWidget::HandleGetTooltipWidget);
 
 	SetEquipmentInstance(nullptr);
 }
@@ -91,6 +96,23 @@ void UA1EquipmentSlotWidget::SetDragVisualOpacity(bool bDragging)
 	{
 		Image_Icon->SetRenderOpacity(bDragging ? 0.5f : 1.f);
 	}
+}
+
+UWidget* UA1EquipmentSlotWidget::HandleGetTooltipWidget()
+{
+	UItemInstance* SourceItem = EquipmentInstance ? EquipmentInstance->GetSourceItemInstance() : nullptr;
+	if (!TooltipWidgetClass || !SourceItem)
+	{
+		return nullptr;
+	}
+
+	UA1InventoryItemTooltipWidget* Tooltip = CreateWidget<UA1InventoryItemTooltipWidget>(this, TooltipWidgetClass);
+	if (Tooltip)
+	{
+		Tooltip->SetItem(SourceItem);
+	}
+
+	return Tooltip;
 }
 
 bool UA1EquipmentSlotWidget::CanAcceptItem(const UItemInstance* Item) const
@@ -175,5 +197,22 @@ void UA1EquipmentSlotWidget::SetEquipmentInstance(UEquipmentInstance* InEquipmen
 		}
 	}
 
-	OnEquipmentChanged(EquipmentInstance);
+	if (Text_Count)
+	{
+		// 장착된 아이템도 InventoryList에는 Entry로 남아있으므로(ToEquipmentFromInventoryAuth 참고) 수량을 조회할 수 있습니다.
+		int32 StackCount = 1;
+		if (SourceItem)
+		{
+			if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(GetOwningPlayer()))
+			{
+				if (const FInventoryEntry* Entry = Inventory->FindEntry(SourceItem))
+				{
+					StackCount = Entry->StackCount;
+				}
+			}
+		}
+
+		// 1개 이하면 수량 숨김
+		Text_Count->SetText(StackCount <= 1 ? FText::GetEmpty() : FText::AsNumber(StackCount));
+	}
 }

@@ -15,6 +15,7 @@ DECLARE_LOG_CATEGORY_EXTERN(A1InventoryItemTooltipWidgetLog, Log, All);
  *
  * ItemDefinition의 DisplayName / Description을 사각형 안에 표시합니다.
  * 시각 요소는 BP에서 디자인하고, 내용 채우기는 SetItem으로 제어합니다.
+ * Inventory/Equipment 양쪽 아이템 위젯이 공통으로 사용합니다.
  */
 UCLASS(Abstract)
 class A1_API UA1InventoryItemTooltipWidget : public UCommonExtensionUserWidget
