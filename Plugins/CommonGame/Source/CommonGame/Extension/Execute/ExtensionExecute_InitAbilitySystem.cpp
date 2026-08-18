@@ -47,30 +47,8 @@ void FExtensionExecute_InitAbilitySystem::OnActivate(AActor* Owner) const
 			ASC->SetTagRelationshipMapping(Mapping);
 		}
 	}
-	
-	// 태그 관계 매핑을 비동기 로딩하여 ASC에 주입 (코루틴 Owner = ASC)
-	//LoadTagRelationshipMappingCoroutine(ASC);
-	
 }
 
-TCoroTask<void> FExtensionExecute_InitAbilitySystem::LoadTagRelationshipMappingCoroutine(UCommonAbilitySystemComponent* ASC) const
-{
-	if (!TagRelationshipMapping)
-	{
-		co_return;
-	}
-	
-	// SoftPtr는 awaiter로 값 복사되어 들어가므로, 재개 후 struct 상태에 접근하지 않는다.
-	UCommonAbilityTagRelationshipMapping* Mapping = co_await Coro::Async::LoadObject(ASC, TagRelationshipMapping);
-
-	// Owner(ASC)가 파괴되면 코루틴이 취소되므로, 재개 시 ASC는 유효하다.
-	if (IsValid(ASC) && Mapping)
-	{
-		ASC->SetTagRelationshipMapping(Mapping);
-	}
-
-	co_return;
-}
 
 void FExtensionExecute_InitAbilitySystem::OnDeactivate(AActor* Owner) const
 {

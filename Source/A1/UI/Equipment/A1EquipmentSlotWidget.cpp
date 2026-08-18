@@ -3,6 +3,7 @@
 #include "UI/Equipment/A1EquipmentSlotWidget.h"
 #include "UI/Inventory/A1ItemDragDrop.h"
 #include "UI/Inventory/A1InventoryItemTooltipWidget.h"
+#include "UI/Inventory/A1InventoryCellWidget.h"
 
 #include "Equipment/EquipmentInstance.h"
 #include "Equipment/EquipmentDefinition.h"
@@ -26,6 +27,10 @@ void UA1EquipmentSlotWidget::NativeOnInitialized()
 
 	// UMG 툴팁 시스템이 호버 시 HandleGetTooltipWidget을 호출해 툴팁을 생성하도록 바인딩
 	ToolTipWidgetDelegate.BindDynamic(this, &UA1EquipmentSlotWidget::HandleGetTooltipWidget);
+
+	// 평소에는 완전히 숨겨서 Cell_Highlight의 배경/테두리 등이 아이콘을 가리지 않도록 합니다.
+	// 드래그 오버 중일 때만 UpdateDropHighlight에서 다시 보이게 합니다.
+	ClearDropHighlight();
 
 	SetEquipmentInstance(nullptr);
 }
@@ -132,12 +137,35 @@ bool UA1EquipmentSlotWidget::CanAcceptItem(const UItemInstance* Item) const
 	return Fragment->EquipmentDefinition->SlotTag == SlotTag;
 }
 
+void UA1EquipmentSlotWidget::UpdateDropHighlight(bool bCanPlace)
+{
+	if (Cell_Highlight)
+	{
+		// 드래그 오버 중에만 위젯 자체를 보이게 합니다. SetSlotState만으로는 Image_Valid만 켜질 뿐,
+		// Cell_Highlight BP 안의 배경/테두리 같은 다른 요소는 계속 남아 아이콘을 가릴 수 있습니다.
+		Cell_Highlight->SetVisibility(ESlateVisibility::HitTestInvisible);
+		Cell_Highlight->SetSlotState(bCanPlace ? EA1InventorySlotState::Valid : EA1InventorySlotState::Invalid);
+	}
+}
+
+void UA1EquipmentSlotWidget::ClearDropHighlight()
+{
+	if (Cell_Highlight)
+	{
+		Cell_Highlight->SetSlotState(EA1InventorySlotState::Default);
+		Cell_Highlight->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
 bool UA1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	const UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
 
-	// 인벤토리에서 온, 이 슬롯에 맞는 아이템일 때만 드롭 대상으로 받아들인다
-	if (DragOp && !DragOp->FromEquipmentSlotTag.IsValid() && CanAcceptItem(DragOp->ItemInstance))
+	// 인벤토리에서 온, 이 슬롯에 맞는 아이템일 때만 드롭 대상으로 받아들인다 (장비창 간 이동은 아직 미지원)
+	const bool bCanAccept = DragOp && !DragOp->FromEquipmentSlotTag.IsValid() && CanAcceptItem(DragOp->ItemInstance);
+	UpdateDropHighlight(bCanAccept);
+
+	if (bCanAccept)
 	{
 		return true;
 	}
@@ -145,8 +173,17 @@ bool UA1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const
 	return Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
 }
 
+void UA1EquipmentSlotWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
+
+	ClearDropHighlight();
+}
+
 bool UA1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
+	ClearDropHighlight();
+
 	UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
 	if (!DragOp || !DragOp->ItemInstance)
 	{
@@ -172,7 +209,7 @@ bool UA1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	}
 
 	// 실제 장착은 서버 권위로 처리되고, 결과가 리플리케이션되면 양쪽 UI가 갱신된다
-	//Inventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
+	Inventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
 	return true;
 }
 

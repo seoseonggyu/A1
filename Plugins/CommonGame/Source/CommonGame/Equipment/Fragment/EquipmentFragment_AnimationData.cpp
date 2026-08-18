@@ -22,7 +22,7 @@ void FEquipmentFragment_AnimationData::OnEquipped(UEquipmentInstance* Instance)
 	}
 
 	if (AnimInstanceClass) {
-		Character->SetAnimationData(AnimInstanceClass);
+		Character->SetAnimationData(AnimInstanceClass, Instance);
 	}
 
 	LoadAnimMontageCoroutine(Character, EquipMontage);
@@ -43,7 +43,7 @@ void FEquipmentFragment_AnimationData::OnUnequipped(UEquipmentInstance* Instance
 		return;
 	}
 
-	Character->ResetAnimationToDefault();
+	Character->ResetAnimationToDefault(Instance);
 }
 
 TCoroTask<void> FEquipmentFragment_AnimationData::LoadAnimMontageCoroutine(ACommonCharacter* Character, TSoftObjectPtr<UAnimMontage> Montage)

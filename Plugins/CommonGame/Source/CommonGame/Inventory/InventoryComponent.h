@@ -226,6 +226,19 @@ public:
 
 	void ToEquipmentFromInventoryAuth(UItemInstance* Instance);
 
+	/**
+	 * 인벤토리 아이템을 지정 슬롯에 장착합니다 (클라이언트 → 서버 RPC).
+	 *
+	 * 해당 Equipment 슬롯에 이미 다른 아이템이 장착되어 있으면 먼저 인벤토리로 되돌리고 교체합니다.
+	 * 되돌릴 빈 칸이 없으면 전체 작업을 취소합니다(부분 적용 없음).
+	 */
+	UFUNCTION(Server, Reliable)
+	void EquipFromInventoryServer(int32 ItemId, FGameplayTag SlotTag);
+
+	/** 장착된 아이템을 해제하고 인벤토리 그리드의 지정 위치로 되돌립니다 (클라이언트 → 서버 RPC) */
+	UFUNCTION(Server, Reliable)
+	void UnequipToInventoryServer(int32 ItemId, FGameplayTag FromEquipmentSlotTag, FIntPoint Anchor);
+
 
 	//-----------------------------------------------------------------------------
 	// Cell 관리
@@ -233,8 +246,11 @@ public:
 
 	/** 서버 전용 */
 	void SetOccupiedCellsAuth(int32 CellPos, bool Value);
-	
-	
+
+	/** Anchor~Anchor+Size 범위의 셀을 일괄 점유/해제합니다 (서버 전용). Anchor가 (-1,-1)이면 무시합니다 */
+	void SetGridOccupiedAuth(const FIntPoint& Anchor, const FIntPoint& Size, bool bValue);
+
+
 	/** 크기 Size(칸 수)의 아이템이 들어갈 수 있는 빈 앵커 위치를 찾는다 */
 	bool FindEmptySlot(const FIntPoint& Size, FIntPoint& OutSlotPos) const;
 

@@ -4,7 +4,10 @@
 
 #include "IPropertyTable.h"
 #include "Inventory/ItemDefinition.h"
+#include "Inventory/Fragment/ItemFragment_Equipment.h"
 #include "Equipment/EquipmentComponent.h"
+#include "Equipment/EquipmentInstance.h"
+#include "Equipment/EquipmentDefinition.h"
 #include "Coroutine/CommonAssetAwaiters.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
@@ -212,14 +215,7 @@ TCoroTask<UItemInstance*> UInventoryComponent::AddItemAuthCoroutine(const UItemD
 	}
 
 	// 찾은 영역을 즉시 점유 상태로 표시 (비동기 로딩 대기 중 다른 추가와의 경쟁 방지)
-	for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
-	{
-		for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
-		{
-			const int32 CellIndex = (SlotPos.Y + OffsetY) * GridSize.X + (SlotPos.X + OffsetX);
-			SetOccupiedCellsAuth(CellIndex, true);
-		}
-	}
+	SetGridOccupiedAuth(SlotPos, Size, true);
 
 	// 슬롯 예약
 	int32 ReservedIndex = InventoryList.Entries.Num();
@@ -279,18 +275,7 @@ bool UInventoryComponent::RemoveItemAuth(UItemInstance* Instance)
 	}
 
 	const FIntPoint Size = GetSizeFromDefinition(InventoryList.Entries[Index].Definition);
-	FIntPoint SlotPos = InventoryList.Entries[Index].SlotPosition;
-	if (SlotPos.X >= 0 && SlotPos.Y >= 0)
-	{
-		for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
-		{
-			for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
-			{
-				const int32 CellIndex = (SlotPos.Y + OffsetY) * GridSize.X + (SlotPos.X + OffsetX);
-				SetOccupiedCellsAuth(CellIndex, false);
-			}
-		}
-	}
+	SetGridOccupiedAuth(InventoryList.Entries[Index].SlotPosition, Size, false);
 
 	const int32 LastIndex = InventoryList.Entries.Num() - 1;
 
@@ -400,25 +385,154 @@ void UInventoryComponent::ToEquipmentFromInventoryAuth(UItemInstance* Instance)
 
 	// 아이템 장착
 	EquipmentComponent->HandleActiveEquipChangedAuth(Instance);
-	
+
 	const FIntPoint Size = GetSizeFromDefinition(InventoryList.Entries[Index].Definition);
-	const FIntPoint SlotPos = InventoryList.Entries[Index].SlotPosition;
-	if (SlotPos.X >= 0 && SlotPos.Y >= 0)
-	{
-		for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
-		{
-			for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
-			{
-				const int32 CellIndex = (SlotPos.Y + OffsetY) * GridSize.X + (SlotPos.X + OffsetX);
-				SetOccupiedCellsAuth(CellIndex, false);
-			}
-		}
-	}
+	SetGridOccupiedAuth(InventoryList.Entries[Index].SlotPosition, Size, false);
 
 	InventoryList.Entries[Index].SlotPosition = FIntPoint(-1, -1);
 	InventoryList.Entries[Index].bEquipment = true;
 	InventoryList.Entries[Index].NotifyChanged(this);
 	InventoryList.MarkEntryDirty(InventoryList.Entries[Index]);
+}
+
+void UInventoryComponent::EquipFromInventoryServer_Implementation(int32 ItemId, FGameplayTag SlotTag)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return;
+	}
+
+	UItemInstance* NewItem = FindItemById(ItemId);
+	if (!NewItem)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("EquipFromInventoryServer: ItemId=%d 아이템을 찾을 수 없습니다"), ItemId);
+		return;
+	}
+
+	// 이 아이템이 실제로 SlotTag에 장착 가능한지 서버에서 재검증합니다 (클라이언트의 CanAcceptItem은 UX용일 뿐 신뢰하지 않음).
+	const FItemFragment_Equipment* Fragment = NewItem->FindFragment<FItemFragment_Equipment>();
+	if (!Fragment || !Fragment->EquipmentDefinition || Fragment->EquipmentDefinition->SlotTag != SlotTag)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("EquipFromInventoryServer: ItemId=%d는 슬롯 %s에 장착할 수 없습니다"), ItemId, *SlotTag.ToString());
+		return;
+	}
+
+	FInventoryEntry* NewEntry = FindEntry(NewItem);
+	if (!NewEntry)
+	{
+		return;
+	}
+
+	const AController* Controller = Cast<AController>(GetOwner());
+	UEquipmentComponent* EquipmentComponent = Controller ? UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn()) : nullptr;
+	if (!EquipmentComponent)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("EquipFromInventoryServer: EquipmentComponent를 찾을 수 없습니다"));
+		return;
+	}
+
+	// 대상 슬롯에 이미 장착된 아이템이 있으면, 인벤토리로 되돌릴 대상 Entry를 미리 확보해둡니다.
+	// (실제 해제/데이터 파괴는 아래 HandleActiveEquipChangedAuth가 수행하므로, 그 전에 원본 아이템을 알아둬야 합니다)
+	UItemInstance* OldItem = nullptr;
+	FInventoryEntry* OldEntry = nullptr;
+	if (UEquipmentInstance* OldEquip = EquipmentComponent->GetEquipmentInSlot(SlotTag))
+	{
+		OldItem = OldEquip->GetSourceItemInstance();
+		OldEntry = OldItem ? FindEntry(OldItem) : nullptr;
+	}
+
+	// 새 아이템을 그리드에서 먼저 내립니다. 기존 장비를 되돌릴 빈 칸을 찾을 때
+	// 이 칸도 후보에 포함되어야 하므로(같은 자리로 교체되는 경우), 검색보다 먼저 비웁니다.
+	const FIntPoint NewSize = GetSizeFromDefinition(NewEntry->Definition);
+	const FIntPoint NewOldSlotPos = NewEntry->SlotPosition;
+	SetGridOccupiedAuth(NewOldSlotPos, NewSize, false);
+
+	// 기존 장착 아이템이 있다면 되돌릴 빈 칸을 찾습니다. 없으면 전체 작업을 취소합니다(부분 적용 방지).
+	FIntPoint OldItemAnchor(-1, -1);
+	if (OldEntry)
+	{
+		const FIntPoint OldSize = GetSizeFromDefinition(OldEntry->Definition);
+		if (!FindEmptySlot(OldSize, OldItemAnchor))
+		{
+			// 실패: 방금 비운 새 아이템의 그리드 점유를 원복하고 중단합니다.
+			SetGridOccupiedAuth(NewOldSlotPos, NewSize, true);
+			UE_LOG(InventoryComponentLog, Warning, TEXT("EquipFromInventoryServer: 기존 장비를 되돌릴 빈 칸이 없어 교체를 취소합니다"));
+			return;
+		}
+	}
+
+	// 새 아이템 Entry를 장착 상태로 전환합니다.
+	NewEntry->SlotPosition = FIntPoint(-1, -1);
+	NewEntry->bEquipment = true;
+	NewEntry->NotifyChanged(this);
+	InventoryList.MarkEntryDirty(*NewEntry);
+
+	// 장착 처리 (내부적으로 대상 슬롯에 남아있는 기존 장비 데이터를 해제합니다)
+	EquipmentComponent->HandleActiveEquipChangedAuth(NewItem);
+
+	// 기존 장착 아이템을 인벤토리 그리드로 되돌립니다.
+	if (OldEntry)
+	{
+		const FIntPoint OldSize = GetSizeFromDefinition(OldEntry->Definition);
+		SetGridOccupiedAuth(OldItemAnchor, OldSize, true);
+
+		OldEntry->SlotPosition = OldItemAnchor;
+		OldEntry->bEquipment = false;
+		OldEntry->NotifyChanged(this);
+		InventoryList.MarkEntryDirty(*OldEntry);
+	}
+}
+
+void UInventoryComponent::UnequipToInventoryServer_Implementation(int32 ItemId, FGameplayTag FromEquipmentSlotTag, FIntPoint Anchor)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return;
+	}
+
+	UItemInstance* Item = FindItemById(ItemId);
+	if (!Item)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: ItemId=%d 아이템을 찾을 수 없습니다"), ItemId);
+		return;
+	}
+
+	FInventoryEntry* Entry = FindEntry(Item);
+	if (!Entry || !Entry->bEquipment)
+	{
+		return;
+	}
+
+	const FIntPoint Size = GetSizeFromDefinition(Entry->Definition);
+	if (!CanPlaceAt(Anchor, Size))
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: 대상 위치(%d, %d)에 배치할 수 없습니다"), Anchor.X, Anchor.Y);
+		return;
+	}
+
+	const AController* Controller = Cast<AController>(GetOwner());
+	UEquipmentComponent* EquipmentComponent = Controller ? UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn()) : nullptr;
+	if (!EquipmentComponent)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: EquipmentComponent를 찾을 수 없습니다"));
+		return;
+	}
+
+	// 클라이언트가 보낸 슬롯에 실제로 이 아이템이 장착되어 있는지 서버에서 재검증합니다.
+	UEquipmentInstance* Equipped = EquipmentComponent->GetEquipmentInSlot(FromEquipmentSlotTag);
+	if (!Equipped || Equipped->GetSourceItemInstance() != Item)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: ItemId=%d가 슬롯 %s에 장착되어 있지 않습니다"), ItemId, *FromEquipmentSlotTag.ToString());
+		return;
+	}
+
+	EquipmentComponent->UnequipItemAuth(FromEquipmentSlotTag);
+
+	SetGridOccupiedAuth(Anchor, Size, true);
+	Entry->SlotPosition = Anchor;
+	Entry->bEquipment = false;
+	Entry->NotifyChanged(this);
+	InventoryList.MarkEntryDirty(*Entry);
 }
 
 void UInventoryComponent::SetOccupiedCellsAuth(int32 CellPos, bool Value)
@@ -430,6 +544,23 @@ void UInventoryComponent::SetOccupiedCellsAuth(int32 CellPos, bool Value)
 
 	OccupiedCells[CellPos] = Value;
 	MARK_PROPERTY_DIRTY_FROM_NAME(UInventoryComponent, OccupiedCells, this);
+}
+
+void UInventoryComponent::SetGridOccupiedAuth(const FIntPoint& Anchor, const FIntPoint& Size, bool bValue)
+{
+	if (Anchor.X < 0 || Anchor.Y < 0)
+	{
+		return;
+	}
+
+	for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
+	{
+		for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
+		{
+			const int32 CellIndex = (Anchor.Y + OffsetY) * GridSize.X + (Anchor.X + OffsetX);
+			SetOccupiedCellsAuth(CellIndex, bValue);
+		}
+	}
 }
 
 FInventoryEntry* UInventoryComponent::FindEntry(const UItemInstance* Instance)
@@ -641,27 +772,8 @@ bool UInventoryComponent::MoveItemAuth(UItemInstance* Instance, const FIntPoint&
 		return false;
 	}
 
-	const FIntPoint OldAnchor = Entry->SlotPosition;
-	if (OldAnchor.X >= 0 && OldAnchor.Y >= 0)
-	{
-		for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
-		{
-			for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
-			{
-				const int32 CellIndex = (OldAnchor.Y + OffsetY) * GridSize.X + (OldAnchor.X + OffsetX);
-				SetOccupiedCellsAuth(CellIndex, false);
-			}
-		}
-	}
-
-	for (int32 OffsetY = 0; OffsetY < Size.Y; ++OffsetY)
-	{
-		for (int32 OffsetX = 0; OffsetX < Size.X; ++OffsetX)
-		{
-			const int32 CellIndex = (NewAnchor.Y + OffsetY) * GridSize.X + (NewAnchor.X + OffsetX);
-			SetOccupiedCellsAuth(CellIndex, true);
-		}
-	}
+	SetGridOccupiedAuth(Entry->SlotPosition, Size, false);
+	SetGridOccupiedAuth(NewAnchor, Size, true);
 
 	Entry->SlotPosition = NewAnchor;
 	Entry->NotifyChanged(this);

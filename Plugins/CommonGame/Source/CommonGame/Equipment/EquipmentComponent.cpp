@@ -55,8 +55,17 @@ void FEquipmentEntry::PreReplicatedRemove(const FEquipmentList& InArraySerialize
 			InArraySerializer.Owner->RemoveFromSlotMap(Instance);
 		}
 
+		// 삭제되기 전에, 이 엔트리가 현재 손에 든 메인 장비였는지 기록해둡니다(삭제 후엔 알 수 없음).
+		const bool bWasActiveMainItem = Instance->IsEquipmentActive() && Instance->GetQuickBarSlotTag().IsValid();
+
 		// 활성 상태였을 때만 실제 해제됩니다(멱등). 비활성(비메인) 엔트리면 무시됩니다.
 		Instance->DeactivateEquipment();
+
+		// 대체 없이(=SetMainEquippedAuth를 거치지 않고) 손에 든 메인 장비가 통째로 사라진 경우, UI에 알립니다.
+		if (bWasActiveMainItem && InArraySerializer.Owner)
+		{
+			InArraySerializer.Owner->OnMainEquippedItemChanged.Broadcast(nullptr);
+		}
 	}
 }
 
@@ -149,10 +158,11 @@ void UEquipmentComponent::UnequipItemAuth(FGameplayTag SlotTag)
 		return;
 	}
 
-	// 메인 장비였다면 참조를 정리합니다.
+	// 메인 장비였다면 참조를 정리하고, 대체 없이 사라짐을 UI에 알립니다.
 	if (MainEquippedItem == Instance)
 	{
 		MainEquippedItem = nullptr;
+		OnMainEquippedItemChanged.Broadcast(nullptr);
 	}
 
 	// 슬롯 맵(데이터)에서 제거합니다.
@@ -258,6 +268,11 @@ TCoroTask<void> UEquipmentComponent::InitializeReplicatedEquipmentCoroutine(FEqu
 	if (CurrentEntry->bActive)
 	{
 		NewInstance->ActivateEquipment();
+
+		if (NewInstance->GetQuickBarSlotTag().IsValid())
+		{
+			OnMainEquippedItemChanged.Broadcast(NewInstance);
+		}
 	}
 
 	// 완료된 태스크 정리
@@ -452,6 +467,11 @@ void UEquipmentComponent::SetEntryActiveAuth(FEquipmentEntry& Entry, bool bNewAc
 		if (bNewActive)
 		{
 			Entry.Instance->ActivateEquipment();
+
+			if (Entry.Instance->GetQuickBarSlotTag().IsValid())
+			{
+				OnMainEquippedItemChanged.Broadcast(Entry.Instance);
+			}
 		}
 		else
 		{
@@ -475,6 +495,11 @@ void UEquipmentComponent::ReconcileReplicatedEntryActors(FEquipmentEntry* Entry)
 	if (Entry->bActive)
 	{
 		Entry->Instance->ActivateEquipment();
+
+		if (Entry->Instance->GetQuickBarSlotTag().IsValid())
+		{
+			OnMainEquippedItemChanged.Broadcast(Entry->Instance);
+		}
 	}
 	else
 	{
@@ -523,6 +548,22 @@ UEquipmentInstance* UEquipmentComponent::GetEquipmentInSlot(FGameplayTag SlotTag
 	if (const TObjectPtr<UEquipmentInstance>* Found = EquipmentSlots.Find(SlotTag))
 	{
 		return *Found;
+	}
+
+	return nullptr;
+}
+
+UEquipmentInstance* UEquipmentComponent::GetActiveMainEquippedItem() const
+{
+	// MainEquippedItem은 서버 전용이라, 서버·클라이언트 모두 동작하도록 EquipmentSlots(데이터)에서
+	// 직접 "QuickBarSlotTag가 있고 현재 활성화된" 장비를 찾습니다.
+	for (const auto& Pair : EquipmentSlots)
+	{
+		UEquipmentInstance* Instance = Pair.Value;
+		if (Instance && Instance->IsEquipmentActive() && Instance->GetQuickBarSlotTag().IsValid())
+		{
+			return Instance;
+		}
 	}
 
 	return nullptr;

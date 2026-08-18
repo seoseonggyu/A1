@@ -3,6 +3,10 @@
 #include "Camera/CommonCameraComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Equipment/EquipmentInstance.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(CommonCharacter)
 
 DEFINE_LOG_CATEGORY(CommonCharacterLog);
@@ -34,7 +38,7 @@ UAbilitySystemComponent* ACommonCharacter::GetAbilitySystemComponent() const
 	return nullptr;
 }
 
-void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass) const
+void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClass, UEquipmentInstance* Requester) const
 {
 	// 애니메이션은 클라이언트에서만 필요합니다
 	if (HasAuthority() || !AnimLayerClass)
@@ -42,14 +46,22 @@ void ACommonCharacter::SetAnimationData(TSubclassOf<UAnimInstance> AnimLayerClas
 		return;
 	}
 
-	if (GetMesh() && AnimLayerClass)
+	if (GetMesh())
 	{
 		GetMesh()->LinkAnimClassLayers(AnimLayerClass);
+		CurrentAnimLayerOwner = Requester;
 	}
 }
 
-void ACommonCharacter::ResetAnimationToDefault() const
+void ACommonCharacter::ResetAnimationToDefault(UEquipmentInstance* Requester) const
 {
-	SetAnimationData(DefaultAnimInstanceClass);
+	// Requester가 지정됐는데 현재 AnimLayer 소유자가 아니면, 이미 다른 장비가 새 AnimLayer를
+	// 적용한 뒤라는 뜻이므로 리셋을 무시한다. (자세한 배경은 헤더의 ResetAnimationToDefault 주석 참고)
+	if (Requester && CurrentAnimLayerOwner.Get() != Requester)
+	{
+		return;
+	}
+
+	SetAnimationData(DefaultAnimInstanceClass, nullptr);
 }
 

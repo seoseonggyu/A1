@@ -7,6 +7,7 @@
 #include "CommonAbilityTypes.generated.h"
 
 class UCommonGameplayAbility;
+class UTexture2D;
 
 //-----------------------------------------------------------------------------
 // FCommonAbilityEntry
@@ -31,6 +32,10 @@ public:
 	/** 입력 태그 (DynamicSpecSourceTags에 추가됨) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Meta = (Categories = "Input"))
 	FGameplayTag InputTag;
+
+	/** 이 Ability를 UI에 표시할 때 쓸 아이콘 (예: 스킬 쿨타임 UI). UItemDefinition::Icon과 동일하게 장비 Definition에서 데이터로 지정 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UTexture2D> Icon = nullptr;
 };
 
 //-----------------------------------------------------------------------------

@@ -13,6 +13,7 @@ class UEquipmentInstance;
 class UItemInstance;
 class UDragDropOperation;
 class UA1InventoryItemTooltipWidget;
+class UA1InventoryCellWidget;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1EquipmentSlotWidgetLog, Log, All);
 
@@ -49,6 +50,7 @@ protected:
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 	/** UMG 툴팁 시스템이 호버 시 호출. 툴팁 위젯을 생성해 장착된 아이템 정보(이름/설명)를 채워 반환 */
@@ -57,6 +59,12 @@ protected:
 
 	/** 이 아이템을 이 슬롯에 장착할 수 있는지 (장비 프래그먼트가 있고 슬롯 태그가 일치) */
 	bool CanAcceptItem(const UItemInstance* Item) const;
+
+	/** 드래그 오버 중인 아이템의 배치 가능 여부에 따라 Cell_Highlight를 초록/빨강으로 표시합니다 (Inventory와 동일한 위젯 재사용) */
+	void UpdateDropHighlight(bool bCanPlace);
+
+	/** 하이라이트를 기본 상태로 되돌립니다 */
+	void ClearDropHighlight();
 
 
 protected:
@@ -92,4 +100,8 @@ protected:
 	/** 장착된 아이템 수량 (1개 이하면 빈 텍스트) */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> Text_Count;
+
+	/** 드래그 오버 시 배치 가능 여부를 초록/빨강으로 표시하는 하이라이트 (Inventory 그리드 셀과 동일한 위젯) */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UA1InventoryCellWidget> Cell_Highlight;
 };

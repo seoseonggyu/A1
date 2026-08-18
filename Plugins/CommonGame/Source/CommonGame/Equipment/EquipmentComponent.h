@@ -25,6 +25,15 @@ DECLARE_LOG_CATEGORY_EXTERN(EquipmentComponentLog, Log, All);
  */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquipmentSlotChanged, FGameplayTag /*SlotTag*/, UEquipmentInstance* /*Instance*/);
 
+/**
+ * 손에 든 메인 장비 변경 델리게이트 (UI용)
+ *
+ * QuickBarSlotTag를 가진 장비가 활성화(bActive=true)되거나, 활성 상태이던 장비가 완전히
+ * 해제되어 아무것도 안 든 상태가 될 때 브로드캐스트됩니다. NewMainItem이 nullptr이면 후자입니다.
+ * 서버·클라이언트 모두 활성 상태 반영 경로(SetEntryActiveAuth/ReconcileReplicatedEntryActors 등)에서 호출됩니다.
+ */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMainEquippedItemChanged, UEquipmentInstance* /*NewMainItem*/);
+
 //-----------------------------------------------------------------------------
 // FEquipmentEntry
 //-----------------------------------------------------------------------------
@@ -171,7 +180,14 @@ public:
 
 	/** 슬롯 장비 변경 델리게이트 (UI 갱신용, 서버/클라이언트 모두) */
 	FOnEquipmentSlotChanged OnEquipmentSlotChanged;
-	
+
+	/** 손에 든 메인 장비 변경 델리게이트 (UI 갱신용, 서버/클라이언트 모두) */
+	FOnMainEquippedItemChanged OnMainEquippedItemChanged;
+
+	/** 현재 활성화된(손에 든) 메인 장비를 반환합니다. 서버/클라이언트 모두 EquipmentSlots에서 직접 조회합니다 */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UEquipmentInstance* GetActiveMainEquippedItem() const;
+
 	//-----------------------------------------------------------------------------
 	// QuickBar
 	//-----------------------------------------------------------------------------

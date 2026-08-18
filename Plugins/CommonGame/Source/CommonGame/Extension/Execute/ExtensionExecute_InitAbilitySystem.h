@@ -34,10 +34,6 @@ public:
 	TSoftObjectPtr<UCommonAbilityTagRelationshipMapping> TagRelationshipMapping;
 
 private:
-	/** TagRelationshipMapping을 비동기 로딩하여 ASC에 설정한다 (Owner = ASC). */
-	TCoroTask<void> LoadTagRelationshipMappingCoroutine(UCommonAbilitySystemComponent* ASC) const;
-
-private:
 	/** ProcessAbilityInput 델리게이트 핸들 (런타임 상태) */
 	mutable FDelegateHandle ProcessInputDelegateHandle;
 };
