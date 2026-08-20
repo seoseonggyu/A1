@@ -5,6 +5,7 @@
 
 #include "A1GameplayTags.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffect.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -28,6 +29,27 @@ void UA1Ability_MeleeWeapon::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	ResetHitActors();
+}
+
+void UA1Ability_MeleeWeapon::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	// 회복 억제 효과 부여: Status.StaminaRegen.Blocked를 RegenBlockDuration초 동안 부여해
+	// 아래 Super::EndAbility가 곧 제거할 ActivationOwnedTags(Status.StaminaRegen.Blocked)의 공백을 이어받는다.
+	// GE가 ActivationOwnedTags보다 먼저 적용되므로 두 소유 구간이 겹쳐 끊김 없이 이어지고,
+	// 결과적으로 "공격 종료 후 RegenBlockDuration초 뒤에 재생 재개"가 된다.
+	// GE 에셋 자체의 Duration 값과 무관하게 SetDuration으로 강제하므로, BP에는 Duration Policy만 "Has Duration"으로
+	// 맞춰두면 된다 (에셋에 적어둔 구체적 시간 값은 무시됨).
+	if (RecoveryBlockEffectClass && RegenBlockDuration > 0.f)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(RecoveryBlockEffectClass, 1.f);
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data->SetDuration(RegenBlockDuration, true);
+			(void)ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
+		}
+	}
+
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 /**

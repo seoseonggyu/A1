@@ -21,6 +21,7 @@ public:
 	UA1Ability_MeleeWeapon(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
 	UFUNCTION()
@@ -50,4 +51,17 @@ protected:
 	/** 데미지 적용에 사용할 GameplayEffect (Damage Attribute에 SetByCaller로 값 전달) */
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	TSubclassOf<UGameplayEffect> DamageEffectClass; // TODO: 매번 넣기 보다는 데이터로
+
+	/**
+	 * 어빌리티 종료 후 스태미나 재생 재개를 지연시키기 위해 부여할 회복 억제 GameplayEffect.
+	 * Duration Policy를 "Has Duration"으로, Granted Tags에 Status.StaminaRegen.Blocked를 설정해야 한다.
+	 * 실제 지속시간은 이 GE 자체 값이 아니라 아래 RegenBlockDuration으로 코드에서 덮어써 적용된다.
+	 * (Sprint의 RecoveryBlockEffectClass와 동일한 GE 에셋을 재사용해도 된다)
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "A1|Stamina")
+	TSubclassOf<UGameplayEffect> RecoveryBlockEffectClass;
+
+	/** 공격 종료 후 스태미나 재생이 다시 시작되기까지의 지연 시간(초). */
+	UPROPERTY(EditDefaultsOnly, Category = "A1|Stamina")
+	float RegenBlockDuration = 1.f;
 };

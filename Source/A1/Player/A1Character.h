@@ -25,7 +25,8 @@ class A1_API AA1Character : public ACommonCharacter, public IA1Interactable
 
 public:
 	AA1Character(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
+	
+	
 	//-----------------------------------------------------------------------------
 	// IA1Interactable (하이라이트 전용)
 	//-----------------------------------------------------------------------------
@@ -33,5 +34,7 @@ public:
 	virtual void GetHighlightComponents(TArray<UPrimitiveComponent*>& OutComponents) const override;
 	virtual void GatherInteractionOptions(const FA1InteractionQuery& Query, TArray<FA1InteractionOption>& OutOptions) const override;
 	virtual bool CanInteract(const FA1InteractionQuery& Query) const override;
+	
+	void HandleDeathAuth();
 
 };

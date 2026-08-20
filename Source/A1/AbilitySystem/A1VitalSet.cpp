@@ -168,7 +168,7 @@ void UA1VitalSet::PostAttributeChange(const FGameplayAttribute& Attribute, float
 		{
 			if (AA1Character* Character = Cast<AA1Character>(ASC->GetAvatarActor()))
 			{
-				// Character->HandleDeathAuth(); // TODO: Death 처리
+				Character->HandleDeathAuth();
 			}
 		}
 	}

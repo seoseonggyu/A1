@@ -2,6 +2,8 @@
 
 #include "Player/A1Character.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/A1VitalSet.h"
 #include "Actors/A1ArmorBase.h"
 #include "Camera/CommonCameraComponent.h"
 #include "Components/ArrowComponent.h"
@@ -68,13 +70,32 @@ void AA1Character::GatherInteractionOptions(const FA1InteractionQuery& Query, TA
 	FA1InteractionOption Option;
 	Option.Interactable = TScriptInterface<IA1Interactable>(const_cast<AA1Character*>(this));
 	Option.Title = FText::FromString(GetActorNameOrLabel());
-	// 캐릭터 전용 외곽선 스텐실 값. World Interactable 예시들과 겹치지 않도록 5를 사용한다
-	// (Door=2, Pickup=3, Corpse=4, WorldInteractable 기본=1).
 	Option.HighlightStencil = 255;
 	OutOptions.Add(Option);
 }
 
 bool AA1Character::CanInteract(const FA1InteractionQuery& Query) const
 {
-	return true;
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (ASC == nullptr)
+	{
+		return false;
+	}
+
+	bool bFound = false;
+	const float Health = ASC->GetGameplayAttributeValue(UA1VitalSet::GetHealthAttribute(), bFound);
+	if (bFound == false)
+	{
+		return false;
+	}
+
+	return Health <= 0.f;
+}
+
+void AA1Character::HandleDeathAuth()
+{
+	if (HasAuthority() == false) return;
+
+	UE_LOG(A1CharacterLog, Log, TEXT("%s 사망"), *GetName());
+	Destroy();
 }
