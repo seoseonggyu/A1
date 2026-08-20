@@ -19,11 +19,7 @@ DEFINE_LOG_CATEGORY(A1Ability_MeleeWeapon)
 UA1Ability_MeleeWeapon::UA1Ability_MeleeWeapon(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// TODO: Network
-
-	// 근접 공격류(기본 공격/콤보/스킬 등 이 클래스를 상속하는 모든 어빌리티) 실행 중에는
-	// 스태미나 재생을 멈춘다. (GE_Stamina_Regen이 Status.StaminaRegen.Blocked를 Ignore로 감시)
-	// 종료 시 ActivationOwnedTags가 즉시 제거되므로 Sprint와 달리 지연 없이 바로 재생이 재개된다.
+	
 	ActivationOwnedTags.AddTag(A1GameplayTags::Status_StaminaRegen_Blocked);
 }
 

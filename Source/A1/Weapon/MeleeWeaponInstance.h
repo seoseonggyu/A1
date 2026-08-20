@@ -37,6 +37,12 @@ public:
 
 	float GetBaseDamage() const { return BaseDamage; }
 
+	/**
+	 * 이 무기로 공격할 때 소비할 스태미나 값. (무기마다 다르며, 밸런싱에 따라 값이 바뀔 수 있다)
+	 * UA1Ability_MeleeWeaponAttack이 SetByCaller로 스태미나 소비 GE에 전달한다.
+	 */
+	float GetStaminaCost() const { return StaminaCost; }
+
 protected:
 	virtual void OnEquipped() override;
 	virtual void OnUnequipped() override;
@@ -51,4 +57,8 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
 	float BaseDamage;
+
+	/** 공격 1회당 소비하는 스태미나. 무기별로 다르게 설정하며, 값은 밸런싱에 따라 조정될 수 있다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float StaminaCost = 0.f;
 };

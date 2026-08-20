@@ -1,10 +1,12 @@
 #include "A1Ability_MeleeWeaponAttack.h"
 #include "Weapon/MeleeWeaponInstance.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "A1GameplayTags.h"
 #include "DeveloperPrint.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystem/A1VitalSet.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
@@ -36,6 +38,24 @@ bool UA1Ability_MeleeWeaponAttack::CanActivateAbility(const FGameplayAbilitySpec
 		return false;
 	}
 
+	// 무기의 스태미나 소비량보다 현재 스태미나가 부족하면 공격을 시작할 수 없다.
+	const float StaminaCost = WeaponInstance->GetStaminaCost();
+	if (StaminaCost > 0.f)
+	{
+		UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+		if (ASC == nullptr)
+		{
+			return false;
+		}
+
+		bool bFoundAttribute = false;
+		const float CurrentStamina = UAbilitySystemBlueprintLibrary::GetFloatAttributeFromAbilitySystemComponent(ASC, UA1VitalSet::GetStaminaAttribute(), bFoundAttribute);
+		if (bFoundAttribute == false || CurrentStamina < StaminaCost)
+		{
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -59,6 +79,9 @@ void UA1Ability_MeleeWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHan
 
 	UAbilitySystemComponent* ASC = CurrentActorInfo->AbilitySystemComponent.Get();
 	check(ASC);
+
+	// 공격 시작 시 무기별 스태미나를 소비한다. (스태미나 재생 차단은 베이스 UA1Ability_MeleeWeapon에서 처리)
+	ApplyStaminaCost();
 
 	const UMeleeWeaponInstance* WeaponInstance = GetMeleeWeaponInstance();
 	UAnimMontage* AttackMontage = WeaponInstance->GetAttackMontage(ComboIndex);
@@ -142,6 +165,59 @@ void UA1Ability_MeleeWeaponAttack::OnMontageFinished()
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
+}
+
+// 현재 장착 무기의 스태미나 소비량을 SetByCaller로 실어 스태미나 소비 GE를 자신에게 적용한다.
+// (데미지와 동일한 SetByCaller 방식 — 무기별로 값이 다르고 밸런싱으로 바뀔 수 있어 GE에 고정하지 않는다)
+void UA1Ability_MeleeWeaponAttack::ApplyStaminaCost() const
+{
+	if (StaminaCostEffectClass == nullptr)
+	{
+		// 소비 GE가 지정되지 않았으면 소비 없이 진행한다. (BP에서 미설정 시 공격만 되고 소비는 되지 않음)
+		UE_LOG(A1Ability_MeleeWeaponAttack, Warning, TEXT("ApplyStaminaCost: StaminaCostEffectClass가 설정되지 않아 소비를 건너뜁니다. (%s)"), *GetName());
+		return;
+	}
+
+	const UMeleeWeaponInstance* WeaponInstance = GetMeleeWeaponInstance();
+	if (WeaponInstance == nullptr)
+	{
+		UE_LOG(A1Ability_MeleeWeaponAttack, Warning, TEXT("ApplyStaminaCost: WeaponInstance를 찾을 수 없어 소비를 건너뜁니다."));
+		return;
+	}
+
+	const float StaminaCost = WeaponInstance->GetStaminaCost();
+	if (StaminaCost <= 0.f)
+	{
+		// 소비량이 0 이하인 무기는 스태미나를 소비하지 않는다.
+		UE_LOG(A1Ability_MeleeWeaponAttack, Warning, TEXT("ApplyStaminaCost: 무기 [%s]의 StaminaCost가 0 이하(%.2f)라 소비를 건너뜁니다."), *GetNameSafe(WeaponInstance), StaminaCost);
+		return;
+	}
+
+	UCommonAbilitySystemComponent* SourceASC = GetCommonAbilitySystemComponentFromActorInfo();
+	if (SourceASC == nullptr)
+	{
+		UE_LOG(A1Ability_MeleeWeaponAttack, Warning, TEXT("ApplyStaminaCost: ASC를 찾을 수 없어 소비를 건너뜁니다."));
+		return;
+	}
+
+	// Instant GE라 소유 클라에서도 예측 적용이 가능하도록 예측 윈도우 안에서 자신에게 적용한다.
+	FScopedPredictionWindow ScopedPrediction(SourceASC, GetCurrentActivationInfo().GetActivationPredictionKey());
+
+	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(StaminaCostEffectClass);
+	if (SpecHandle.IsValid() == false)
+	{
+		UE_LOG(A1Ability_MeleeWeaponAttack, Warning, TEXT("ApplyStaminaCost: GameplayEffectSpec 생성에 실패했습니다. (%s)"), *GetNameSafe(StaminaCostEffectClass));
+		return;
+	}
+
+	// 무기별 소비량을 SetByCaller.StaminaCost 태그를 키로 스펙에 심는다.
+	// GE_Cost_Stamina의 Modifier Op가 Add이므로, 소비(감소)시키려면 음수 값을 실어야 한다.
+	// (UE5.8 GE 에디터의 Set by Caller Magnitude에는 별도 계수(Coefficient) 필드가 없어 여기서 부호를 반전한다)
+	SpecHandle.Data->SetSetByCallerMagnitude(A1GameplayTags::SetByCaller_StaminaCost, -StaminaCost);
+
+	const FActiveGameplayEffectHandle AppliedHandle = ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
+	UE_LOG(A1Ability_MeleeWeaponAttack, Log, TEXT("ApplyStaminaCost: 무기 [%s] StaminaCost=%.2f 적용 결과 Handle.IsValid=%d (HasAuthority=%d)"),
+		*GetNameSafe(WeaponInstance), StaminaCost, AppliedHandle.IsValid(), HasAuthority(&CurrentActivationInfo));
 }
 
 void UA1Ability_MeleeWeaponAttack::SetOrientRotationToMovementLocal(bool bNewOrient) const
