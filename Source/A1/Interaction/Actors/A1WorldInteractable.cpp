@@ -96,8 +96,6 @@ void AA1WorldInteractable::OnInteractAuth(AActor* Interactor)
 	}
 
 	UE_LOG(A1WorldInteractableLog, Log, TEXT("%s 상호작용됨 (by %s)"), *GetName(), *GetNameSafe(Interactor));
-
-	K2_OnInteractAuth(Interactor);
 }
 
 void AA1WorldInteractable::OnRep_bIsUsed()

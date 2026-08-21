@@ -46,9 +46,6 @@ public:
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/** BP에서 상호작용 결과 연출/처리를 확장하는 훅. 서버에서 호출된다. */
-	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnInteractAuth")
-	void K2_OnInteractAuth(AActor* Interactor);
 
 protected:
 	/** 상호작용 대상 메시. 호버 하이라이트/커서 트레이스 대상. */
