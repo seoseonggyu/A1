@@ -5,6 +5,7 @@
 #include "Widget/CommonExtensionUserWidget.h"
 #include "A1EquipmentWidget.generated.h"
 
+class APawn;
 class UEquipmentComponent;
 class UEquipmentInstance;
 class UA1EquipmentSlotWidget;
@@ -33,6 +34,14 @@ class A1_API UA1EquipmentWidget : public UCommonExtensionUserWidget
 public:
 	UEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
 
+	/**
+	 * 소유 Pawn 대신 지정한 Pawn의 장비를 보여주도록 설정합니다 (예: 시체 루팅 창).
+	 * bInReadOnly가 true면 모든 슬롯을 드래그 불가로 만듭니다(다른 액터의 장비라 이동 조작 대상이 아님).
+	 * NativeConstruct의 SetupEquipment()보다 먼저 호출되었는지 여부와 무관하게 안전합니다
+	 * (이미 다른 대상으로 구성되어 있었다면 다시 구성합니다).
+	 */
+	void SetTargetPawnOverride(APawn* InTargetPawn, bool bInReadOnly);
+
 protected:
 	//-----------------------------------------------------------------------------
 	// UUserWidget 오버라이드
@@ -55,6 +64,12 @@ private:
 	void TearDown();
 
 private:
+	/** 지정되어 있으면 GetOwningPlayerPawn() 대신 이 Pawn의 장비를 표시한다. */
+	TWeakObjectPtr<APawn> TargetPawnOverride;
+
+	/** true면 모든 슬롯 위젯을 읽기 전용(드래그 불가)으로 만든다. */
+	bool bReadOnly = false;
+
 	UPROPERTY()
 	TObjectPtr<UEquipmentComponent> EquipmentComponent = nullptr;
 

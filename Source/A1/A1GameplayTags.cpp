@@ -65,6 +65,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Scan, "Ability.Interact.Scan");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Pickup, "Ability.Interact.Pickup");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Door, "Ability.Interact.Door");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Player, "Ability.Interact.Player");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_DropItem, "Ability.DropItem");
 
@@ -97,6 +98,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Attack, "GameplayEvent.Interact.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Pickup, "GameplayEvent.Interact.Pickup");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Door, "GameplayEvent.Interact.Door");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Player, "GameplayEvent.Interact.Player");
 		
 	//-----------------------------------------------------------------------------
 	// Cooldown.Skill

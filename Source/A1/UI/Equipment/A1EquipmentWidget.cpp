@@ -6,6 +6,7 @@
 #include "Equipment/EquipmentComponent.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1EquipmentWidget)
 
@@ -33,7 +34,9 @@ void UA1EquipmentWidget::SetupEquipment()
 		return;
 	}
 
-	EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(GetOwningPlayerPawn());
+	APawn* SourcePawn = TargetPawnOverride.IsValid() ? TargetPawnOverride.Get() : GetOwningPlayerPawn();
+
+	EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(SourcePawn);
 	if (!EquipmentComponent)
 	{
 		UE_LOG(A1EquipmentWidgetLog, Warning, TEXT("SetupEquipment: EquipmentComponent를 찾을 수 없습니다"));
@@ -47,6 +50,7 @@ void UA1EquipmentWidget::SetupEquipment()
 		{
 			if (UA1EquipmentSlotWidget* SlotWidget = Cast<UA1EquipmentSlotWidget>(InWidget))
 			{
+				SlotWidget->SetReadOnly(bReadOnly);
 				SlotWidgets.Add(SlotWidget);
 			}
 		});
@@ -54,8 +58,22 @@ void UA1EquipmentWidget::SetupEquipment()
 
 	RefreshAllSlots();
 
-	// 장착/해제가 실시간으로 반영되도록 구독
-	SlotChangedHandle = EquipmentComponent->OnEquipmentSlotChanged.AddUObject(this, &ThisClass::HandleEquipmentSlotChanged);
+	// 읽기 전용 대상(예: 시체)은 더 이상 장착 상태가 바뀌지 않으므로 실시간 구독이 필요 없다.
+	if (!bReadOnly)
+	{
+		SlotChangedHandle = EquipmentComponent->OnEquipmentSlotChanged.AddUObject(this, &ThisClass::HandleEquipmentSlotChanged);
+	}
+}
+
+void UA1EquipmentWidget::SetTargetPawnOverride(APawn* InTargetPawn, bool bInReadOnly)
+{
+	TargetPawnOverride = InTargetPawn;
+	bReadOnly = bInReadOnly;
+
+	// SetupEquipment()가 이 호출보다 먼저 실행되어 (초기화 순서는 보장되지 않으므로) 잘못된
+	// 대상(예: 내 소유 Pawn)으로 이미 구성되어 있었을 수 있으므로 정리 후 다시 구성한다.
+	TearDown();
+	SetupEquipment();
 }
 
 void UA1EquipmentWidget::HandleEquipmentSlotChanged(FGameplayTag SlotTag, UEquipmentInstance* Instance)

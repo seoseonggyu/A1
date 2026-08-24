@@ -34,7 +34,7 @@ void UA1InventoryItemWidget::NativeOnInitialized()
 
 FReply UA1InventoryItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	if (!bReadOnly && ItemInstance && InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
 		// 위젯 좌상단 기준 마우스를 잡은 위치를 기억해뒀다가, 드래그 비주얼이 같은 지점에서 잡히도록 사용
 		CachedGrabOffset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());

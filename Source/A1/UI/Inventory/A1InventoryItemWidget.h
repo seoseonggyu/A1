@@ -36,11 +36,17 @@ public:
 
 	/** 스택 수량만 갱신합니다 */
 	void RefreshStackCount(int32 InStackCount);
-	
+
 	int32 GetItemId() const;
 
 	/** 드래그 중 반투명 등 처리 */
 	void SetDragVisualOpacity(bool bDragging);
+
+	/**
+	 * 읽기 전용 여부를 설정합니다. true면 드래그로 옮길 수 없습니다.
+	 * 다른 액터(예: 시체)의 인벤토리를 열람만 시켜줄 때 사용합니다(내 아이템이 아니라 이동 조작 대상이 아님).
+	 */
+	void SetReadOnly(bool bInReadOnly) { bReadOnly = bInReadOnly; }
 
 protected:
 	//-----------------------------------------------------------------------------
@@ -61,6 +67,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
 	int32 StackCount = 0;
+
+	/** true면 드래그로 옮길 수 없다. */
+	bool bReadOnly = false;
 
 	UPROPERTY()
 	TWeakObjectPtr<UA1InventoryWidget> OwnerInventory;

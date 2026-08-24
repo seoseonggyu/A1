@@ -15,8 +15,8 @@ UItemDefinition (불변 DataAsset, Fragment 템플릿 배열)
                                                         └─ UWeaponInstance / UMeleeWeaponInstance
 ```
 
-- `UInventoryComponent` : **Controller** 부착. Owner에게만 복제. Experience 로드 후 초기 아이템 지급.
-- `UEquipmentComponent` : **Pawn** 부착. 슬롯 태그 → `UEquipmentInstance` 맵 관리.
+- `UInventoryComponent` : **Pawn** 부착. `EquipmentComponent`와 동일하게 조건 없이 전체 복제(다른 플레이어도 열람 가능 — 예: 사망한 캐릭터의 인벤토리 루팅 UI). BeginPlay 시 초기 아이템 지급.
+- `UEquipmentComponent` : **Pawn** 부착. 슬롯 태그 → `UEquipmentInstance` 맵 관리. 조건 없이 전체 복제.
 - `UQuickBarComponent` : 슬롯 태그별 아이템 배열 + 활성 슬롯.
 
 ## 주요 API

@@ -37,7 +37,7 @@ void UA1EquipmentSlotWidget::NativeOnInitialized()
 
 FReply UA1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && EquipmentInstance)
+	if (!bReadOnly && InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && EquipmentInstance)
 	{
 		// 위젯 좌상단 기준 마우스를 잡은 위치와 위젯 크기를 기억해뒀다가, 드래그 비주얼이 같은 지점/크기로 잡히도록 사용
 		CachedGrabOffset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
@@ -162,7 +162,7 @@ bool UA1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const
 	const UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
 
 	// 인벤토리에서 온, 이 슬롯에 맞는 아이템일 때만 드롭 대상으로 받아들인다 (장비창 간 이동은 아직 미지원)
-	const bool bCanAccept = DragOp && !DragOp->FromEquipmentSlotTag.IsValid() && CanAcceptItem(DragOp->ItemInstance);
+	const bool bCanAccept = !bReadOnly && DragOp && !DragOp->FromEquipmentSlotTag.IsValid() && CanAcceptItem(DragOp->ItemInstance);
 	UpdateDropHighlight(bCanAccept);
 
 	if (bCanAccept)
@@ -183,6 +183,11 @@ void UA1EquipmentSlotWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropE
 bool UA1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	ClearDropHighlight();
+
+	if (bReadOnly)
+	{
+		return false;
+	}
 
 	UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
 	if (!DragOp || !DragOp->ItemInstance)

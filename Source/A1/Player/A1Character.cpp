@@ -2,6 +2,7 @@
 
 #include "Player/A1Character.h"
 
+#include "A1GameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/A1VitalSet.h"
 #include "Actors/A1ArmorBase.h"
@@ -10,6 +11,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Cosmetic/A1CosmeticManagerComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h"
 #include "Physics/A1CollisionChannels.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Character)
@@ -70,7 +73,9 @@ void AA1Character::GatherInteractionOptions(const FA1InteractionQuery& Query, TA
 	FA1InteractionOption Option;
 	Option.Interactable = TScriptInterface<IA1Interactable>(const_cast<AA1Character*>(this));
 	Option.Title = FText::FromString(GetActorNameOrLabel());
-	Option.HighlightStencil = 255;
+	// CanInteract가 사망 상태만 통과시키므로, 여기 도달하는 대상은 항상 시체다. (Corpse 스텐실 값 사용)
+	Option.HighlightStencil = 4;
+	Option.InteractEventTag = A1GameplayTags::GameplayEvent_Interact_Player;
 	OutOptions.Add(Option);
 }
 
@@ -97,5 +102,4 @@ void AA1Character::HandleDeathAuth()
 	if (HasAuthority() == false) return;
 
 	UE_LOG(A1CharacterLog, Log, TEXT("%s 사망"), *GetName());
-	Destroy();
 }

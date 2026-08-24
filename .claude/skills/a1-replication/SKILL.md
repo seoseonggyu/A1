@@ -22,7 +22,7 @@ description: A1 프로젝트에서 네트워크 복제를 다룰 때 반드시 �
 
 1. `UPROPERTY(Replicated)` 또는 `ReplicatedUsing = OnRep_<Name>`
 2. `GetLifetimeReplicatedProps`에 `DOREPLIFETIME(...)` / `DOREPLIFETIME_CONDITION(...)` 추가 — **누락 시 조용히 복제 안 됨**
-3. Owner에게만 필요한 데이터는 `COND_OwnerOnly` (예: 인벤토리)
+3. Owner에게만 필요한 데이터는 `COND_OwnerOnly`. 단, 다른 플레이어도 봐야 하는 데이터(예: `InventoryComponent`/`EquipmentComponent` — 사망한 캐릭터의 인벤토리를 다른 플레이어가 열람하는 루팅 UI)는 조건 없이 전체 복제한다.
 4. `OnRep_`은 클라이언트에서만 불린다는 전제로 작성
 
 ## FastArray 리스트 추가

@@ -12,6 +12,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
+#include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1InventoryWidget)
 
@@ -47,7 +48,9 @@ void UA1InventoryWidget::SetupInventory()
 		return;
 	}
 
-	InventoryComponent = UInventoryComponent::FindInventoryComponent(GetOwningPlayer());
+	APawn* SourcePawn = TargetPawnOverride.IsValid() ? TargetPawnOverride.Get() : GetOwningPlayerPawn();
+
+	InventoryComponent = UInventoryComponent::FindInventoryComponent(SourcePawn);
 	if (!InventoryComponent)
 	{
 		UE_LOG(A1InventoryWidgetLog, Warning, TEXT("SetupInventory: InventoryComponent를 찾을 수 없습니다"));
@@ -60,6 +63,17 @@ void UA1InventoryWidget::SetupInventory()
 	SpawnExistingItems();
 
 	GridChangedHandle = InventoryComponent->OnInventoryGridChanged.AddUObject(this, &ThisClass::HandleGridChanged);
+}
+
+void UA1InventoryWidget::SetTargetPawnOverride(APawn* InTargetPawn, bool bInReadOnly)
+{
+	TargetPawnOverride = InTargetPawn;
+	bReadOnly = bInReadOnly;
+
+	// SetupInventory()가 이 호출보다 먼저 실행되어 (초기화 순서는 보장되지 않으므로) 잘못된
+	// 대상(예: 내 소유 Pawn)으로 이미 구성되어 있었을 수 있으므로 정리 후 다시 구성한다.
+	TearDown();
+	SetupInventory();
 }
 
 void UA1InventoryWidget::TearDown()
@@ -213,6 +227,7 @@ void UA1InventoryWidget::PlaceItemWidget(int32 ItemId, UItemInstance* Instance, 
 		ItemWidgets.Add(ItemId, ItemWidget);
 		CanvasPanel_Items->AddChildToCanvas(ItemWidget);
 		ItemWidget->InitializeItem(this, Instance, StackCount, UnitCellSize);
+		ItemWidget->SetReadOnly(bReadOnly);
 	}
 	else
 	{
@@ -246,7 +261,7 @@ void UA1InventoryWidget::RemoveItemWidget(int32 ItemId)
 bool UA1InventoryWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
-	if (!DragOp || !DragOp->ItemInstance || !InventoryComponent)
+	if (bReadOnly || !DragOp || !DragOp->ItemInstance || !InventoryComponent)
 	{
 		return false;
 	}
@@ -278,7 +293,7 @@ bool UA1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 
 	ClearDropPreview();
 
-	if (!DragOp || !DragOp->ItemInstance || !InventoryComponent)
+	if (bReadOnly || !DragOp || !DragOp->ItemInstance || !InventoryComponent)
 	{
 		return false;
 	}

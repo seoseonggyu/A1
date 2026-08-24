@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ControllerComponent.h"
+#include "Components/PawnComponent.h"
 #include "Inventory/ItemInstance.h"
 #include "Inventory/Fragment/NetState/ItemFragmentNetStateList.h"
 #include "Coro.h"
 #include "InventoryComponent.generated.h"
 
 struct FInventoryList;
+class AController;
+class APawn;
 class UItemDefinition;
 class UExperienceDefinition;
 class UInventoryComponent;
@@ -162,12 +164,12 @@ struct TStructOpsTypeTraits<FInventoryList> : public TStructOpsTypeTraitsBase2<F
 /**
  * 플레이어 인벤토리 컴포넌트
  *
- * PlayerController에 붙어서 아이템을 관리합니다.
- * 네트워크 복제를 지원하며, Owner에게만 복제됩니다.
- * Experience 로드 완료 시 초기 아이템을 자동으로 추가합니다.
+ * Pawn(캐릭터)에 붙어서 아이템을 관리합니다. EquipmentComponent와 동일하게 조건 없이 전체
+ * 복제됩니다(다른 플레이어도 볼 수 있음 — 예: 사망한 캐릭터의 인벤토리를 다른 플레이어가 열람).
+ * 스폰 시 초기 아이템을 자동으로 추가합니다.
  */
 UCLASS(ClassGroup = (Inventory), meta = (BlueprintSpawnableComponent))
-class COMMONGAME_API UInventoryComponent : public UControllerComponent
+class COMMONGAME_API UInventoryComponent : public UPawnComponent
 {
 	GENERATED_BODY()
 
@@ -189,10 +191,9 @@ public:
 	// 아이템 관리 (서버 전용)
 	//-----------------------------------------------------------------------------
 
-	/** 초기 아이템을 지급합니다 (서버 전용, Pawn Possess 시 호출) */
-	UFUNCTION()
-	void GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn);
-	
+	/** 초기 아이템을 지급합니다 (서버 전용, BeginPlay에서 호출) */
+	void GiveInitialItemsAuth();
+
 	/** 아이템을 추가합니다 (서버 전용, 코루틴) */
 	TCoroTask<UItemInstance*> AddItemAuthCoroutine(const UItemDefinition* Definition, int32 Count = 1);
 

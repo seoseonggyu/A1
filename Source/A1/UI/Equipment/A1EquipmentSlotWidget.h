@@ -40,6 +40,12 @@ public:
 	/** 드래그 중 반투명 등 처리 */
 	void SetDragVisualOpacity(bool bDragging);
 
+	/**
+	 * 읽기 전용 여부를 설정합니다. true면 드래그로 옮기거나 받을 수 없습니다.
+	 * 다른 액터(예: 시체)의 장비를 열람만 시켜줄 때 사용합니다(내 장비가 아니라 이동 조작 대상이 아님).
+	 */
+	void SetReadOnly(bool bInReadOnly) { bReadOnly = bInReadOnly; }
+
 protected:
 	//-----------------------------------------------------------------------------
 	// UUserWidget 오버라이드 (드래그)
@@ -82,6 +88,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
 	TObjectPtr<UEquipmentInstance> EquipmentInstance = nullptr;
+
+	/** true면 드래그로 옮기거나 받을 수 없다. */
+	bool bReadOnly = false;
 
 	/** 마우스 버튼을 누른 시점의 위젯 내 잡은 위치(px) */
 	FVector2D CachedGrabOffset = FVector2D::ZeroVector;

@@ -138,12 +138,12 @@ UInventoryComponent::UInventoryComponent(const FObjectInitializer& ObjectInitial
 
 UInventoryComponent* UInventoryComponent::FindInventoryComponent(const APawn* Pawn)
 {
-	return Pawn ? FindInventoryComponent(Pawn->GetController()) : nullptr;
+	return Pawn ? Pawn->FindComponentByClass<UInventoryComponent>() : nullptr;
 }
 
 UInventoryComponent* UInventoryComponent::FindInventoryComponent(const AController* Controller)
 {
-	return Controller ? Controller->FindComponentByClass<UInventoryComponent>() : nullptr;
+	return Controller ? FindInventoryComponent(Controller->GetPawn()) : nullptr;
 }
 
 void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -152,7 +152,6 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
-	Params.Condition = COND_OwnerOnly;
 
 	DOREPLIFETIME_WITH_PARAMS_FAST(UInventoryComponent, InventoryList, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(UInventoryComponent, ItemNetStates, Params);
@@ -166,20 +165,17 @@ void UInventoryComponent::BeginPlay()
 	// 서버와 클라 모두 사용
 	OccupiedCells.Init(false, GridSize.X * GridSize.Y);
 
-	// 서버에서만 Pawn Possess 시 초기 아이템 지급
+	// Pawn에 붙는 컴포넌트라 스폰될 때 이미 소유 Pawn이 결정되어 있으므로 바로 지급한다.
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
-		if (AController* Controller = Cast<AController>(GetOwner()))
-		{
-			Controller->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::GiveInitialItemsAuth);
-		}
+		GiveInitialItemsAuth();
 	}
 }
 
 
-void UInventoryComponent::GiveInitialItemsAuth(APawn* OldPawn, APawn* NewPawn)
+void UInventoryComponent::GiveInitialItemsAuth()
 {
-	if (!NewPawn || bInitialItemsGiven)
+	if (bInitialItemsGiven)
 	{
 		return;
 	}
@@ -375,8 +371,7 @@ void UInventoryComponent::ToEquipmentFromInventoryAuth(UItemInstance* Instance)
 		return;
 	}
 	
-	const AController* Controller = Cast<AController>(GetOwner());
-	UEquipmentComponent* EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn());
+	UEquipmentComponent* EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(Cast<APawn>(GetOwner()));
 	if (!EquipmentComponent)
 	{
 		UE_LOG(InventoryComponentLog, Warning, TEXT("초기 아이템 장착 실패: EquipmentComponent를 찾을 수 없습니다"));
@@ -423,8 +418,7 @@ void UInventoryComponent::EquipFromInventoryServer_Implementation(int32 ItemId, 
 		return;
 	}
 
-	const AController* Controller = Cast<AController>(GetOwner());
-	UEquipmentComponent* EquipmentComponent = Controller ? UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn()) : nullptr;
+	UEquipmentComponent* EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(Cast<APawn>(GetOwner()));
 	if (!EquipmentComponent)
 	{
 		UE_LOG(InventoryComponentLog, Warning, TEXT("EquipFromInventoryServer: EquipmentComponent를 찾을 수 없습니다"));
@@ -510,8 +504,7 @@ void UInventoryComponent::UnequipToInventoryServer_Implementation(int32 ItemId, 
 		return;
 	}
 
-	const AController* Controller = Cast<AController>(GetOwner());
-	UEquipmentComponent* EquipmentComponent = Controller ? UEquipmentComponent::FindEquipmentComponent(Controller->GetPawn()) : nullptr;
+	UEquipmentComponent* EquipmentComponent = UEquipmentComponent::FindEquipmentComponent(Cast<APawn>(GetOwner()));
 	if (!EquipmentComponent)
 	{
 		UE_LOG(InventoryComponentLog, Warning, TEXT("UnequipToInventoryServer: EquipmentComponent를 찾을 수 없습니다"));

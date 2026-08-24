@@ -5,10 +5,12 @@
 #include "Widget/CommonExtensionActivatableWidget.h"
 #include "A1InventoryWidget.generated.h"
 
+class APawn;
 class UUniformGridPanel;
 class UCanvasPanel;
 class UInventoryComponent;
 class UItemInstance;
+class UItemDefinition;
 class UA1InventoryCellWidget;
 class UA1InventoryItemWidget;
 class UA1ItemDragDrop;
@@ -23,8 +25,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnA1InventoryWindowClosed);
 /**
  * 인벤토리 창 (활성화 가능 위젯)
  *
- * PlayerController의 UInventoryComponent를 찾아 2D 그리드를 구성하고,
- * OnInventoryGridChanged를 구독해 아이템 위젯을 생성/이동/제거합니다.
+ * 소유 Pawn(또는 SetTargetPawnOverride로 지정한 다른 Pawn)의 UInventoryComponent를 찾아
+ * 2D 그리드를 구성하고, OnInventoryGridChanged를 구독해 아이템 위젯을 생성/이동/제거합니다.
+ * UInventoryComponent는 EquipmentComponent와 마찬가지로 조건 없이 전체 복제되므로,
+ * 다른 플레이어(예: 사망한 캐릭터)의 인벤토리를 지정해도 실시간으로 갱신된다 — 같은 컴포넌트를
+ * 바라보는 다른 클라이언트가 있다면 그쪽 위젯도 동시에 갱신된다.
  * 드래그&드롭으로 아이템을 옮기며, 배치 가능 여부를 초록/빨강으로 미리보기합니다.
  *
  * 클라이언트 전용으로 가정합니다.
@@ -40,6 +45,14 @@ public:
 	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	FVector2D GetUnitCellSize() const { return UnitCellSize; }
 
+	/**
+	 * 소유 Pawn 대신 지정한 Pawn의 인벤토리를 보여주도록 설정합니다 (예: 시체 루팅 창).
+	 * bInReadOnly가 true면 드래그로 옮길 수 없게 만듭니다 (다른 플레이어의 인벤토리 사이를
+	 * 옮기는 서버 RPC가 아직 없어, 드래그를 허용하면 조용히 실패하는 것처럼 보이기 때문).
+	 * NativeConstruct의 SetupInventory()보다 먼저 호출되었는지 여부와 무관하게 안전합니다
+	 * (이미 다른 대상으로 구성되어 있었다면 다시 구성합니다).
+	 */
+	void SetTargetPawnOverride(APawn* InTargetPawn, bool bInReadOnly);
 
 protected:
 	//-----------------------------------------------------------------------------
@@ -129,6 +142,12 @@ protected:
 	TObjectPtr<UCanvasPanel> CanvasPanel_Items;
 
 private:
+	/** 지정되어 있으면 GetOwningPlayer() 대신 이 Pawn의 인벤토리를 표시한다. */
+	TWeakObjectPtr<APawn> TargetPawnOverride;
+
+	/** true면 드래그로 옮길 수 없다(모든 아이템 위젯에 전파). */
+	bool bReadOnly = false;
+
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent = nullptr;
 

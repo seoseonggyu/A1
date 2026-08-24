@@ -15,8 +15,10 @@ DECLARE_LOG_CATEGORY_EXTERN(A1CharacterLog, Log, All);
  * �� �ý����� �����ϴ� ĳ���� Ŭ�����Դϴ�.
  * �� ������ ���� PlayerController���� �����ɴϴ�.
  *
- * IA1Interactable을 구현해 다른 플레이어의 커서 호버 대상이 될 수 있다 (하이라이트 전용,
- * 이번 단계에서는 실제 상호작용 처리(OnInteractAuth)는 연결하지 않는다).
+ * IA1Interactable을 구현해 다른 플레이어의 상호작용 대상이 될 수 있다.
+ * CanInteract가 사망(Health<=0) 상태만 허용하므로, 시체 상태에서만 Interact가 가능하다.
+ * 실제 결과 처리(장비/인벤토리 열람 등)는 GatherInteractionOptions가 제공하는
+ * InteractEventTag(GameplayEvent.Interact.Player)로 UA1Ability_Interact_Player에 위임한다.
  */
 UCLASS()
 class A1_API AA1Character : public ACommonCharacter, public IA1Interactable
@@ -28,7 +30,7 @@ public:
 	
 	
 	//-----------------------------------------------------------------------------
-	// IA1Interactable (하이라이트 전용)
+	// IA1Interactable
 	//-----------------------------------------------------------------------------
 
 	virtual void GetHighlightComponents(TArray<UPrimitiveComponent*>& OutComponents) const override;
