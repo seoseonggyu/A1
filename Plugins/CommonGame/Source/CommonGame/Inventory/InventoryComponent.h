@@ -15,6 +15,7 @@ class APawn;
 class UItemDefinition;
 class UExperienceDefinition;
 class UInventoryComponent;
+class UEquipmentComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(InventoryComponentLog, Log, All);
 
@@ -184,6 +185,10 @@ public:
 	static UInventoryComponent* FindInventoryComponent(const APawn* Pawn);
 	static UInventoryComponent* FindInventoryComponent(const AController* Controller);
 
+	/** Item이 현재 속한 InventoryComponent를 반환합니다 (Outer 기준). 장착 중인 아이템도 항상 유효합니다. */
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static UInventoryComponent* FindOwningInventory(const UItemInstance* Item);
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 
@@ -239,6 +244,38 @@ public:
 	/** 장착된 아이템을 해제하고 인벤토리 그리드의 지정 위치로 되돌립니다 (클라이언트 → 서버 RPC) */
 	UFUNCTION(Server, Reliable)
 	void UnequipToInventoryServer(int32 ItemId, FGameplayTag FromEquipmentSlotTag, FIntPoint Anchor);
+
+
+	//-----------------------------------------------------------------------------
+	// 캐릭터 간 아이템 교환 (예: 시체 루팅) - 서로 다른 InventoryComponent 사이 전용.
+	// 같은 캐릭터 내 이동/장착은 위의 MoveItemServer/EquipFromInventoryServer/
+	// UnequipToInventoryServer를 그대로 쓴다. 클라이언트 → 서버 RPC이므로 호출은 항상
+	// "내가 소유한" InventoryComponent에서 하고, Source/Dest 중 하나가 반드시 그 자신이어야 한다.
+	//-----------------------------------------------------------------------------
+
+	/** 인벤토리 아이템을 다른 캐릭터의 인벤토리로 옮깁니다. */
+	UFUNCTION(Server, Reliable)
+	void TransferInventoryToInventoryServer(UInventoryComponent* SourceInventory, int32 ItemId, UInventoryComponent* DestInventory, FIntPoint NewAnchor);
+
+	/**
+	 * 인벤토리 아이템을 다른 캐릭터의 장비 슬롯에 장착합니다.
+	 * 대상 슬롯에 이미 장착된 아이템이 있으면 대상 캐릭터의 인벤토리로 되돌리고 교체하며,
+	 * 되돌릴 빈 칸이 없으면 전체 작업을 취소합니다(부분 적용 없음, 장착도 실패).
+	 */
+	UFUNCTION(Server, Reliable)
+	void TransferInventoryToEquipmentServer(UInventoryComponent* SourceInventory, int32 ItemId, UEquipmentComponent* DestEquipment, FGameplayTag SlotTag);
+
+	/** 다른 캐릭터가 장착 중인 장비를 해제해 인벤토리로 가져옵니다. */
+	UFUNCTION(Server, Reliable)
+	void TransferEquipmentToInventoryServer(UEquipmentComponent* SourceEquipment, FGameplayTag SourceSlotTag, UInventoryComponent* DestInventory, FIntPoint NewAnchor);
+
+	/**
+	 * 다른 캐릭터가 장착 중인 장비를 곧바로 내(또는 대상) 장비 슬롯으로 옮겨 장착합니다.
+	 * 대상 슬롯에 이미 장착된 아이템(예: 손에 든 무기)이 있으면 대상 캐릭터의 인벤토리로
+	 * 되돌리며, 되돌릴 빈 칸이 없으면 전체 작업을 취소합니다(장착도 실패).
+	 */
+	UFUNCTION(Server, Reliable)
+	void TransferEquipmentToEquipmentServer(UEquipmentComponent* SourceEquipment, FGameplayTag SourceSlotTag, UEquipmentComponent* DestEquipment, FGameplayTag DestSlotTag);
 
 
 	//-----------------------------------------------------------------------------
@@ -329,6 +366,15 @@ public:
 private:
 	/**	 * 실제 아이템 인스턴스 생성 로직 (번들 로딩 완료 상태에서 호출) */
 	UItemInstance* AddItemAuthInternal(const UItemDefinition* Definition, int32 Count, FIntPoint SlotPos, int32 ReservedIndex);
+
+	/**
+	 * Instance의 인벤토리 Entry와 NetState를 이 컴포넌트에서 완전히 제거하고 Dest로 옮깁니다
+	 * (Instance 자체는 파괴하지 않음). Instance의 Outer도 Dest로 재설정합니다 — NetState 조회/
+	 * 권한 판정(UItemInstance::GetOuter())이 Outer 기준이라 반드시 필요합니다.
+	 * bNewEquipment가 false면 NewSlotPosition 기준으로 Dest의 그리드 점유도 갱신합니다.
+	 * 서버 전용. Instance가 이 컴포넌트 소속이 아니면 아무 일도 하지 않습니다.
+	 */
+	void MoveEntryToOtherAuth(UItemInstance* Instance, UInventoryComponent* Dest, const FIntPoint& NewSlotPosition, bool bNewEquipment);
 
 protected:
 	/** 새로운 아이템 ID를 생성합니다 (서버 전용, 서버 전체에서 고유) */

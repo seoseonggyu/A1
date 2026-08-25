@@ -7,6 +7,7 @@
 
 #include "Equipment/EquipmentInstance.h"
 #include "Equipment/EquipmentDefinition.h"
+#include "Equipment/EquipmentComponent.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/ItemInstance.h"
 #include "Inventory/ItemDefinition.h"
@@ -16,6 +17,7 @@
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1EquipmentSlotWidget)
 
@@ -137,6 +139,40 @@ bool UA1EquipmentSlotWidget::CanAcceptItem(const UItemInstance* Item) const
 	return Fragment->EquipmentDefinition->SlotTag == SlotTag;
 }
 
+UEquipmentComponent* UA1EquipmentSlotWidget::GetOwnerEquipmentComponent() const
+{
+	return OwnerEquipmentComponent.Get();
+}
+
+bool UA1EquipmentSlotWidget::CanAcceptItemFull(const UItemInstance* Item) const
+{
+	if (bReadOnly || !CanAcceptItem(Item) || !OwnerEquipmentComponent.IsValid())
+	{
+		return false;
+	}
+
+	// 이미 이 슬롯에 장착된 아이템이 있으면, 그 아이템을 되돌릴 인벤토리의 빈 칸이 있어야 한다
+	// (없으면 서버에서 원자적으로 교체가 취소되므로, 미리보기도 같은 기준으로 판단한다).
+	if (UEquipmentInstance* OldEquip = OwnerEquipmentComponent->GetEquipmentInSlot(SlotTag))
+	{
+		UItemInstance* OldItem = OldEquip->GetSourceItemInstance();
+		UInventoryComponent* OwnerInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(OwnerEquipmentComponent->GetOwner()));
+		if (!OldItem || !OwnerInventory)
+		{
+			return false;
+		}
+
+		const FIntPoint OldSize = UInventoryComponent::GetSizeFromDefinition(OldItem->Definition);
+		FIntPoint UnusedAnchor;
+		if (!OwnerInventory->FindEmptySlot(OldSize, UnusedAnchor))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void UA1EquipmentSlotWidget::UpdateDropHighlight(bool bCanPlace)
 {
 	if (Cell_Highlight)
@@ -161,8 +197,7 @@ bool UA1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const
 {
 	const UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
 
-	// 인벤토리에서 온, 이 슬롯에 맞는 아이템일 때만 드롭 대상으로 받아들인다 (장비창 간 이동은 아직 미지원)
-	const bool bCanAccept = !bReadOnly && DragOp && !DragOp->FromEquipmentSlotTag.IsValid() && CanAcceptItem(DragOp->ItemInstance);
+	const bool bCanAccept = DragOp && CanAcceptItemFull(DragOp->ItemInstance);
 	UpdateDropHighlight(bCanAccept);
 
 	if (bCanAccept)
@@ -184,37 +219,62 @@ bool UA1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 {
 	ClearDropHighlight();
 
-	if (bReadOnly)
-	{
-		return false;
-	}
-
 	UA1ItemDragDrop* DragOp = Cast<UA1ItemDragDrop>(InOperation);
-	if (!DragOp || !DragOp->ItemInstance)
+
+	// 슬롯 자체가 유효하지 않거나(비어있는 시체 등), 조건 불충족(칸 없음 등) → Unhandled로 원상 복구
+	if (!DragOp || !DragOp->ItemInstance || !CanAcceptItemFull(DragOp->ItemInstance))
 	{
 		return false;
 	}
 
-	// 장비창 → 장비창 이동은 아직 미지원 (인벤토리에서 온 드래그만 처리)
+	UEquipmentComponent* DestEquipment = OwnerEquipmentComponent.Get();
+
+	// RPC는 항상 "내가 소유한" 컴포넌트에서만 호출할 수 있으므로, Source/Dest 중 어느 쪽이든
+	// 실제 호출은 반드시 내 InventoryComponent를 통해서 한다.
+	UInventoryComponent* MyInventory = UInventoryComponent::FindInventoryComponent(GetOwningPlayerPawn());
+	if (!MyInventory)
+	{
+		return false;
+	}
+
+	UInventoryComponent* SourceOwningInventory = UInventoryComponent::FindOwningInventory(DragOp->ItemInstance);
+	if (!SourceOwningInventory)
+	{
+		return false;
+	}
+
 	if (DragOp->FromEquipmentSlotTag.IsValid())
 	{
-		return false;
-	}
+		// 장비창에서 온 드래그
+		UEquipmentComponent* SourceEquipment = UEquipmentComponent::FindEquipmentComponent(Cast<APawn>(SourceOwningInventory->GetOwner()));
+		if (!SourceEquipment || SourceEquipment == DestEquipment)
+		{
+			// 같은 캐릭터의 장비 슬롯 간 이동은 의미가 없으므로 지원하지 않는다
+			return false;
+		}
 
-	// 슬롯에 맞지 않는 아이템 → Unhandled 반환으로 원본 위젯을 원상 복구시킨다
-	if (!CanAcceptItem(DragOp->ItemInstance))
+		MyInventory->TransferEquipmentToEquipmentServer(SourceEquipment, DragOp->FromEquipmentSlotTag, DestEquipment, SlotTag);
+	}
+	else
 	{
-		return false;
+		// 인벤토리에서 온 드래그
+		UInventoryComponent* DestOwningInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(DestEquipment->GetOwner()));
+		if (SourceOwningInventory == DestOwningInventory)
+		{
+			// 같은 캐릭터: 기존 "내 인벤토리 -> 내 장비" 경로. 남의 인벤토리를 남의 장비로
+			// 옮기는(=내가 관여하지 않는) 조작은 지원하지 않는다.
+			if (SourceOwningInventory != MyInventory)
+			{
+				return false;
+			}
+			MyInventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
+		}
+		else
+		{
+			MyInventory->TransferInventoryToEquipmentServer(SourceOwningInventory, DragOp->ItemId, DestEquipment, SlotTag);
+		}
 	}
 
-	UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(GetOwningPlayer());
-	if (!Inventory)
-	{
-		return false;
-	}
-
-	// 실제 장착은 서버 권위로 처리되고, 결과가 리플리케이션되면 양쪽 UI가 갱신된다
-	Inventory->EquipFromInventoryServer(DragOp->ItemId, SlotTag);
 	return true;
 }
 

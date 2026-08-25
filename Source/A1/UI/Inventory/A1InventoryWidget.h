@@ -47,8 +47,8 @@ public:
 
 	/**
 	 * 소유 Pawn 대신 지정한 Pawn의 인벤토리를 보여주도록 설정합니다 (예: 시체 루팅 창).
-	 * bInReadOnly가 true면 드래그로 옮길 수 없게 만듭니다 (다른 플레이어의 인벤토리 사이를
-	 * 옮기는 서버 RPC가 아직 없어, 드래그를 허용하면 조용히 실패하는 것처럼 보이기 때문).
+	 * bInReadOnly가 true면 드래그 자체를 막습니다. false면 캐릭터 간 드래그&드롭도 가능합니다
+	 * (NativeOnDrop에서 Source/Dest InventoryComponent를 비교해 같은 캐릭터인지 판별).
 	 * NativeConstruct의 SetupInventory()보다 먼저 호출되었는지 여부와 무관하게 안전합니다
 	 * (이미 다른 대상으로 구성되어 있었다면 다시 구성합니다).
 	 */

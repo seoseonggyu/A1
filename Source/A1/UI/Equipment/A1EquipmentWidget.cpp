@@ -51,6 +51,7 @@ void UA1EquipmentWidget::SetupEquipment()
 			if (UA1EquipmentSlotWidget* SlotWidget = Cast<UA1EquipmentSlotWidget>(InWidget))
 			{
 				SlotWidget->SetReadOnly(bReadOnly);
+				SlotWidget->SetOwnerEquipmentComponent(EquipmentComponent);
 				SlotWidgets.Add(SlotWidget);
 			}
 		});
@@ -58,11 +59,8 @@ void UA1EquipmentWidget::SetupEquipment()
 
 	RefreshAllSlots();
 
-	// 읽기 전용 대상(예: 시체)은 더 이상 장착 상태가 바뀌지 않으므로 실시간 구독이 필요 없다.
-	if (!bReadOnly)
-	{
-		SlotChangedHandle = EquipmentComponent->OnEquipmentSlotChanged.AddUObject(this, &ThisClass::HandleEquipmentSlotChanged);
-	}
+	// 읽기 전용이어도(예: 시체) 다른 플레이어의 조작으로 상태가 바뀔 수 있으므로 항상 구독한다.
+	SlotChangedHandle = EquipmentComponent->OnEquipmentSlotChanged.AddUObject(this, &ThisClass::HandleEquipmentSlotChanged);
 }
 
 void UA1EquipmentWidget::SetTargetPawnOverride(APawn* InTargetPawn, bool bInReadOnly)

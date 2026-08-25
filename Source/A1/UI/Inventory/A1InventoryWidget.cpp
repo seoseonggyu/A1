@@ -7,6 +7,7 @@
 
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/ItemInstance.h"
+#include "Equipment/EquipmentComponent.h"
 
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -307,16 +308,63 @@ bool UA1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 		return false;
 	}
 
-	// 실제 이동은 서버 권위로 검증 후 처리되고, 결과가 리플리케이션되면 위젯이 갱신된다.
+	// RPC는 항상 "내가 소유한" 컴포넌트에서만 호출할 수 있으므로, Source/Dest 중 어느 쪽이든
+	// 실제 호출은 반드시 내 InventoryComponent를 통해서 한다 (이 위젯이 보여주는 대상이 내 것이든
+	// 다른 캐릭터의 것이든 상관없이).
+	UInventoryComponent* MyInventory = UInventoryComponent::FindInventoryComponent(GetOwningPlayerPawn());
+	if (!MyInventory)
+	{
+		return false;
+	}
+
 	if (DragOp->FromEquipmentSlotTag.IsValid())
 	{
-		// 장비창에서 온 드래그: 서버에서 장착 해제 후 인벤토리 그리드에 배치
-		InventoryComponent->UnequipToInventoryServer(DragOp->ItemId, DragOp->FromEquipmentSlotTag, Anchor);
+		// 장비창에서 온 드래그
+		UInventoryComponent* SourceOwningInventory = UInventoryComponent::FindOwningInventory(DragOp->ItemInstance);
+		UEquipmentComponent* SourceEquipment = SourceOwningInventory ? UEquipmentComponent::FindEquipmentComponent(Cast<APawn>(SourceOwningInventory->GetOwner())) : nullptr;
+		if (!SourceEquipment)
+		{
+			return false;
+		}
+
+		if (SourceOwningInventory == InventoryComponent)
+		{
+			// 같은 캐릭터: 기존 "장착 해제 -> 내 그리드" 경로. 남의 장비를 남의 인벤토리로
+			// 옮기는(=내가 관여하지 않는) 조작은 지원하지 않는다.
+			if (InventoryComponent != MyInventory)
+			{
+				return false;
+			}
+			InventoryComponent->UnequipToInventoryServer(DragOp->ItemId, DragOp->FromEquipmentSlotTag, Anchor);
+		}
+		else
+		{
+			MyInventory->TransferEquipmentToInventoryServer(SourceEquipment, DragOp->FromEquipmentSlotTag, InventoryComponent, Anchor);
+		}
 	}
 	else
 	{
-		// 인벤토리 내부 이동
-		InventoryComponent->MoveItemServer(DragOp->ItemId, Anchor);
+		// 인벤토리에서 온 드래그
+		UInventoryComponent* SourceInventory = UInventoryComponent::FindOwningInventory(DragOp->ItemInstance);
+		if (!SourceInventory)
+		{
+			return false;
+		}
+
+		if (SourceInventory == InventoryComponent)
+		{
+			// 같은 캐릭터 내부 이동. 남의 그리드 안에서 재배치하는(=내가 관여하지 않는) 조작은
+			// 지원하지 않는다.
+			if (InventoryComponent != MyInventory)
+			{
+				return false;
+			}
+			InventoryComponent->MoveItemServer(DragOp->ItemId, Anchor);
+		}
+		else
+		{
+			MyInventory->TransferInventoryToInventoryServer(SourceInventory, DragOp->ItemId, InventoryComponent, Anchor);
+		}
 	}
 
 	return true;

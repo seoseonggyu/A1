@@ -10,11 +10,11 @@ void UA1LootWidget::InitializeLoot(APawn* InTargetPawn)
 {
 	if (EquipmentWidget_Other)
 	{
-		EquipmentWidget_Other->SetTargetPawnOverride(InTargetPawn, /*bInReadOnly=*/ true);
+		EquipmentWidget_Other->SetTargetPawnOverride(InTargetPawn, /*bInReadOnly=*/ false);
 	}
 
 	if (InventoryWidget_Other)
 	{
-		InventoryWidget_Other->SetTargetPawnOverride(InTargetPawn, /*bInReadOnly=*/ true);
+		InventoryWidget_Other->SetTargetPawnOverride(InTargetPawn, /*bInReadOnly=*/ false);
 	}
 }

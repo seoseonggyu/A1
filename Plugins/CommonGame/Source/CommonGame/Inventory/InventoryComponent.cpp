@@ -97,6 +97,13 @@ void FInventoryEntry::NotifyRemoved(UInventoryComponent* Owner) const
 	{
 		Instance->OnRemoved(Owner);
 	}
+
+	// UI(클라이언트)가 위젯을 제거하도록 알림. NotifyChanged와 달리 이 Entry는 이 호출 직후
+	// 배열에서 완전히 사라지므로(RemoveItemAuth/MoveEntryToOtherAuth), 그리드 표시에서도 지워야 한다.
+	if (Owner)
+	{
+		Owner->OnInventoryGridChanged.Broadcast(EInventoryGridChangeType::Removed, ItemId, Instance, FIntPoint(-1, -1), StackCount);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -144,6 +151,11 @@ UInventoryComponent* UInventoryComponent::FindInventoryComponent(const APawn* Pa
 UInventoryComponent* UInventoryComponent::FindInventoryComponent(const AController* Controller)
 {
 	return Controller ? FindInventoryComponent(Controller->GetPawn()) : nullptr;
+}
+
+UInventoryComponent* UInventoryComponent::FindOwningInventory(const UItemInstance* Item)
+{
+	return Item ? Cast<UInventoryComponent>(Item->GetOuter()) : nullptr;
 }
 
 void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -526,6 +538,345 @@ void UInventoryComponent::UnequipToInventoryServer_Implementation(int32 ItemId, 
 	Entry->bEquipment = false;
 	Entry->NotifyChanged(this);
 	InventoryList.MarkEntryDirty(*Entry);
+}
+
+//-----------------------------------------------------------------------------
+// 캐릭터 간 아이템 교환 (예: 시체 루팅)
+//-----------------------------------------------------------------------------
+
+void UInventoryComponent::MoveEntryToOtherAuth(UItemInstance* Instance, UInventoryComponent* Dest, const FIntPoint& NewSlotPosition, bool bNewEquipment)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !Instance || !Dest || Dest == this)
+	{
+		return;
+	}
+
+	FInventoryEntry* SourceEntry = FindEntry(Instance);
+	if (!SourceEntry)
+	{
+		return;
+	}
+
+	const UItemDefinition* Definition = SourceEntry->Definition;
+	const int32 StackCount = SourceEntry->StackCount;
+	const int32 ItemId = Instance->ItemId;
+
+	// 원본 그리드 점유 해제 (장착 상태였다면 SlotPosition이 이미 (-1,-1)이라 아무 일도 하지 않음)
+	SetGridOccupiedAuth(SourceEntry->SlotPosition, GetSizeFromDefinition(Definition), false);
+
+	// 원본 목록에서 완전히 제거합니다 (Instance 자체는 파괴하지 않음. RemoveItemAuth와 동일한 스왑 패턴).
+	const int32 EntryIndex = static_cast<int32>(SourceEntry - InventoryList.Entries.GetData());
+	const int32 LastIndex = InventoryList.Entries.Num() - 1;
+
+	SourceEntry->NotifyRemoved(this);
+	ItemMap.Remove(ItemId);
+
+	if (EntryIndex != LastIndex && InventoryList.Entries[LastIndex].Instance)
+	{
+		InventoryList.Entries[LastIndex].Instance->ArrayIndex = EntryIndex;
+	}
+
+	InventoryList.Entries.RemoveAtSwap(EntryIndex);
+	InventoryList.MarkArrayDirty();
+
+	// NetState(내구도 등 Fragment 상태)를 Dest로 이전합니다.
+	for (int32 i = ItemNetStates.Entries.Num() - 1; i >= 0; --i)
+	{
+		if (ItemNetStates.Entries[i].ItemId == ItemId)
+		{
+			Dest->ItemNetStates.Entries.Add(ItemNetStates.Entries[i]);
+			ItemNetStates.Entries.RemoveAtSwap(i);
+		}
+	}
+	ItemNetStates.MarkArrayDirty();
+	Dest->ItemNetStates.MarkArrayDirty();
+
+	// Instance 소유권(Outer)을 Dest로 옮깁니다. UItemInstance::GetOwnerNetStates()/HasAuthority()가
+	// GetOuter()로 소속 컴포넌트를 찾으므로, 재설정하지 않으면 이후 상태 변경이 옛 컴포넌트로 샙니다.
+	Instance->Rename(nullptr, Dest, REN_DontCreateRedirectors);
+
+	// Dest 목록에 새 Entry로 추가합니다.
+	if (!bNewEquipment)
+	{
+		Dest->SetGridOccupiedAuth(NewSlotPosition, GetSizeFromDefinition(Definition), true);
+	}
+
+	FInventoryEntry& NewEntry = Dest->InventoryList.Entries.AddDefaulted_GetRef();
+	NewEntry.Definition = Definition;
+	NewEntry.ItemId = ItemId;
+	NewEntry.StackCount = StackCount;
+	NewEntry.SlotPosition = bNewEquipment ? FIntPoint(-1, -1) : NewSlotPosition;
+	NewEntry.bEquipment = bNewEquipment;
+	NewEntry.Instance = Instance;
+
+	Instance->ArrayIndex = Dest->InventoryList.Entries.Num() - 1;
+	Dest->ItemMap.Add(ItemId, Instance);
+
+	NewEntry.NotifyCreated(Dest);
+	Dest->InventoryList.MarkEntryDirty(NewEntry);
+}
+
+void UInventoryComponent::TransferInventoryToInventoryServer_Implementation(UInventoryComponent* SourceInventory, int32 ItemId, UInventoryComponent* DestInventory, FIntPoint NewAnchor)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !SourceInventory || !DestInventory || SourceInventory == DestInventory)
+	{
+		return;
+	}
+
+	// 보안: 호출자(this)가 실제 거래 당사자(Source 또는 Dest) 중 하나여야 합니다.
+	if (this != SourceInventory && this != DestInventory)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToInventoryServer: 거래 당사자가 아닙니다"));
+		return;
+	}
+
+	UItemInstance* Item = SourceInventory->FindItemById(ItemId);
+	if (!Item)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToInventoryServer: ItemId=%d를 Source에서 찾을 수 없습니다"), ItemId);
+		return;
+	}
+
+	const FInventoryEntry* SourceEntry = SourceInventory->FindEntry(Item);
+	if (!SourceEntry || SourceEntry->bEquipment)
+	{
+		return;
+	}
+
+	const FIntPoint Size = GetSizeFromDefinition(SourceEntry->Definition);
+	if (!DestInventory->CanPlaceAt(NewAnchor, Size))
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToInventoryServer: 대상 위치(%d, %d)에 배치할 수 없습니다"), NewAnchor.X, NewAnchor.Y);
+		return;
+	}
+
+	SourceInventory->MoveEntryToOtherAuth(Item, DestInventory, NewAnchor, /*bNewEquipment=*/ false);
+}
+
+void UInventoryComponent::TransferInventoryToEquipmentServer_Implementation(UInventoryComponent* SourceInventory, int32 ItemId, UEquipmentComponent* DestEquipment, FGameplayTag SlotTag)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !SourceInventory || !DestEquipment)
+	{
+		return;
+	}
+
+	UInventoryComponent* DestInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(DestEquipment->GetOwner()));
+	if (!DestInventory || SourceInventory == DestInventory)
+	{
+		return;
+	}
+
+	// 보안: 호출자(this)가 실제 거래 당사자(Source 또는 Dest) 중 하나여야 합니다.
+	if (this != SourceInventory && this != DestInventory)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToEquipmentServer: 거래 당사자가 아닙니다"));
+		return;
+	}
+
+	UItemInstance* NewItem = SourceInventory->FindItemById(ItemId);
+	if (!NewItem)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToEquipmentServer: ItemId=%d를 Source에서 찾을 수 없습니다"), ItemId);
+		return;
+	}
+
+	// 이 아이템이 실제로 SlotTag에 장착 가능한지 서버에서 재검증합니다.
+	const FItemFragment_Equipment* Fragment = NewItem->FindFragment<FItemFragment_Equipment>();
+	if (!Fragment || !Fragment->EquipmentDefinition || Fragment->EquipmentDefinition->SlotTag != SlotTag)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToEquipmentServer: ItemId=%d는 슬롯 %s에 장착할 수 없습니다"), ItemId, *SlotTag.ToString());
+		return;
+	}
+
+	const FInventoryEntry* SourceEntry = SourceInventory->FindEntry(NewItem);
+	if (!SourceEntry || SourceEntry->bEquipment)
+	{
+		return;
+	}
+
+	// 대상 슬롯에 이미 장착된 아이템이 있으면, 되돌릴 Dest 인벤토리의 빈 칸을 미리 확보합니다.
+	// 빈 칸이 없으면 전체 작업을 취소합니다(부분 적용 없음, 장착도 실패).
+	UItemInstance* OldItem = nullptr;
+	if (UEquipmentInstance* OldEquip = DestEquipment->GetEquipmentInSlot(SlotTag))
+	{
+		OldItem = OldEquip->GetSourceItemInstance();
+	}
+
+	FIntPoint OldItemAnchor(-1, -1);
+	if (OldItem)
+	{
+		const FInventoryEntry* OldEntry = DestInventory->FindEntry(OldItem);
+		if (!OldEntry)
+		{
+			return;
+		}
+
+		const FIntPoint OldSize = GetSizeFromDefinition(OldEntry->Definition);
+		if (!DestInventory->FindEmptySlot(OldSize, OldItemAnchor))
+		{
+			UE_LOG(InventoryComponentLog, Warning, TEXT("TransferInventoryToEquipmentServer: 기존 장비를 되돌릴 빈 칸이 없어 교체를 취소합니다"));
+			return;
+		}
+	}
+
+	// 여기까지 통과하면 실패할 이유가 없으므로 실제 이전을 수행합니다.
+	SourceInventory->MoveEntryToOtherAuth(NewItem, DestInventory, FIntPoint(-1, -1), /*bNewEquipment=*/ true);
+
+	// 장착 처리 (내부적으로 대상 슬롯에 남아있는 기존 장비 데이터를 해제합니다)
+	DestEquipment->HandleActiveEquipChangedAuth(NewItem);
+
+	// 기존 장착 아이템을 Dest 인벤토리 그리드로 되돌립니다.
+	// (MoveEntryToOtherAuth가 Dest->InventoryList.Entries를 재할당했을 수 있어 포인터를 다시 조회합니다)
+	if (OldItem)
+	{
+		if (FInventoryEntry* RefetchedOldEntry = DestInventory->FindEntry(OldItem))
+		{
+			const FIntPoint OldSize = GetSizeFromDefinition(RefetchedOldEntry->Definition);
+			DestInventory->SetGridOccupiedAuth(OldItemAnchor, OldSize, true);
+			RefetchedOldEntry->SlotPosition = OldItemAnchor;
+			RefetchedOldEntry->bEquipment = false;
+			RefetchedOldEntry->NotifyChanged(DestInventory);
+			DestInventory->InventoryList.MarkEntryDirty(*RefetchedOldEntry);
+		}
+	}
+}
+
+void UInventoryComponent::TransferEquipmentToInventoryServer_Implementation(UEquipmentComponent* SourceEquipment, FGameplayTag SourceSlotTag, UInventoryComponent* DestInventory, FIntPoint NewAnchor)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !SourceEquipment || !DestInventory)
+	{
+		return;
+	}
+
+	UInventoryComponent* SourceInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(SourceEquipment->GetOwner()));
+	if (!SourceInventory || SourceInventory == DestInventory)
+	{
+		return;
+	}
+
+	// 보안: 호출자(this)가 실제 거래 당사자(Source 또는 Dest) 중 하나여야 합니다.
+	if (this != SourceInventory && this != DestInventory)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToInventoryServer: 거래 당사자가 아닙니다"));
+		return;
+	}
+
+	UEquipmentInstance* Equipped = SourceEquipment->GetEquipmentInSlot(SourceSlotTag);
+	UItemInstance* Item = Equipped ? Equipped->GetSourceItemInstance() : nullptr;
+	if (!Item)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToInventoryServer: 슬롯 %s에 장착된 아이템이 없습니다"), *SourceSlotTag.ToString());
+		return;
+	}
+
+	const FInventoryEntry* SourceEntry = SourceInventory->FindEntry(Item);
+	if (!SourceEntry || !SourceEntry->bEquipment)
+	{
+		return;
+	}
+
+	const FIntPoint Size = GetSizeFromDefinition(SourceEntry->Definition);
+	if (!DestInventory->CanPlaceAt(NewAnchor, Size))
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToInventoryServer: 대상 위치(%d, %d)에 배치할 수 없습니다"), NewAnchor.X, NewAnchor.Y);
+		return;
+	}
+
+	// 장비 해제 (액터/슬롯맵 정리, 인벤토리 Entry 자체는 아래에서 옮깁니다)
+	SourceEquipment->UnequipItemAuth(SourceSlotTag);
+
+	SourceInventory->MoveEntryToOtherAuth(Item, DestInventory, NewAnchor, /*bNewEquipment=*/ false);
+}
+
+void UInventoryComponent::TransferEquipmentToEquipmentServer_Implementation(UEquipmentComponent* SourceEquipment, FGameplayTag SourceSlotTag, UEquipmentComponent* DestEquipment, FGameplayTag DestSlotTag)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !SourceEquipment || !DestEquipment || SourceEquipment == DestEquipment)
+	{
+		return;
+	}
+
+	UInventoryComponent* SourceInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(SourceEquipment->GetOwner()));
+	UInventoryComponent* DestInventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(DestEquipment->GetOwner()));
+	if (!SourceInventory || !DestInventory || SourceInventory == DestInventory)
+	{
+		return;
+	}
+
+	// 보안: 호출자(this)가 실제 거래 당사자(Source 또는 Dest) 중 하나여야 합니다.
+	if (this != SourceInventory && this != DestInventory)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToEquipmentServer: 거래 당사자가 아닙니다"));
+		return;
+	}
+
+	UEquipmentInstance* SourceEquipped = SourceEquipment->GetEquipmentInSlot(SourceSlotTag);
+	UItemInstance* NewItem = SourceEquipped ? SourceEquipped->GetSourceItemInstance() : nullptr;
+	if (!NewItem)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToEquipmentServer: 슬롯 %s에 장착된 아이템이 없습니다"), *SourceSlotTag.ToString());
+		return;
+	}
+
+	// 이 아이템이 실제로 DestSlotTag에 장착 가능한지 서버에서 재검증합니다.
+	const FItemFragment_Equipment* Fragment = NewItem->FindFragment<FItemFragment_Equipment>();
+	if (!Fragment || !Fragment->EquipmentDefinition || Fragment->EquipmentDefinition->SlotTag != DestSlotTag)
+	{
+		UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToEquipmentServer: 슬롯 %s에 장착할 수 없습니다"), *DestSlotTag.ToString());
+		return;
+	}
+
+	const FInventoryEntry* SourceEntry = SourceInventory->FindEntry(NewItem);
+	if (!SourceEntry || !SourceEntry->bEquipment)
+	{
+		return;
+	}
+
+	// 대상 슬롯에 이미 장착된 아이템(예: 손에 든 무기)이 있으면, 되돌릴 Dest 인벤토리의 빈 칸을
+	// 미리 확보합니다. 빈 칸이 없으면 전체 작업을 취소합니다(장착도 실패, 부분 적용 없음).
+	UItemInstance* OldItem = nullptr;
+	if (UEquipmentInstance* OldEquip = DestEquipment->GetEquipmentInSlot(DestSlotTag))
+	{
+		OldItem = OldEquip->GetSourceItemInstance();
+	}
+
+	FIntPoint OldItemAnchor(-1, -1);
+	if (OldItem)
+	{
+		const FInventoryEntry* OldEntry = DestInventory->FindEntry(OldItem);
+		if (!OldEntry)
+		{
+			return;
+		}
+
+		const FIntPoint OldSize = GetSizeFromDefinition(OldEntry->Definition);
+		if (!DestInventory->FindEmptySlot(OldSize, OldItemAnchor))
+		{
+			UE_LOG(InventoryComponentLog, Warning, TEXT("TransferEquipmentToEquipmentServer: 기존 장비를 되돌릴 빈 칸이 없어 교체를 취소합니다"));
+			return;
+		}
+	}
+
+	// 여기까지 통과하면 실패할 이유가 없으므로 실제 이전을 수행합니다.
+	SourceEquipment->UnequipItemAuth(SourceSlotTag);
+	SourceInventory->MoveEntryToOtherAuth(NewItem, DestInventory, FIntPoint(-1, -1), /*bNewEquipment=*/ true);
+
+	// 장착 처리 (내부적으로 대상 슬롯에 남아있는 기존 장비를 해제합니다)
+	DestEquipment->HandleActiveEquipChangedAuth(NewItem);
+
+	// 기존 장착 아이템을 Dest 인벤토리 그리드로 되돌립니다.
+	// (MoveEntryToOtherAuth가 Dest->InventoryList.Entries를 재할당했을 수 있어 포인터를 다시 조회합니다)
+	if (OldItem)
+	{
+		if (FInventoryEntry* RefetchedOldEntry = DestInventory->FindEntry(OldItem))
+		{
+			const FIntPoint OldSize = GetSizeFromDefinition(RefetchedOldEntry->Definition);
+			DestInventory->SetGridOccupiedAuth(OldItemAnchor, OldSize, true);
+			RefetchedOldEntry->SlotPosition = OldItemAnchor;
+			RefetchedOldEntry->bEquipment = false;
+			RefetchedOldEntry->NotifyChanged(DestInventory);
+			DestInventory->InventoryList.MarkEntryDirty(*RefetchedOldEntry);
+		}
+	}
 }
 
 void UInventoryComponent::SetOccupiedCellsAuth(int32 CellPos, bool Value)

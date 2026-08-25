@@ -10,6 +10,7 @@ class UImage;
 class UWidget;
 class UTextBlock;
 class UEquipmentInstance;
+class UEquipmentComponent;
 class UItemInstance;
 class UDragDropOperation;
 class UA1InventoryItemTooltipWidget;
@@ -46,6 +47,14 @@ public:
 	 */
 	void SetReadOnly(bool bInReadOnly) { bReadOnly = bInReadOnly; }
 
+	/**
+	 * 이 슬롯이 속한 EquipmentComponent를 등록합니다. 슬롯이 비어 있어도(EquipmentInstance가
+	 * nullptr이어도) 어느 캐릭터의 장비창인지 알아야 캐릭터 간 드롭 대상을 판별할 수 있어 필요합니다.
+	 */
+	void SetOwnerEquipmentComponent(UEquipmentComponent* InOwnerEquipmentComponent) { OwnerEquipmentComponent = InOwnerEquipmentComponent; }
+
+	UEquipmentComponent* GetOwnerEquipmentComponent() const;
+
 protected:
 	//-----------------------------------------------------------------------------
 	// UUserWidget 오버라이드 (드래그)
@@ -65,6 +74,13 @@ protected:
 
 	/** 이 아이템을 이 슬롯에 장착할 수 있는지 (장비 프래그먼트가 있고 슬롯 태그가 일치) */
 	bool CanAcceptItem(const UItemInstance* Item) const;
+
+	/**
+	 * CanAcceptItem에 더해, 이미 장착된 아이템이 있을 경우 그 아이템을 되돌릴 인벤토리의 빈 칸이
+	 * 있는지까지 확인합니다(원자적 교체 규칙의 미리보기 버전). 드래그 오버 미리보기와 드롭 실행이
+	 * 항상 같은 기준으로 판단하도록 두 곳 모두 이 함수를 통해서만 수락 여부를 결정합니다.
+	 */
+	bool CanAcceptItemFull(const UItemInstance* Item) const;
 
 	/** 드래그 오버 중인 아이템의 배치 가능 여부에 따라 Cell_Highlight를 초록/빨강으로 표시합니다 (Inventory와 동일한 위젯 재사용) */
 	void UpdateDropHighlight(bool bCanPlace);
@@ -91,6 +107,9 @@ protected:
 
 	/** true면 드래그로 옮기거나 받을 수 없다. */
 	bool bReadOnly = false;
+
+	/** 이 슬롯이 속한 EquipmentComponent (슬롯이 비어 있어도 유효, SetOwnerEquipmentComponent로 등록됨) */
+	TWeakObjectPtr<UEquipmentComponent> OwnerEquipmentComponent;
 
 	/** 마우스 버튼을 누른 시점의 위젯 내 잡은 위치(px) */
 	FVector2D CachedGrabOffset = FVector2D::ZeroVector;
