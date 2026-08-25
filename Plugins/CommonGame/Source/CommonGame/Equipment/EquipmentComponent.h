@@ -196,6 +196,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	UEquipmentInstance* FindEquippedItemWithAbility(FGameplayTag InputTag) const;
 
+	/**
+	 * 장착 상태(EquipmentSlots/bActive)는 그대로 둔 채, 이미 스폰되어 있는 모든 장비 Actor의
+	 * 렌더링만 켜고 끕니다. 로컬 전용(비복제)이라 호출부가 모든 클라이언트에서 동일하게
+	 * 트리거해야 합니다 (예: 리플리케이션되는 상태 변화에 반응해서 각 클라가 스스로 호출).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void SetAllEquipmentActorsHiddenLocal(bool bHidden) const;
+
 	//-----------------------------------------------------------------------------
 	// QuickBar
 	//-----------------------------------------------------------------------------

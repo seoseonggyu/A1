@@ -72,17 +72,20 @@ namespace A1GameplayTags
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_DropItem);
 
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Death);
+
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
-	
+
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Attack);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Skill);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_RejectHitReact);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Sprint);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_StaminaRegen_Blocked);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Interacting);
-	
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Death);
+
 	
 	//-----------------------------------------------------------------------------
 	// Gameplay.Event
@@ -101,7 +104,9 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Pickup);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Door);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Player);
-	
+
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Death);
+
 	//-----------------------------------------------------------------------------
 	// Cooldown.Skill
 	//-----------------------------------------------------------------------------

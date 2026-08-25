@@ -2,8 +2,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AbilitySystem/A1VitalSet.h"
-#include "Player/A1Character.h"
+#include "A1GameplayTags.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Pawn.h"
@@ -164,12 +165,18 @@ void UA1VitalSet::PostAttributeChange(const FGameplayAttribute& Attribute, float
 	// TODO: 각 Attribute에 맞게
 	if (Attribute == GetHealthAttribute() && NewValue <= 0.f && OldValue > 0.f)
 	{
-		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+		UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+
+		// 서버(권위)에서만 사망 이벤트를 보낸다. 실제 사망 처리는 이 이벤트로 트리거되는
+		// UA1Ability_Death가 전담한다 (Ability 기반 사망 처리).
+		if (ASC && ASC->IsOwnerActorAuthoritative())
 		{
-			if (AA1Character* Character = Cast<AA1Character>(ASC->GetAvatarActor()))
-			{
-				Character->HandleDeathAuth();
-			}
+			FGameplayEventData Payload;
+			Payload.EventTag = A1GameplayTags::GameplayEvent_Death;
+			Payload.Target = ASC->GetAvatarActor();
+
+			FScopedPredictionWindow NewScopedWindow(ASC, true);
+			ASC->HandleGameplayEvent(A1GameplayTags::GameplayEvent_Death, &Payload);
 		}
 	}
 }

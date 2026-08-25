@@ -69,18 +69,21 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_DropItem, "Ability.DropItem");
 
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Death, "Ability.Death");
+
 
 	//-----------------------------------------------------------------------------
 	// Status
 	//-----------------------------------------------------------------------------
-	
+
 	UE_DEFINE_GAMEPLAY_TAG(Status_Attack, "Status.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Skill, "Status.Skill");
 	UE_DEFINE_GAMEPLAY_TAG(Status_RejectHitReact, "Status.RejectHitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Sprint, "Status.Sprint");
 	UE_DEFINE_GAMEPLAY_TAG(Status_StaminaRegen_Blocked, "Status.StaminaRegen.Blocked");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Interacting, "Status.Interacting");
-	
+	UE_DEFINE_GAMEPLAY_TAG(Status_Death, "Status.Death");
+
 	
 	//-----------------------------------------------------------------------------
 	// Gameplay.Event
@@ -99,7 +102,9 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Pickup, "GameplayEvent.Interact.Pickup");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Door, "GameplayEvent.Interact.Door");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Player, "GameplayEvent.Interact.Player");
-		
+
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Death, "GameplayEvent.Death");
+
 	//-----------------------------------------------------------------------------
 	// Cooldown.Skill
 	//-----------------------------------------------------------------------------

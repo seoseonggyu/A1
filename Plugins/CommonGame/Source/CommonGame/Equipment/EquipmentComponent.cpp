@@ -604,6 +604,26 @@ UEquipmentInstance* UEquipmentComponent::FindEquippedItemWithAbility(FGameplayTa
 	return nullptr;
 }
 
+void UEquipmentComponent::SetAllEquipmentActorsHiddenLocal(bool bHidden) const
+{
+	for (const auto& Pair : EquipmentSlots)
+	{
+		const UEquipmentInstance* Instance = Pair.Value;
+		if (!Instance)
+		{
+			continue;
+		}
+
+		for (AActor* SpawnedActor : Instance->GetSpawnedActors())
+		{
+			if (SpawnedActor)
+			{
+				SpawnedActor->SetActorHiddenInGame(bHidden);
+			}
+		}
+	}
+}
+
 AActor* UEquipmentComponent::GetEquipmentInstance(FGameplayTag SlotTag) const
 {
 	// TODO: Temporarily returns only the first Actor
