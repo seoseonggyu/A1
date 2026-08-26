@@ -123,4 +123,10 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_BaseDamage);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_StaminaCost);
 
+	//-----------------------------------------------------------------------------
+	// GameplayCue
+	//-----------------------------------------------------------------------------
+
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Character_DamageTaken);
+
 }

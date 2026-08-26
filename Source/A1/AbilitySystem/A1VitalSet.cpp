@@ -105,7 +105,7 @@ void UA1VitalSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData
 		{
 			float RemainingDamage = IncomingDamage;
 			// TODO: Armor
-			// const float CurrentArmor = GetArmor(); 
+			// const float CurrentArmor = GetArmor();
 
 			// Armor가 있으면 데미지 흡수 (A1 스타일: Armor가 50% 흡수)
 			/*if (CurrentArmor > 0.f)
@@ -122,6 +122,17 @@ void UA1VitalSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData
 			{
 				const float NewHealth = FMath::Max(GetHealth() - RemainingDamage, 0.f);
 				SetHealth(NewHealth);
+			}
+
+			// 서버에서만 Cue를 실행한다. 클라 복제는 ExecuteGameplayCue 내부의 멀티캐스트가 처리한다
+			// (GameplayEvent_Death와 동일하게 IsOwnerActorAuthoritative로 가드).
+			UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+			if (ASC && ASC->IsOwnerActorAuthoritative())
+			{
+				FGameplayCueParameters CueParams;
+				CueParams.RawMagnitude = IncomingDamage;
+				CueParams.EffectContext = Data.EffectSpec.GetContext();
+				ASC->ExecuteGameplayCue(A1GameplayTags::GameplayCue_Character_DamageTaken, CueParams);
 			}
 		}
 	}

@@ -124,4 +124,10 @@ namespace A1GameplayTags
 	/** 스태미나 소비 값 (SetByCaller) */
 	A1_API UE_DEFINE_GAMEPLAY_TAG(SetByCaller_StaminaCost, "SetByCaller.StaminaCost");
 
+	//-----------------------------------------------------------------------------
+	// GameplayCue
+	//-----------------------------------------------------------------------------
+
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Character_DamageTaken, "GameplayCue.Character.DamageTaken");
+
 }

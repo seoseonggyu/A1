@@ -17,6 +17,7 @@ description: A1 프로젝트에서 네트워크 복제를 다룰 때 반드시 �
 
 - 상태 변경은 **항상 서버에서** 시작한다. 클라이언트는 요청(RPC)만 보낸다.
 - `Auth` 함수 진입부에서 `if (!GetOwner()->HasAuthority()) return;` 형태의 방어를 유지한다.
+- 컴포넌트 간(다른 액터 소유) RPC(예: `InventoryComponent::Transfer*Server` — 시체 루팅)는 반드시 **호출자가 소유한 컴포넌트에서** 호출하고, Source/Dest 인자 중 하나가 호출자 자신이어야 한다. 서버는 이걸 재검증해야 한다(클라 인자를 그대로 신뢰 금지).
 
 ## 프로퍼티 추가 절차
 
@@ -61,6 +62,12 @@ template<> struct TStructOpsTypeTraits<F<Name>List> : public TStructOpsTypeTrait
 - Entry 수정 후 `MarkEntryDirty(Entry)` 호출 필수.
 - **FastArray를 중첩하지 말 것.** (그래서 아이템 NetState가 `FInventoryEntry` 안이 아니라 `FItemNetStateList`로 컴포넌트 최상위에 분리되어 있다.)
 - UObject 인스턴스는 복제하지 않고 `PostReplicatedAdd`에서 클라이언트가 로컬 생성하는 패턴을 따른다 (`UItemInstance`, `UEquipmentInstance`).
+
+## GameplayTag 복제 (루즈 태그)
+
+`SetLooseGameplayTagCount`로 직접 설정하는 상태 태그(Ability 종료 후에도 남아야 하는 것, 예: `Status.Death`)는
+Iris 하에서 `EGameplayTagReplicationState::TagAndCountToAll`을 명시해야 다른 클라이언트에도 보인다.
+기본값(`None`)은 서버·소유 클라에만 보이고 조용히 다른 클라에는 복제되지 않는다.
 
 ## 다형성 구조체 복제 (NetState)
 

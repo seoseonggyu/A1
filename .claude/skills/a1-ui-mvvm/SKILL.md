@@ -25,7 +25,7 @@ UCommonUIManagerSubsystem (GameInstance)
 `Source/A1/UI/<도메인>/<이름>ViewModel.h/.cpp`, `UCommonViewModelBase` 상속.
 
 ```cpp
-UCLASS(BlueprintType)[SKILL.md](../a1-replication/SKILL.md)
+UCLASS(BlueprintType)
 class A1_API U<이름>ViewModel : public UCommonViewModelBase
 {
     GENERATED_BODY()
@@ -51,6 +51,12 @@ public:
 - 공급 측(GameFeature/장비): `UGameFeatureAction_AddWidgets` 또는 `FEquipmentFragment_UIExtension`
 - 매칭 규칙 `EUIExtensionPointMatch`: `ExactMatch` / `PartialMatch`(하위 태그 포함)
 - 태그 규칙: `UI.ExtensionPoint.*`
+
+## 위젯 구현 패턴: ViewModel vs 직접 바인딩
+
+- 단순 값 표시(스탯 등)는 **ViewModel(FieldNotify)** 패턴을 쓴다 (`UCharacterViewModel`).
+- 인벤토리/장비/루팅/드래그드롭처럼 상태가 복잡한 위젯(`UA1InventoryWidget`, `UA1EquipmentWidget`, `UA1LootWidget` 등, `Source/A1/UI/Inventory|Equipment|Loot`)은 ViewModel을 거치지 않고 **컴포넌트 델리게이트에 직접 바인딩**하는 `UCommonExtensionActivatableWidget` 파생 C++ 클래스로 만든다 (예: `OnInventoryGridChanged` 구독).
+- 다른 Pawn을 대상으로 같은 위젯을 재사용하는 패턴(시체 루팅 창)은 `SetTargetPawnOverride(TargetPawn, bReadOnly)` 같은 함수로 대상 교체를 지원한다. `InventoryComponent`/`EquipmentComponent`가 조건 없이 전체 복제되므로 다른 플레이어의 컴포넌트를 그대로 바인딩해도 실시간으로 갱신된다.
 
 ## 규칙
 

@@ -9,7 +9,8 @@ description: A1 프로젝트에서 GameplayAbility, AttributeSet, GameplayEffect
 
 - ASC: `UCommonAbilitySystemComponent` — **PlayerState**에 부착. `ACommonCharacter::GetAbilitySystemComponent()`는 PlayerState의 ASC를 반환.
 - Ability 베이스: `UCommonGameplayAbility` (ActivationPolicy / ActivationGroup, 입력 태그 기반 활성화)
-- 게임 측 계층: `UA1Ability_Equipment` → `UA1Ability_MeleeWeaponAttack`, `UA1Ability_ChangeQuickBarSlot`
+- 게임 측 계층: `UA1Ability_Equipment` → `UA1Ability_MeleeWeaponAttack`/`_MeleeWeaponComboAttack`, `UA1Ability_Consume` → `UA1Ability_DrinkPotion`. 도메인별로 `AbilitySystem/Interaction`(Interact, Interact_Scan/Door/Pickup/Player), `Movement`(Sprint_Check/Active), `Skill`(GroundBreaker, WhirlwindSlash), `Weapon` 하위 폴더에 분리.
+- 입력 없이 이벤트로만 발동되는 Ability도 많다: `ActivationPolicy=Manual` + `AbilityTriggers=GameplayEvent.*`. 예) `UA1Ability_Death`(`GameplayEvent.Death`), `UA1Ability_DropItem`(`GameplayEvent.DropItem`, UI가 `HandleGameplayEvent` 직접 호출), `UA1Ability_Interact_Player`(`GameplayEvent.Interact.Player`, `NetExecutionPolicy=ServerInitiated`로 서버 판단을 소유 클라에 복제).
 - AttributeSet: `UCommonAttributeSet` → `UA1VitalSet` (Health / Mana / Stamina)
 - 초기화: `FExtensionExecute_InitAbilitySystem`이 `InitAbilityActorInfo` + `OnPostProcessInput` → `ProcessAbilityInput` 바인딩 수행. **직접 초기화 코드를 새로 짜지 말 것.**
 
@@ -58,3 +59,4 @@ UFUNCTION() void OnRep_<Name>(const FGameplayAttributeData& Old);
 - [ ] 로그 카테고리 선언·정의 쌍이 맞는가
 - [ ] 태그 문자열이 `Input.Ability.*` / `Equipment.Slot.*` / `QuickBar.Slot.*` 규칙을 따르는가
 - [ ] 새 Attribute의 복제 설정을 빠뜨리지 않았는가
+- [ ] Ability 종료 후에도 남아야 하는 상태 태그(예: `Status.Death`)를 `SetLooseGameplayTagCount`로 직접 설정했다면, Iris 하에서는 `EGameplayTagReplicationState::TagAndCountToAll`을 지정했는가 (기본값 `None`은 소유 클라에만 보이고 다른 클라에는 복제되지 않는다)
