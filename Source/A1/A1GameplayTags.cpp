@@ -105,6 +105,8 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Death, "GameplayEvent.Death");
 
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_DropItem, "GameplayEvent.DropItem");
+
 	//-----------------------------------------------------------------------------
 	// Cooldown.Skill
 	//-----------------------------------------------------------------------------

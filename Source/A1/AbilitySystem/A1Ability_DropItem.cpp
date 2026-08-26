@@ -13,7 +13,6 @@
 #include "Engine/World.h"
 #include "Equipment/EquipmentComponent.h"
 #include "Equipment/EquipmentDefinition.h"
-#include "Equipment/EquipmentInstance.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 #include "Interaction/Actors/A1Interactable_Pickup.h"
@@ -145,29 +144,47 @@ UA1Ability_DropItem::UA1Ability_DropItem(const FObjectInitializer& ObjectInitial
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	// 입력 키로 발동한다.
-	ActivationPolicy = ECommonAbilityActivationPolicy::OnInputTriggered;
+	// 입력이 아니라 UI(드래그&드롭)가 보내는 GameplayEvent로 트리거된다.
+	ActivationPolicy = ECommonAbilityActivationPolicy::Manual;
 	ActivationGroup = ECommonAbilityActivationGroup::Independent;
 
 	// 기본 드롭 클래스는 픽업. (메시 지정된 BP 픽업으로 GA 에셋에서 덮어써 사용)
 	DropActorClass = AA1Interactable_Pickup::StaticClass();
 
 	SetAssetTags(FGameplayTagContainer(A1GameplayTags::Ability_DropItem));
+
+	if (HasAnyFlags(RF_ClassDefaultObject))
+	{
+		FAbilityTriggerData TriggerData;
+		TriggerData.TriggerTag = A1GameplayTags::GameplayEvent_DropItem;
+		TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+		AbilityTriggers.Add(TriggerData);
+	}
 }
 
 void UA1Ability_DropItem::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (HasAuthority(&ActivationInfo))
+	// 드롭할 아이템은 ItemId로 전달된다(EventMagnitude). OptionalObject(UItemInstance*)는 네트워크
+	// 주소 지정이 가능한 오브젝트가 아니라서(액터가 아님) 클라 → 서버로 안정적으로 복제되지 않는다.
+	// 서버에서 내 InventoryComponent 기준으로 그 ID의 아이템을 다시 찾아야 한다.
+	if (HasAuthority(&ActivationInfo) && TriggerEventData != nullptr)
 	{
-		DropItemAuth();
+		const int32 ItemId = static_cast<int32>(TriggerEventData->EventMagnitude);
+		if (UInventoryComponent* Inventory = UInventoryComponent::FindInventoryComponent(Cast<APawn>(GetAvatarActorFromActorInfo())))
+		{
+			if (UItemInstance* ItemToDrop = Inventory->FindItemById(ItemId))
+			{
+				DropItemAuth(ItemToDrop);
+			}
+		}
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-void UA1Ability_DropItem::DropItemAuth()
+void UA1Ability_DropItem::DropItemAuth(UItemInstance* ItemToDrop)
 {
 	APawn* Avatar = Cast<APawn>(GetAvatarActorFromActorInfo());
 	UWorld* World = GetWorld();
@@ -184,15 +201,15 @@ void UA1Ability_DropItem::DropItemAuth()
 		return;
 	}
 
-	// 드롭할 원본 아이템을 결정한다. (장착 아이템이면 해제할 슬롯 태그와 표시 메시·스케일도 함께 받는다)
+	// 이 아이템이 실제로 내 인벤토리 소속인지 검증하고, 장착 중이면 해제할 슬롯 태그와
+	// 표시 메시·스케일을 받는다. (클라가 보낸 TriggerEventData는 신뢰할 수 없으므로 서버에서 재검증)
 	FGameplayTag UnequipSlotTag;
 	UStaticMesh* DisplayStaticMesh = nullptr;
 	USkeletalMesh* DisplaySkeletalMesh = nullptr;
 	FVector DisplayScale = FVector::OneVector;
-	UItemInstance* ItemToDrop = SelectItemToDropAuth(Avatar, Inventory, UnequipSlotTag, DisplayStaticMesh, DisplaySkeletalMesh, DisplayScale);
-	if (ItemToDrop == nullptr)
+	if (!ResolveDropContextAuth(ItemToDrop, Inventory, UnequipSlotTag, DisplayStaticMesh, DisplaySkeletalMesh, DisplayScale))
 	{
-		UE_LOG(A1AbilityDropItemLog, Log, TEXT("DropItemAuth: 드롭할 %s 아이템이 없음."), bDropEquipped ? TEXT("장착") : TEXT("인벤토리"));
+		UE_LOG(A1AbilityDropItemLog, Warning, TEXT("DropItemAuth: %s은(는) %s의 인벤토리 소속이 아니라 드롭을 건너뜀."), *GetNameSafe(ItemToDrop), *GetNameSafe(Avatar));
 		return;
 	}
 
@@ -216,50 +233,29 @@ void UA1Ability_DropItem::DropItemAuth()
 	SpawnDropActorAuth(Definition, Count, DisplayStaticMesh, DisplaySkeletalMesh, DisplayScale);
 }
 
-UItemInstance* UA1Ability_DropItem::SelectItemToDropAuth(APawn* Avatar, UInventoryComponent* Inventory, FGameplayTag& OutUnequipSlotTag, UStaticMesh*& OutStaticMesh, USkeletalMesh*& OutSkeletalMesh, FVector& OutDisplayScale) const
+bool UA1Ability_DropItem::ResolveDropContextAuth(UItemInstance* ItemToDrop, UInventoryComponent* Inventory, FGameplayTag& OutUnequipSlotTag, UStaticMesh*& OutStaticMesh, USkeletalMesh*& OutSkeletalMesh, FVector& OutDisplayScale) const
 {
 	OutUnequipSlotTag = FGameplayTag();
 	OutStaticMesh = nullptr;
 	OutSkeletalMesh = nullptr;
 	OutDisplayScale = FVector::OneVector;
 
-	UItemInstance* ItemToDrop = nullptr;
-
-	if (bDropEquipped)
+	const FInventoryEntry* Entry = Inventory->FindEntry(ItemToDrop);
+	if (Entry == nullptr)
 	{
-		// 손에 든(활성) 메인 장비의 원본 아이템을 드롭 대상으로 삼는다.
-		if (UEquipmentComponent* Equipment = UEquipmentComponent::FindEquipmentComponent(Avatar))
-		{
-			if (UEquipmentInstance* MainEquip = Equipment->GetActiveMainEquippedItem())
-			{
-				OutUnequipSlotTag = MainEquip->GetEquipmentSlotTag();
-				ItemToDrop = MainEquip->GetSourceItemInstance();
-			}
-		}
-	}
-	else
-	{
-		// 인벤토리에서 장착되지 않은 첫 번째 아이템을 고른다.
-		TArray<UItemInstance*> Items;
-		Inventory->GetAllItems(Items);
-		for (UItemInstance* Item : Items)
-		{
-			const FInventoryEntry* Entry = Inventory->FindEntry(Item);
-			if (Entry && Entry->bEquipment == false)
-			{
-				ItemToDrop = Item;
-				break;
-			}
-		}
+		return false;
 	}
 
-	// 표시 메시·스케일 조회는 장착/인벤토리 경로가 공유하는 단일 헬퍼가 담당한다.
-	if (ItemToDrop != nullptr)
+	// 장착 중인 아이템도 InventoryList에는 Entry로 남아있다(bEquipment=true). 이 경우 아이템
+	// 정의의 슬롯 태그가 곧 현재 장착된 슬롯이므로(장착은 슬롯 태그가 일치해야만 성립) 그대로 쓴다.
+	if (Entry->bEquipment)
 	{
-		FindDisplayMeshForItem(ItemToDrop, OutStaticMesh, OutSkeletalMesh, OutDisplayScale);
+		OutUnequipSlotTag = ItemToDrop->GetEquipmentSlotTag();
 	}
 
-	return ItemToDrop;
+	FindDisplayMeshForItem(ItemToDrop, OutStaticMesh, OutSkeletalMesh, OutDisplayScale);
+
+	return true;
 }
 
 void UA1Ability_DropItem::SpawnDropActorAuth(const UItemDefinition* ItemDefinition, int32 ItemCount, UStaticMesh* DisplayStaticMesh, USkeletalMesh* DisplaySkeletalMesh, const FVector& DisplayScale)

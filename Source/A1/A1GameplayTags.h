@@ -107,6 +107,8 @@ namespace A1GameplayTags
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Death);
 
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_DropItem);
+
 	//-----------------------------------------------------------------------------
 	// Cooldown.Skill
 	//-----------------------------------------------------------------------------
