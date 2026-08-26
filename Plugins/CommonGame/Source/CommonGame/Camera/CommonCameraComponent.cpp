@@ -90,3 +90,9 @@ void UCommonCameraComponent::GetBlendInfo(float& OutWeightOfTopLayer, FGameplayT
 	check(CameraModeStack);
 	CameraModeStack->GetBlendInfo(/*out*/ OutWeightOfTopLayer, /*out*/ OutTagOfTopLayer);
 }
+
+UCommonCameraMode* UCommonCameraComponent::GetTopCameraMode() const
+{
+	check(CameraModeStack);
+	return CameraModeStack->GetTopCameraMode();
+}

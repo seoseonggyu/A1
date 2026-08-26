@@ -51,8 +51,7 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 	{
 		BindingHandles.Add(MoveHandle);
 	}
-
-
+	
 	// Ability 입력 바인딩 - ASC로 라우팅
 	for (const FInputActionAndTag& Mapping : AbilityInputActions)
 	{

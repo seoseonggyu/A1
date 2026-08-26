@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "Engine/TimerHandle.h"
 #include "Game/CommonCharacter.h"
+#include "Input/InputTypes.h"
 #include "Interaction/A1Interactable.h"
 #include "A1Character.generated.h"
+
+class UInputMappingContext;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1CharacterLog, Log, All);
 
@@ -61,5 +64,23 @@ private:
 	/** Status.Death 태그 카운트가 변할 때(및 구독 직후 현재 상태 반영 시) 호출된다. */
 	void HandleDeathStatusChangedLocal(const FGameplayTag Tag, int32 NewCount);
 
+	/**
+	 * 사망 시 카메라를 자유 시점(UCommonCameraMode_FreeFly)으로 전환하고, 기존 이동/어빌리티용
+	 * MappingContext를 모두 해제한 뒤 DeathFreeFlyMappingContext로 교체한다. 로컬 컨트롤 캐릭터에서만 호출.
+	 */
+	void ActivateDeathFreeFlyCameraLocal();
+
 	FTimerHandle DeathStatusTrackingRetryTimerHandle;
+
+	//-----------------------------------------------------------------------------
+	// 사망 후 자유 시점 카메라용 입력 설정
+	//-----------------------------------------------------------------------------
+
+	/** 사망 후 활성화할 MappingContext (이동/어빌리티 MappingContext를 대체한다) */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|FreeFly", meta = (AssetBundles = "Client"))
+	TSoftObjectPtr<UInputMappingContext> DeathFreeFlyMappingContext;
+
+	/** 사망 후 사용할 Native Input Action (시점 회전, 이동만 필요하며 Ability는 사용하지 않는다) */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|FreeFly", meta = (TitleProperty = "{InputTag}"))
+	TArray<FInputActionAndTag> DeathFreeFlyNativeInputActions;
 };

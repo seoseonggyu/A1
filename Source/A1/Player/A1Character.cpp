@@ -6,14 +6,20 @@
 #include "AbilitySystemComponent.h"
 #include "Actors/A1ArmorBase.h"
 #include "Camera/CommonCameraComponent.h"
+#include "Camera/CommonCameraMode_FreeFly.h"
+#include "CommonGameTags.h"
 #include "Components/ArrowComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Cosmetic/A1CosmeticManagerComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Equipment/EquipmentComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
+#include "Input/CommonEnhancedInputComponent.h"
+#include "InputActionValue.h"
+#include "InputMappingContext.h"
 #include "Physics/A1CollisionChannels.h"
 #include "TimerManager.h"
 
@@ -150,4 +156,77 @@ void AA1Character::HandleDeathStatusChangedLocal(const FGameplayTag Tag, int32 N
 		Capsule->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 		Capsule->SetCollisionResponseToChannel(A1_TraceChannel_Interaction, ECR_Block);
 	}
+
+	// 내가 조종하던 캐릭터가 죽었을 때만 카메라를 자유 시점으로 전환한다(시체를 보는 다른 클라는 대상 아님).
+	if (IsLocallyControlled())
+	{
+		ActivateDeathFreeFlyCameraLocal();
+	}
+}
+
+void AA1Character::ActivateDeathFreeFlyCameraLocal()
+{
+	UCommonCameraComponent* DeathCameraComponent = GetCommonCameraComponent();
+	if (DeathCameraComponent == nullptr)
+	{
+		return;
+	}
+
+	// TopDown 대신 자유 시점 카메라 모드를 쓰도록 델리게이트를 재바인딩한다.
+	DeathCameraComponent->DetermineCameraModeDelegate.BindLambda(
+		[]() -> TSubclassOf<UCommonCameraMode>
+		{
+			return UCommonCameraMode_FreeFly::StaticClass();
+		});
+
+	APlayerController* PC = GetController<APlayerController>();
+	UCommonEnhancedInputComponent* CommonInputComponent = Cast<UCommonEnhancedInputComponent>(InputComponent);
+	if (PC == nullptr || !PC->GetLocalPlayer() || CommonInputComponent == nullptr)
+	{
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
+	if (Subsystem == nullptr)
+	{
+		return;
+	}
+
+	// 탑다운 커서 조작용으로 띄워두던 마우스 커서를 숨기고 뷰포트에 캡처해서, 클릭/키 입력 없이도
+	// 마우스를 움직이는 즉시 시점이 돌아가게 한다.
+	PC->bShowMouseCursor = false;
+	PC->SetInputMode(FInputModeGameOnly());
+
+	// 이동/어빌리티용으로 쓰던 MappingContext를 전부 해제하고, 자유 시점 전용 MappingContext로 교체한다.
+	// 사망 상태에서는 Ability를 쓰지 않으므로 Ability 입력은 다시 바인딩하지 않는다.
+	Subsystem->ClearAllMappings();
+
+	if (UInputMappingContext* LoadedContext = DeathFreeFlyMappingContext.Get())
+	{
+		Subsystem->AddMappingContext(LoadedContext, 0);
+	}
+
+	CommonInputComponent->SetNativeInputActionMappings(DeathFreeFlyNativeInputActions);
+
+	CommonInputComponent->BindNativeActionValueLambda(
+		CommonGameTags::Input_Native_Look,
+		ETriggerEvent::Triggered,
+		[DeathCameraComponent](const FInputActionValue& Value)
+		{
+			if (UCommonCameraMode_FreeFly* FreeFlyMode = Cast<UCommonCameraMode_FreeFly>(DeathCameraComponent->GetTopCameraMode()))
+			{
+				FreeFlyMode->AddLookInput(Value.Get<FVector2D>());
+			}
+		});
+
+	CommonInputComponent->BindNativeActionValueLambda(
+		CommonGameTags::Input_Native_Move,
+		ETriggerEvent::Triggered,
+		[DeathCameraComponent](const FInputActionValue& Value)
+		{
+			if (UCommonCameraMode_FreeFly* FreeFlyMode = Cast<UCommonCameraMode_FreeFly>(DeathCameraComponent->GetTopCameraMode()))
+			{
+				FreeFlyMode->AddMoveInput(Value.Get<FVector2D>());
+			}
+		});
 }

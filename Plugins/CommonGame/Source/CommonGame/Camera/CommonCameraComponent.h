@@ -18,10 +18,10 @@ DECLARE_DELEGATE_RetVal(TSubclassOf<UCommonCameraMode>, FCommonCameraModeDelegat
 /**
  * UCommonCameraComponent
  *
- *	ÀÌ ÇÃ·¯±×ÀÎ¿¡¼­ »ç¿ëÇÏ´Â ±âº» Ä«¸Ş¶ó ±¸¼º ¿ä¼Ò Å¬·¡½ºÀÔ´Ï´Ù.
+ *	ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½âº» Ä«ï¿½Ş¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.
  */
 UCLASS()
-class UCommonCameraComponent : public UCameraComponent
+class COMMONGAME_API UCommonCameraComponent : public UCameraComponent
 {
 	GENERATED_BODY()
 
@@ -36,6 +36,9 @@ public:
 	FCommonCameraModeDelegate DetermineCameraModeDelegate;
 
 	void AddFieldOfViewOffset(float FovOffset) { FieldOfViewOffset += FovOffset; }
+
+	/** í˜„ì¬ ìŠ¤íƒ ë§¨ ìœ„(ê°€ì¥ ìš°ì„ ìˆœìœ„ ë†’ì€) ì¹´ë©”ë¼ ëª¨ë“œ ì¸ìŠ¤í„´ìŠ¤ë¥¼ ë°˜í™˜í•œë‹¤. ì—†ìœ¼ë©´ nullptr. */
+	UCommonCameraMode* GetTopCameraMode() const;
 
 	void GetBlendInfo(float& OutWeightOfTopLayer, FGameplayTag& OutTagOfTopLayer) const;
 

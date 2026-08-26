@@ -146,6 +146,9 @@ public:
 
 	void PushCameraMode(TSubclassOf<UCommonCameraMode> CameraModeClass);
 
+	/** 현재 스택 맨 위(가장 우선순위 높은) 카메라 모드 인스턴스를 반환한다. 없으면 nullptr. */
+	UCommonCameraMode* GetTopCameraMode() const { return (CameraModeStack.Num() > 0) ? CameraModeStack[0] : nullptr; }
+
 	bool EvaluateStack(float DeltaTime, FCommonCameraModeView& OutCameraModeView);
 
 	void GetBlendInfo(float& OutWeightOfTopLayer, FGameplayTag& OutTagOfTopLayer) const;
