@@ -10,6 +10,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(A1Ability_MeleeWeapon, Log, All);
 
 class AController;
+class UCommonCameraMode;
 
 
 UCLASS()
@@ -64,4 +65,11 @@ protected:
 	/** 공격 종료 후 스태미나 재생이 다시 시작되기까지의 지연 시간(초). */
 	UPROPERTY(EditDefaultsOnly, Category = "A1|Stamina")
 	float RegenBlockDuration = 1.f;
+
+	/**
+	 * 이 어빌리티가 활성화되는 동안 카메라를 임시로 확대/축소할 카메라 모드. 비워두면(기본값) 줌 연출이 없다.
+	 * 기본 공격은 비워두고, 스킬(GroundBreaker/WhirlwindSlash) BP 데이터에서만 채워 스킬 전용 줌으로 쓴다.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "A1|Camera")
+	TSubclassOf<UCommonCameraMode> ZoomCameraModeClass;
 };

@@ -129,5 +129,7 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Character_DamageTaken, "GameplayCue.Character.DamageTaken");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Character_HitShake, "GameplayCue.Character.HitShake");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
 
 }

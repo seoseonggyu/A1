@@ -133,6 +133,7 @@ void UA1VitalSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData
 				CueParams.RawMagnitude = IncomingDamage;
 				CueParams.EffectContext = Data.EffectSpec.GetContext();
 				ASC->ExecuteGameplayCue(A1GameplayTags::GameplayCue_Character_DamageTaken, CueParams);
+				ASC->ExecuteGameplayCue(A1GameplayTags::GameplayCue_Character_HitShake, CueParams);
 			}
 		}
 	}

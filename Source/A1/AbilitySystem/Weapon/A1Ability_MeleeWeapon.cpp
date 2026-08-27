@@ -7,6 +7,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffect.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
+#include "Camera/CommonCameraMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
@@ -29,6 +30,12 @@ void UA1Ability_MeleeWeapon::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	ResetHitActors();
+
+	// 스킬 데이터에서 지정한 경우에만 줌 연출을 건다. EndAbility에서 자동으로 해제된다.
+	if (ZoomCameraModeClass)
+	{
+		SetCameraMode(ZoomCameraModeClass);
+	}
 }
 
 void UA1Ability_MeleeWeapon::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -100,17 +107,23 @@ void UA1Ability_MeleeWeapon::ProcessHitResult(const FHitResult& HitResult, float
 	if (SourceASC == nullptr)
 		return;
 	
-	FScopedPredictionWindow	ScopedPrediction(SourceASC, GetCurrentActivationInfo().GetActivationPredictionKey());
-	
-	// TODO: GameplayCue
-	//FGameplayCueParameters SourceCueParams;
-	//SourceCueParams.Location = HitResult.ImpactPoint;
-	//SourceCueParams.Normal = HitResult.ImpactNormal;
-	//SourceCueParams.PhysicalMaterial = HitResult.PhysMaterial;
-	//SourceASC->ExecuteGameplayCue(D1GameplayTags::GameplayCue_Weapon_Impact, SourceCueParams);
-	
+	// 때린 쪽(공격자) 카메라 펀치용 Cue. 이 함수(OnTargetDataReady)는 서버에서만 실행되고 클라에서는 예측 실행된 적이
+	// 없으므로, 여기서 FScopedPredictionWindow로 감싸면 안 된다. PredictionKey를 씌우면 서버는 "공격자 클라가 이미
+	// 이 어빌리티를 예측 중이니 알아서 재생했겠지"라고 착각해 그 클라에는 Cue 복제 자체를 스킵해버린다(실제로는
+	// 공격자 클라가 이 코드를 로컬로 실행한 적이 없어서 결국 아무도 못 봄 - 공격자 화면에서만 안 흔들리던 원인).
+	// SourceASC(공격자)로 실행하므로 Cue의 Target(MyTarget)은 자동으로 공격자 자신의 Pawn이 되고,
+	// GCN_Weapon_Impact BP는 이 Target을 기준으로 판별하는 Locally Controlled Source = Target Actor를 쓴다.
+	FGameplayCueParameters SourceCueParams;
+	SourceCueParams.Location = HitResult.ImpactPoint;
+	SourceCueParams.Normal = HitResult.ImpactNormal;
+	SourceCueParams.PhysicalMaterial = HitResult.PhysMaterial;
+	SourceASC->ExecuteGameplayCue(A1GameplayTags::GameplayCue_Weapon_Impact, SourceCueParams);
+
 	if (HasAuthority(&CurrentActivationInfo))
 	{
+		// GE 적용은 서버 전용이지만 클라 예측 GE와의 정합성을 위해 PredictionKey를 그대로 씌운다.
+		FScopedPredictionWindow ScopedPrediction(SourceASC, GetCurrentActivationInfo().GetActivationPredictionKey());
+
 		// GE를 적용할 "대상"을 지정하는 TargetData. 맞은 액터 하나로 만든다.
 		FGameplayAbilityTargetDataHandle TargetDataHandle = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(HitResult.GetActor());
 

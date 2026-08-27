@@ -9,6 +9,9 @@ UCommonCameraComponent::UCommonCameraComponent(const FObjectInitializer& ObjectI
 {
 	CameraModeStack = nullptr;
 	FieldOfViewOffset = 0.0f;
+
+	// 카메라 모드 결정은 항상 이 컴포넌트 자신이 담당한다. 외부 시스템은 SetBaseCameraMode/SetAbilityCameraMode로만 관여한다.
+	DetermineCameraModeDelegate.BindUObject(this, &UCommonCameraComponent::DetermineCameraMode);
 }
 
 void UCommonCameraComponent::OnRegister()
@@ -95,4 +98,35 @@ UCommonCameraMode* UCommonCameraComponent::GetTopCameraMode() const
 {
 	check(CameraModeStack);
 	return CameraModeStack->GetTopCameraMode();
+}
+
+void UCommonCameraComponent::SetBaseCameraMode(TSubclassOf<UCommonCameraMode> NewBaseCameraMode)
+{
+	BaseCameraModeClass = NewBaseCameraMode;
+}
+
+void UCommonCameraComponent::SetAbilityCameraMode(TSubclassOf<UCommonCameraMode> NewCameraMode, const FGameplayAbilitySpecHandle& OwningSpecHandle)
+{
+	AbilityCameraModeClass = NewCameraMode;
+	AbilityCameraModeOwningHandle = OwningSpecHandle;
+}
+
+void UCommonCameraComponent::ClearAbilityCameraMode(const FGameplayAbilitySpecHandle& OwningSpecHandle)
+{
+	// 이미 다른 Ability가 새로 덮어썼다면(핸들 불일치) 그 오버라이드를 건드리지 않는다.
+	if (AbilityCameraModeOwningHandle == OwningSpecHandle)
+	{
+		AbilityCameraModeClass = nullptr;
+		AbilityCameraModeOwningHandle = FGameplayAbilitySpecHandle();
+	}
+}
+
+TSubclassOf<UCommonCameraMode> UCommonCameraComponent::DetermineCameraMode() const
+{
+	if (AbilityCameraModeClass)
+	{
+		return AbilityCameraModeClass;
+	}
+
+	return BaseCameraModeClass;
 }

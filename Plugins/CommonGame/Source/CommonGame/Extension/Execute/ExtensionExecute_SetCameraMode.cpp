@@ -22,12 +22,7 @@ void FExtensionExecute_SetCameraMode::OnActivate(AActor* Owner) const
 	ACommonCharacter* Character = Cast<ACommonCharacter>(Pawn);
 	if (UCommonCameraComponent* CameraComponent = Character ? Character->GetCommonCameraComponent() : nullptr)
 	{
-		CameraComponent->DetermineCameraModeDelegate.BindLambda(
-			[this]() -> TSubclassOf<UCommonCameraMode>
-			{
-				return CameraModeClass;
-			}
-		);
+		CameraComponent->SetBaseCameraMode(CameraModeClass);
 	}
 }
 

@@ -3,6 +3,8 @@
 #include "AbilitySystem/Ability/CommonGameplayAbility.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Camera/CommonCameraComponent.h"
+#include "Camera/CommonCameraMode.h"
 #include "Game/CommonCharacter.h"
 #include "Game/CommonPlayerController.h"
 
@@ -131,6 +133,44 @@ void UCommonGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* Acto
 void UCommonGameplayAbility::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnRemoveAbility(ActorInfo, Spec);
+}
+
+void UCommonGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	// 하위 Ability가 ClearCameraMode를 깜빡 잊어도 항상 정리되도록 베이스에서 보장한다.
+	ClearCameraMode();
+
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UCommonGameplayAbility::SetCameraMode(TSubclassOf<UCommonCameraMode> CameraModeClass)
+{
+	if (ACommonCharacter* Character = GetCommonCharacterFromActorInfo())
+	{
+		if (UCommonCameraComponent* CameraComponent = Character->GetCommonCameraComponent())
+		{
+			CameraComponent->SetAbilityCameraMode(CameraModeClass, CurrentSpecHandle);
+			ActiveCameraModeClass = CameraModeClass;
+		}
+	}
+}
+
+void UCommonGameplayAbility::ClearCameraMode()
+{
+	if (!ActiveCameraModeClass)
+	{
+		return;
+	}
+
+	if (ACommonCharacter* Character = GetCommonCharacterFromActorInfo())
+	{
+		if (UCommonCameraComponent* CameraComponent = Character->GetCommonCameraComponent())
+		{
+			CameraComponent->ClearAbilityCameraMode(CurrentSpecHandle);
+		}
+	}
+
+	ActiveCameraModeClass = nullptr;
 }
 
 bool UCommonGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& AbilitySystemComponent, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const

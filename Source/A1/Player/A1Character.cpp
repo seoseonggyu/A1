@@ -172,12 +172,8 @@ void AA1Character::ActivateDeathFreeFlyCameraLocal()
 		return;
 	}
 
-	// TopDown 대신 자유 시점 카메라 모드를 쓰도록 델리게이트를 재바인딩한다.
-	DeathCameraComponent->DetermineCameraModeDelegate.BindLambda(
-		[]() -> TSubclassOf<UCommonCameraMode>
-		{
-			return UCommonCameraMode_FreeFly::StaticClass();
-		});
+	// TopDown 대신 자유 시점 카메라 모드를 쓰도록 기본 카메라 모드를 교체한다.
+	DeathCameraComponent->SetBaseCameraMode(UCommonCameraMode_FreeFly::StaticClass());
 
 	APlayerController* PC = GetController<APlayerController>();
 	UCommonEnhancedInputComponent* CommonInputComponent = Cast<UCommonEnhancedInputComponent>(InputComponent);

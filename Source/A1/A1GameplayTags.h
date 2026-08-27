@@ -128,5 +128,7 @@ namespace A1GameplayTags
 	//-----------------------------------------------------------------------------
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Character_DamageTaken);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Character_HitShake);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Weapon_Impact);
 
 }
