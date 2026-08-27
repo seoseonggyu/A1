@@ -69,6 +69,8 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Pickup);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Door);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Player);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_Extraction);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact_LootContainer);
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_DropItem);
 
@@ -104,6 +106,8 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Pickup);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Door);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Player);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_Extraction);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Interact_LootContainer);
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayEvent_Death);
 

@@ -66,6 +66,8 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Pickup, "Ability.Interact.Pickup");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Door, "Ability.Interact.Door");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Player, "Ability.Interact.Player");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_Extraction, "Ability.Interact.Extraction");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Interact_LootContainer, "Ability.Interact.LootContainer");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_DropItem, "Ability.DropItem");
 
@@ -102,6 +104,8 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Pickup, "GameplayEvent.Interact.Pickup");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Door, "GameplayEvent.Interact.Door");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Player, "GameplayEvent.Interact.Player");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_Extraction, "GameplayEvent.Interact.Extraction");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Interact_LootContainer, "GameplayEvent.Interact.LootContainer");
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Death, "GameplayEvent.Death");
 

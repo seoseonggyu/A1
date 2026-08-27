@@ -59,7 +59,7 @@ public:
 
 	/**
 	 * 외곽선(CustomDepth) 스텐실 값. 대상 종류별 색 구분에 사용한다.
-	 * 사용 중인 값: WorldInteractable 기본=1, Door=2, Pickup=3, Corpse=4, Character=5.
+	 * 사용 중인 값: WorldInteractable 기본=1, Door=2, Pickup=3, Corpse=4, Character=5, ExtractionZone=6, LootContainer=7.
 	 * 새 종류를 추가할 때는 겹치지 않는 값을 사용한다.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
