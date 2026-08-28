@@ -6,6 +6,7 @@
 #include "AbilitySystem/Ability/CommonGameplayAbility.h"
 #include "A1Ability_Equipment.generated.h"
 
+class UWeaponInstance;
 class UMeleeWeaponInstance;
 
 DECLARE_LOG_CATEGORY_EXTERN(A1Ability_Equipment, Log, All);
@@ -25,6 +26,10 @@ public:
 
 
 protected:
+	/** Equipment.Slot.Weapon에 장착된 무기 인스턴스를 반환한다. (근접/원거리 공통 베이스 타입) */
+	virtual UWeaponInstance* GetWeaponInstance() const;
+
+	/** GetWeaponInstance()를 UMeleeWeaponInstance로 캐스팅한다. 근접 무기 전용 파생 클래스에서 쓴다. */
 	virtual UMeleeWeaponInstance* GetMeleeWeaponInstance() const;
 
 };

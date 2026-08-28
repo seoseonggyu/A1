@@ -96,6 +96,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_End, "GameplayEvent.Montage.End");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Montage_Move, "GameplayEvent.Montage.Move");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Trace, "GameplayEvent.Trace");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Weapon_Fire, "GameplayEvent.Weapon.Fire");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Reset, "GameplayEvent.Reset");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayEvent_Stun, "GameplayEvent.Stun");
 

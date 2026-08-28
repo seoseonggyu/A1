@@ -44,6 +44,10 @@ AA1Character::AA1Character(const FObjectInitializer& ObjectInitializer)
 
 	// 상호작용 커서 트레이스 채널에만 추가로 반응한다. 기존 Pawn 콜리전(캡슐)에는 영향 없음.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(A1_TraceChannel_Interaction, ECR_Block);
+
+	// 투사체 채널의 기본 응답은 Block이지만(벽 등은 막아야 함), 캐릭터는 Overlap으로 맞아야
+	// AA1Projectile::OnCollisionBeginOverlap이 발동해 피격 판정이 이루어진다.
+	GetCapsuleComponent()->SetCollisionResponseToChannel(A1_TraceChannel_Projectile, ECR_Overlap);
 }
 
 void AA1Character::BeginPlay()
