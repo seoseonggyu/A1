@@ -65,8 +65,9 @@ void UA1Ability_Interact_Hold::ActivateAbility(const FGameplayAbilitySpecHandle 
 		}
 	}
 
-	// 홀드 진행 UI는 순수 로컬 연출이므로 소유 클라에서만 띄운다.
-	if (HasAuthority(&ActivationInfo) == false)
+	// 홀드 진행 UI는 순수 로컬 연출이므로 로컬로 조작되는 쪽에서만 띄운다.
+	// (리슨 서버 호스트는 HasAuthority()도 true이므로 권한 여부가 아니라 IsLocallyControlled()로 판단해야 한다.)
+	if (IsLocallyControlled())
 	{
 		ShowHoldWidgetLocal();
 	}
@@ -99,18 +100,22 @@ TCoroTask<void> UA1Ability_Interact_Hold::RunHoldCoroutine()
 
 	AActor* Interactor = GetAvatarActorFromActorInfo();
 	AActor* Target = TargetActor.Get();
-
+	
 	if (HasAuthority(&CurrentActivationInfo))
 	{
 		OnHoldCompletedAuth(Interactor, Target);
 		UE_LOG(A1AbilityInteractHoldLog, Log, TEXT("홀드 완료(Auth): Interactor=%s Target=%s"), *GetNameSafe(Interactor), *GetNameSafe(Target));
 	}
-	else
+
+	if (IsLocallyControlled())
 	{
 		OnHoldCompletedLocal(Interactor, Target);
 	}
 
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+	// bReplicateEndAbility=false: 정상 완료는 각자 자기 코루틴 타이머로 끝난다. true로 두면 서버가
+	// 끝나자마자 클라에 강제 종료를 리플리케이트하는데, 이게 클라 자신의 완료 판정(위 IsActive 체크)보다
+	// 먼저 도착해 클라 쪽 OnHoldCompletedLocal이 호출되기 전에 어빌리티가 끝나버리는 레이스가 있었다.
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }
 
 void UA1Ability_Interact_Hold::OnInputReleased(float TimeHeld)
