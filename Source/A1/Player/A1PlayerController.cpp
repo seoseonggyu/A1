@@ -109,3 +109,23 @@ void AA1PlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 }
+
+void AA1PlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	if (IsLocalController())
+	{
+		UpdateCursorHit();
+	}
+}
+
+void AA1PlayerController::UpdateCursorHit()
+{
+	FHitResult HitResult;
+
+	if (GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	{
+		CachedCursorHitLocation = HitResult.Location;
+	}
+}

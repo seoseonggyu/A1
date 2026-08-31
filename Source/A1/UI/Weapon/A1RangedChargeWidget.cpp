@@ -29,6 +29,14 @@ void UA1RangedChargeWidget::StartCharge(float MaxChargeDurationSeconds)
 	PlayAnimation(ChargeAnim, 0.f, 1, EUMGSequencePlayMode::Forward, PlayRate);
 }
 
+void UA1RangedChargeWidget::PauseCharge()
+{
+	if (ChargeAnim != nullptr)
+	{
+		PauseAnimation(ChargeAnim);
+	}
+}
+
 void UA1RangedChargeWidget::StopCharge()
 {
 	StopAllAnimations();

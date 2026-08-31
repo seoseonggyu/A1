@@ -2,7 +2,7 @@
 
 **리슨 서버 기반이 아닌 Iris(Dedicated) 서버**
 
-**꼭 필요한 경우에만 주석·문서·응답은 한국어로 작성.
+**꼭 필요한 경우에만 주석·문서·응답은 한국어로 작성. 
 주석은 3줄을 넘어가지 않는다. 중요한 주석은 3줄을 넘어가도 된다** 식별자는 영어 UpperCamelCase.
 
 ## 빌드
@@ -53,6 +53,7 @@ Config/                    DefaultEngine/Game/Input.ini
 - `.uasset`(Blueprint, DataAsset)은 바이너리라 편집 불가. C++ 변경이 BP 참조를 깨뜨릴 수 있으면 **먼저 알리고** 진행한다.
   (`Plugins/GameFeatures/Ark/Content` 및 `/Game` 하위)
 - 복제 프로퍼티 추가 시 `GetLifetimeReplicatedProps` 갱신 필수.
+- 계속해서 호출되는 코드는 하나의 함수로 묶어서 관리.
 
 ## 사용자 요청
 

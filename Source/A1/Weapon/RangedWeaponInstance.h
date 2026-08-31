@@ -43,12 +43,7 @@ public:
 	float GetMaxChargeSpeed() const { return MaxChargeSpeed; }
 	float GetMaxChargeScale() const { return MaxChargeScale; }
 	float GetMaxChargeStaminaCost() const { return MaxChargeStaminaCost; }
-
-	/**
-	 * 홀드를 시작하는 즉시(0% 충전) 소비하는 기본 스태미나 값.
-	 * UA1Ability_RangedWeaponAttack이 SetByCaller로 스태미나 소비 GE에 전달한다.
-	 */
-	float GetStaminaCost() const { return StaminaCost; }
+	float GetMinStaminaToStart() const { return MinStaminaToStart; }
 
 protected:
 	virtual void OnEquipped() override;
@@ -69,15 +64,19 @@ private:
 
 	/** 투사체 발사 속도(초당 유닛). 0% 충전(즉시 릴리즈) 값. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Projectile", meta = (AllowPrivateAccess = "true"))
-	float ProjectileSpeed = 1200.f;
+	float ProjectileSpeed = 600.f;
 
 	/** 0% 충전(즉시 릴리즈) 데미지. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true"))
 	float BaseDamage = 10.f;
 
-	/** 홀드를 시작하는 즉시 소비하는 기본 스태미나(0% 충전 값). 0 이하면 기본 소비가 없다. */
+	/**
+	 * 발동 자체에 필요한 최소 스태미나. 소비되지는 않고 "이 이상 있어야 홀드를 시작할 수 있다"는
+	 * 문턱값으로만 쓰인다(실제 소비는 0에서 시작해 차징하며 진행). 리젠으로 막 회복돼 얼마 안 되는
+	 * 스태미나로 바로 발동해버리는 것을 막기 위한 값이다.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Stats", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float StaminaCost = 0.f;
+	float MinStaminaToStart = 10.f;
 
 	/** 이 시간(초) 이상 홀드하면 최대 충전(100%)에 도달한다. 0이면 차징 없이 항상 0% 충전 값으로 발사한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Charge", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
@@ -89,17 +88,13 @@ private:
 
 	/** 100% 충전 시 투사체 속도. ProjectileSpeed와의 사이를 충전 비율로 선형 보간한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Charge", meta = (AllowPrivateAccess = "true"))
-	float MaxChargeSpeed = 2500.f;
+	float MaxChargeSpeed = 1200.f;
 
 	/** 100% 충전 시 투사체 크기 배수. 0% 충전은 배수 1(원래 크기)이며 그 사이는 선형 보간한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Charge", meta = (AllowPrivateAccess = "true", ClampMin = "0.1"))
 	float MaxChargeScale = 2.f;
 
-	/**
-	 * 100% 충전(MaxChargeDuration만큼 다 홀드)까지 걸리는 동안 총 소비되는 스태미나.
-	 * StaminaCost(홀드 시작 즉시 소비되는 기본값)와의 차액을 홀드하는 동안 실시간으로 나눠서 계속 소비한다
-	 * (UA1Ability_RangedWeaponAttack의 반복 타이머). 최대 충전에 도달하면 더 이상 소비하지 않는다.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Charge", meta = (AllowPrivateAccess = "true"))
+	/** 100% 충전(MaxChargeDuration만큼 다 홀드)했을 때 소비되는 스태미나 총량	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config|Charge", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
 	float MaxChargeStaminaCost = 20.f;
 };

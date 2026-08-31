@@ -28,6 +28,12 @@ public:
 	/** 위젯을 보이게 하고, MaxChargeDurationSeconds에 맞춘 재생 속도로 ChargeAnim을 처음부터 재생한다. */
 	void StartCharge(float MaxChargeDurationSeconds);
 
+	/**
+	 * 재생 중인 ChargeAnim을 현재 위치에서 멈춘다(위젯은 계속 보임). 시간이 남았어도 스태미나가
+	 * 바닥나 더 이상 충전이 진행되지 않을 때, 애니메이션이 끝까지 재생돼버리지 않도록 호출한다.
+	 */
+	void PauseCharge();
+
 	/** 애니메이션을 멈추고 위젯을 다시 숨긴다. */
 	void StopCharge();
 

@@ -11,18 +11,23 @@
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystem/A1VitalSet.h"
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
+#include "AbilitySystem/Tasks/A1AbilityTask_WaitForTick.h"
+#include "Actors/A1Projectile.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "CommonUIExtensionTags.h"
+#include "DrawDebugHelpers.h"
 #include "Equipment/EquipmentComponent.h"
+#include "TimerManager.h"
+#include "Game/CommonCharacter.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Layout/CommonPrimaryGameLayout.h"
-#include "Actors/A1Projectile.h"
 #include "UI/Weapon/A1RangedChargeWidget.h"
 #include "Weapon/RangedWeaponInstance.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
+#include "Player/A1PlayerController.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Ability_RangedWeaponAttack)
 
@@ -32,6 +37,9 @@ UA1Ability_RangedWeaponAttack::UA1Ability_RangedWeaponAttack(const FObjectInitia
 	: Super(ObjectInitializer)
 {
 	ActivationOwnedTags.AddTag(A1GameplayTags::Status_StaminaRegen_Blocked);
+
+	// UpdateAimDirectionServer RPC를 쓰려면 어빌리티 인스턴스가 서버·소유 클라 각각 복제되어야 한다.
+	ReplicationPolicy = EGameplayAbilityReplicationPolicy::ReplicateYes;
 }
 
 bool UA1Ability_RangedWeaponAttack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
@@ -47,24 +55,17 @@ bool UA1Ability_RangedWeaponAttack::CanActivateAbility(const FGameplayAbilitySpe
 		return false;
 	}
 
-	// 스태미나가 바닥났으면(0 이하) StaminaCost가 0으로 설정돼 있어도 애초에 홀드 자체를 시작할 수 없다.
-	// 홀드 시작 후에도 계속 스태미나를 까먹으므로, "지금 0인데 시작은 된다"를 막는 것이 핵심이다.
 	UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
 	if (ASC == nullptr)
 	{
 		return false;
 	}
 
+	// 발동 즉시 소비되는 스태미나는 없다(0에서 시작해 차징하며 소비). 대신 MinStaminaToStart 이상
+	// 보유하고 있어야 홀드를 시작할 수 있다(리젠으로 막 회복된 소량 스태미나로 바로 발동되는 것 방지).
 	bool bFoundAttribute = false;
 	const float CurrentStamina = UAbilitySystemBlueprintLibrary::GetFloatAttributeFromAbilitySystemComponent(ASC, UA1VitalSet::GetStaminaAttribute(), bFoundAttribute);
-	if (bFoundAttribute == false || CurrentStamina <= 0.f)
-	{
-		return false;
-	}
-
-	// 무기의 스태미나 소비량(기본값)보다 현재 스태미나가 부족하면 발사를 시작할 수 없다.
-	const float StaminaCost = WeaponInstance->GetStaminaCost();
-	if (StaminaCost > 0.f && CurrentStamina < StaminaCost)
+	if (bFoundAttribute == false || CurrentStamina < WeaponInstance->GetMinStaminaToStart())
 	{
 		return false;
 	}
@@ -76,44 +77,33 @@ void UA1Ability_RangedWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHa
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	SetOrientRotationToMovement(false);
+
+	if (const ACommonCharacter* Character = GetCommonCharacterFromActorInfo())
+	{
+		LocalAimDirection = Character->GetActorForwardVector();
+		ServerAimDirection = LocalAimDirection;
+	}
+
+	// 발동 즉시 소비되는 스태미나는 없다. 스태미나는 차징이 진행되는 동안 TickCharge에서만 소비된다.
 	const URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
 
-	// 첫 TickCharge 전(예: 즉시 릴리즈)에도 정상적인 방향으로 발사되도록 현재 정면으로 초기화한다.
-	if (const APawn* AvatarPawn = Cast<APawn>(GetAvatarActorFromActorInfo()))
-	{
-		ServerAimDirection = AvatarPawn->GetActorForwardVector();
-	}
-
-	// 홀드 시작 즉시 기본(0% 충전) 스태미나를 소비한다. 나머지는 StartChargeTimer가 홀드 중 나눠서 소비한다.
-	if (WeaponInstance != nullptr)
-	{
-		ApplyStaminaCostAmount(WeaponInstance->GetStaminaCost());
-	}
 	StartChargeTimer();
 
-	// 차징 중(홀드~발사 몽타주 재생까지)에는 이동 방향으로의 자동 회전만 막는다. 서버·소유 클라 각각 로컬로 적용.
-	if (bDisableOrientRotationDuringCharge)
+	AimTickTask = UA1AbilityTask_WaitForTick::WaitForTick(this);
+	if (AimTickTask != nullptr)
 	{
-		if (const ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
-		{
-			if (const UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement())
-			{
-				bCachedOrientRotationToMovement = MovementComp->bOrientRotationToMovement;
-			}
-		}
-		SetOrientRotationToMovementLocal(false);
+		AimTickTask->OnTick.AddDynamic(this, &ThisClass::OnAimTick);
+		AimTickTask->ReadyForActivation();
 	}
 
 	const float MaxChargeDuration = WeaponInstance ? WeaponInstance->GetMaxChargeDuration() : 0.f;
 
-	// 차징 UI는 순수 로컬 연출이므로 로컬로 조작되는 쪽에서만 띄운다.
-	// (리슨 서버 호스트는 HasAuthority()도 true이므로 권한 여부가 아니라 IsLocallyControlled()로 판단해야 한다)
 	if (IsLocallyControlled())
 	{
 		ShowChargeWidgetLocal(MaxChargeDuration);
 	}
 
-	// 즉시 발사하지 않고 입력을 뗄 때까지 기다린다. 홀드 시간(TimeHeld)이 곧 충전 시간이다.
 	if (UAbilityTask_WaitInputRelease* ReleaseTask = UAbilityTask_WaitInputRelease::WaitInputRelease(this, true))
 	{
 		ReleaseTask->OnRelease.AddDynamic(this, &ThisClass::OnInputReleased);
@@ -124,12 +114,7 @@ void UA1Ability_RangedWeaponAttack::ActivateAbility(const FGameplayAbilitySpecHa
 void UA1Ability_RangedWeaponAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	StopChargeTimer();
-
-	// 정상 종료·취소 모두 이곳을 거치므로 캐시해 둔 원래 회전 설정으로 되돌린다.
-	if (bDisableOrientRotationDuringCharge)
-	{
-		SetOrientRotationToMovementLocal(bCachedOrientRotationToMovement);
-	}
+	SetOrientRotationToMovement(true);
 
 	if (bChargeWidgetVisible)
 	{
@@ -139,16 +124,102 @@ void UA1Ability_RangedWeaponAttack::EndAbility(const FGameplayAbilitySpecHandle 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
+void UA1Ability_RangedWeaponAttack::SetOrientRotationToMovement(bool bRotate)
+{
+	if (ACommonCharacter* Character = GetCommonCharacterFromActorInfo())
+	{
+		if (UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement())
+		{
+			MovementComponent->bOrientRotationToMovement = bRotate;
+		}
+	}
+}
+
+void UA1Ability_RangedWeaponAttack::UpdateAimRotationLocal(float DeltaTime)
+{
+	ACommonCharacter* Character = GetCommonCharacterFromActorInfo();
+	if (Character == nullptr)
+	{
+		return;
+	}
+
+	FRotator TargetRotation;
+
+	if (IsLocallyControlled())
+	{
+		// 마우스 커서 정보는 소유 클라(호스트 포함)에만 있으므로, 소유 클라에서만 실제로 방향을 계산한다.
+		AA1PlayerController* PlayerController = Cast<AA1PlayerController>(GetCommonPlayerControllerFromActorInfo());
+		if (PlayerController == nullptr)
+		{
+			return;
+		}
+
+		const FVector CharacterLocation = Character->GetActorLocation();
+		const FVector CursorLocation = PlayerController->GetCachedCursorLocation();
+
+		TargetRotation = UKismetMathLibrary::FindLookAtRotation(CharacterLocation, CursorLocation);
+		TargetRotation.Pitch = 0.f;
+		TargetRotation.Roll = 0.f;
+
+		LocalAimDirection = TargetRotation.Vector();
+
+#if ENABLE_DRAW_DEBUG
+		// 디버그: 소유 클라 화면에서 캐릭터 -> 실제 커서 히트 위치까지 매 프레임 그려서, 로컬에서
+		// 계산한 조준 방향 자체가 커서를 제대로 향하는지 확인한다(서버 스폰 방향과 비교용).
+		DrawDebugLine(GetWorld(), CharacterLocation, CursorLocation, FColor::Green, false, -1.f, 0, 2.f);
+#endif
+	}
+	else if (HasAuthority(&CurrentActivationInfo))
+	{
+		TargetRotation = ServerAimDirection.Rotation();
+	}
+	else
+	{
+		return;
+	}
+
+	const FRotator NewRotation = FMath::RInterpTo(Character->GetActorRotation(), TargetRotation, DeltaTime, AimRotationInterpSpeed);
+	Character->SetActorRotation(NewRotation);
+}
+
+void UA1Ability_RangedWeaponAttack::OnAimTick(float DeltaTime)
+{
+	UpdateAimRotationLocal(DeltaTime);
+}
+
+void UA1Ability_RangedWeaponAttack::StopAimTickLocal()
+{
+	if (AimTickTask != nullptr)
+	{
+		AimTickTask->EndTask();
+		AimTickTask = nullptr;
+	}
+}
+
+void UA1Ability_RangedWeaponAttack::UpdateAimDirectionServer_Implementation(FVector_NetQuantizeNormal AimDirection)
+{
+	ServerAimDirection = AimDirection;
+}
+
+void UA1Ability_RangedWeaponAttack::SyncAimDirectionToServerLocal()
+{
+	// Server RPC는 이미 권한이 있는 쪽(호스트/스탠드얼론)에서 호출하면 네트워크를 타지 않고
+	// 그 자리에서 곧바로 _Implementation을 실행하므로, HasAuthority 여부와 무관하게 항상 호출해도 된다.
+	// (여기서 HasAuthority일 때 호출을 생략하면 호스트 자신의 캐릭터는 ServerAimDirection이
+	// ActivateAbility 시점 값에서 갱신되지 않고 굳어버린다)
+	if (IsLocallyControlled())
+	{
+		UpdateAimDirectionServer(LocalAimDirection);
+	}
+}
+
 void UA1Ability_RangedWeaponAttack::OnInputReleased(float TimeHeld)
 {
 	StopChargeTimer();
+
+	// 여기서는 조준 회전을 멈추지 않는다. 발사 몽타주가 팔을 들었다 내리는 모션이라, 내리는 순간
+	// (Fire 이벤트, OnFireEventReceived)까지는 계속 커서를 따라 돌다가 그 순간 방향이 확정돼야 한다.
 	HideChargeWidgetLocal();
-
-	const URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
-	const float MaxChargeDuration = WeaponInstance ? WeaponInstance->GetMaxChargeDuration() : 0.f;
-
-	ChargeAlpha = (MaxChargeDuration > 0.f) ? FMath::Clamp(TimeHeld / MaxChargeDuration, 0.f, 1.f) : 0.f;
-
 	PlayFireMontage();
 }
 
@@ -172,6 +243,10 @@ void UA1Ability_RangedWeaponAttack::PlayFireMontage()
 
 void UA1Ability_RangedWeaponAttack::OnFireEventReceived(FGameplayEventData Payload)
 {
+	// 팔을 내리는 이 순간의 조준 방향을 서버에 마지막으로 최신화하고, 회전도 여기서 확정해 멈춘다.
+	SyncAimDirectionToServerLocal();
+	StopAimTickLocal();
+
 	SpawnProjectileAuth();
 }
 
@@ -183,8 +258,6 @@ void UA1Ability_RangedWeaponAttack::OnMontageFinished()
 	}
 }
 
-// GameplayEvent.Weapon.Fire는 몽타주를 재생 중인 쪽(서버·소유 클라 각각)에서 로컬로 발생하므로
-// 이 콜백 자체는 양쪽에서 다 불린다. 실제 스폰은 서버 권위에서만 수행한다.
 void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
 {
 	if (HasAuthority(&CurrentActivationInfo) == false)
@@ -192,7 +265,7 @@ void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
 		return;
 	}
 
-	URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
+	const URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
 	if (WeaponInstance == nullptr)
 	{
 		return;
@@ -211,12 +284,7 @@ void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
 		return;
 	}
 
-	// 무기 액터(스태프 메시)는 서버·클라 각각 로컬로 스폰돼 있으므로(EquipmentInstance::SpawnEquipmentActors),
-	// 서버에서도 그대로 조회해 발사 소켓 위치를 구할 수 있다.
 	FVector SpawnLocation = AvatarPawn->GetActorLocation();
-
-	// 캐릭터/컨트롤러의 실제 Rotation이 아니라 UpdateAimDirectionServer로 전달받아 서버가 들고 있는
-	// ServerAimDirection을 쓴다(마우스 조준 정보는 소유 클라에만 있어 순수 데이터로만 전달받음).
 	const FRotator SpawnRotation = ServerAimDirection.Rotation();
 
 	UEquipmentComponent* EquipmentComp = UEquipmentComponent::FindEquipmentComponent(AvatarPawn);
@@ -235,7 +303,15 @@ void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
 
 	const FTransform SpawnTransform(SpawnRotation, SpawnLocation);
 
-	// 충전 비율(OnInputReleased에서 확정)만큼 0%~100% 충전 값 사이를 보간한다. 데미지는 항상 정수로 반올림.
+#if ENABLE_DRAW_DEBUG
+	// 디버그: 발사 방향이 실제 커서 쪽을 향하는지 눈으로 확인한다. 서버는 클라의 원본 커서 히트
+	// 위치를 모르고 정규화된 방향(ServerAimDirection)만 갖고 있으므로, SpawnLocation에서 그 방향으로
+	// 임의 거리(3000)만큼 뻗은 지점을 끝점으로 삼는다. (서버 프로세스에서만 렌더링됨: 데디케이티드
+	// 서버는 화면이 없어 안 보이므로, PIE에서 Listen Server로 띄워야 확인 가능하다)
+	DrawDebugLine(GetWorld(), SpawnLocation, SpawnLocation + ServerAimDirection * 3000.f, FColor::Red, false, 3.f, 0, 3.f);
+#endif
+
+	// 충전 비율(TickCharge가 갱신해온 ChargeAlpha)만큼 0%~100% 충전 값 사이를 보간한다. 데미지는 항상 정수로 반올림.
 	const float Damage = FMath::RoundToFloat(FMath::Lerp(WeaponInstance->GetBaseDamage(), WeaponInstance->GetMaxChargeDamage(), ChargeAlpha));
 	const float Speed = FMath::Lerp(WeaponInstance->GetProjectileSpeed(), WeaponInstance->GetMaxChargeSpeed(), ChargeAlpha);
 	const float Scale = FMath::Lerp(1.f, WeaponInstance->GetMaxChargeScale(), ChargeAlpha);
@@ -254,9 +330,6 @@ URangedWeaponInstance* UA1Ability_RangedWeaponAttack::GetRangedWeaponInstance() 
 	return Cast<URangedWeaponInstance>(GetWeaponInstance());
 }
 
-// Amount만큼 SetByCaller로 실어 스태미나 소비 GE를 자신에게 적용한다. 소비량은 항상 정수로 반올림한다
-// (틱마다 나눠 소비하다 보면 소수점 값이 나오는데, 스태미나 표시/계산을 정수로만 다루기 위함).
-// (UA1Ability_MeleeWeaponAttack::ApplyStaminaCost와 동일한 방식 - 홀드 시작 즉시 1회, 이후 TickCharge에서 조금씩 반복 호출된다)
 void UA1Ability_RangedWeaponAttack::ApplyStaminaCostAmount(float Amount) const
 {
 	const float RoundedAmount = FMath::RoundToFloat(Amount);
@@ -285,14 +358,22 @@ void UA1Ability_RangedWeaponAttack::ApplyStaminaCostAmount(float Amount) const
 
 void UA1Ability_RangedWeaponAttack::StartChargeTimer()
 {
+	// 매 활성화마다 차징 상태를 전부 리셋한다. (이전 활성화에서 bIsCharge가 false로 굳은 채 남아있으면
+	// 다음 발동에서 TickCharge의 소비 로직 전체가 스킵돼 스태미나가 전혀 안 줄어드는 문제가 있었다)
+	ChargeTickElapsed = 0.f;
+	PendingStaminaFraction = 0.f;
+	ChargeStaminaConsumed = 0.f;
+	ChargeAlpha = 0.f;
+	bIsCharge = false;
+
 	const URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
 	if (WeaponInstance == nullptr || WeaponInstance->GetMaxChargeDuration() <= 0.f)
 	{
+		// 차징 없는 무기(즉시 발사)는 항상 0% 충전 값으로 나간다.
 		return;
 	}
 
-	ChargeTickElapsed = 0.f;
-	PendingStaminaFraction = 0.f;
+	bIsCharge = true;
 
 	if (UWorld* World = GetWorld())
 	{
@@ -308,108 +389,74 @@ void UA1Ability_RangedWeaponAttack::StopChargeTimer()
 	}
 }
 
-// ChargeTickInterval마다 호출된다. 조준 방향은 소유 클라에서만(마우스 정보가 거기에만 있으므로) 갱신하고,
-// 스태미나는 (MaxChargeStaminaCost - StaminaCost)를 MaxChargeDuration에 걸쳐 나눈 만큼을 계속 소비한다.
-// 최대 충전에 도달하면(홀드를 그 이상 유지해도 더 세지지 않으므로) 스스로 타이머를 멈춘다.
 void UA1Ability_RangedWeaponAttack::TickCharge()
 {
-	if (IsLocallyControlled())
+	// ChargeTickInterval(10Hz) 주기로 서버에 최신 조준 방향을 동기화한다. 실제 화면 회전은
+	// OnAimTick(매 프레임)에서 RInterpTo로 부드럽게 처리되므로, 이 주기는 네트워크 전송 빈도만 결정한다.
+	SyncAimDirectionToServerLocal();
+
+	if (bIsCharge == false)
 	{
-		UpdateAimDirectionLocal();
+		return;
 	}
 
 	const URangedWeaponInstance* WeaponInstance = GetRangedWeaponInstance();
 	const float MaxChargeDuration = WeaponInstance ? WeaponInstance->GetMaxChargeDuration() : 0.f;
 	if (WeaponInstance == nullptr || MaxChargeDuration <= 0.f)
 	{
-		StopChargeTimer();
+		bIsCharge = false;
 		return;
 	}
 
 	ChargeTickElapsed += ChargeTickInterval;
 
-	// 틱당 소비량이 1보다 작으면(예: 0.2) 매번 반올림해서 적용하면 계속 0으로 버려질 수 있으므로,
-	// 소수점을 이월(PendingStaminaFraction)했다가 1 이상 모였을 때만 정수로 소비한다.
-	const float DrainPerSecond = (WeaponInstance->GetMaxChargeStaminaCost() - WeaponInstance->GetStaminaCost()) / MaxChargeDuration;
-	PendingStaminaFraction += DrainPerSecond * ChargeTickInterval;
+	// 0 -> MaxChargeStaminaCost까지 MaxChargeDuration 동안 비율대로(MaxChargeStaminaCost / MaxChargeDuration) 선형 소비한다.
+	const float ChargeStaminaBudget = FMath::Max(0.f, WeaponInstance->GetMaxChargeStaminaCost());
+	const float DesiredDrain = (ChargeStaminaBudget / MaxChargeDuration) * ChargeTickInterval;
+	const float RemainingBudget = FMath::Max(0.f, ChargeStaminaBudget - ChargeStaminaConsumed);
 
+	// 예산은 남아있어도 실제로 보유한 스태미나가 그보다 적을 수 있으므로, 현재 스태미나로도 한 번 더 제한한다.
+	// (예: MaxChargeStaminaCost=40, MaxChargeDuration=5초인데 현재 스태미나가 20이면 딱 50%까지만 차징된다)
+	UAbilitySystemComponent* ASC = CurrentActorInfo ? CurrentActorInfo->AbilitySystemComponent.Get() : nullptr;
+	bool bFoundAttribute = false;
+	const float CurrentStamina = ASC ? UAbilitySystemBlueprintLibrary::GetFloatAttributeFromAbilitySystemComponent(ASC, UA1VitalSet::GetStaminaAttribute(), bFoundAttribute) : 0.f;
+
+	float ActualDrain = FMath::Min(DesiredDrain, RemainingBudget);
+	if (bFoundAttribute)
+	{
+		ActualDrain = FMath::Clamp(ActualDrain, 0.f, FMath::Max(0.f, CurrentStamina));
+	}
+
+	PendingStaminaFraction += ActualDrain;
 	const float WholeAmount = FMath::TruncToFloat(PendingStaminaFraction);
 	if (WholeAmount >= 1.f)
 	{
 		PendingStaminaFraction -= WholeAmount;
 		ApplyStaminaCostAmount(WholeAmount);
+		ChargeStaminaConsumed += WholeAmount;
 	}
 
-	if (ChargeTickElapsed >= MaxChargeDuration)
+	// 충전도는 "시간 진행률"과 "스태미나 예산 소비율" 중 더 작은 쪽을 따른다.
+	// 스태미나가 모자라 예산을 다 못 채우면, 시간이 더 지나도 여기서 더 이상 안 올라간다.
+	const float TimeRatio = FMath::Clamp(ChargeTickElapsed / MaxChargeDuration, 0.f, 1.f);
+	const float StaminaRatio = (ChargeStaminaBudget > 0.f) ? FMath::Clamp(ChargeStaminaConsumed / ChargeStaminaBudget, 0.f, 1.f) : 1.f;
+	ChargeAlpha = FMath::Min(TimeRatio, StaminaRatio);
+
+	const bool bTimeMaxed = ChargeTickElapsed >= MaxChargeDuration;
+	const bool bBudgetMaxed = ChargeStaminaBudget > 0.f && ChargeStaminaConsumed >= ChargeStaminaBudget;
+	const bool bStaminaDepleted = DesiredDrain > 0.f && bFoundAttribute && (CurrentStamina - ActualDrain) <= KINDA_SMALL_NUMBER;
+
+	if (bTimeMaxed || bBudgetMaxed || bStaminaDepleted)
 	{
-		StopChargeTimer();
+		bIsCharge = false;
+
+		// 시간이 아니라 예산/자원 고갈로 일찍 멈췄다면, 시간 기준으로 계속 재생 중인 위젯 애니메이션을
+		// 지금 지점에서 멈춰야 실제 ChargeAlpha(캡핑된 값)와 화면에 보이는 충전 게이지가 일치한다.
+		if (!bTimeMaxed)
+		{
+			PauseChargeWidgetLocal();
+		}
 	}
-}
-
-// 소유 클라 전용. 탑다운 카메라 레이(마우스 커서 방향)와 캐릭터 높이의 수평면이 만나는 지점을
-// 조준 지점으로 삼는다. 캐릭터/컨트롤러 회전은 절대 건드리지 않고(이 프로젝트의 탑다운 카메라가
-// 캐릭터 회전에 종속돼 있어, 예전에 SetControlRotation으로 실제 회전시켰더니 차징 중 화면이
-// 캐릭터를 따라 돌면서 마우스 커서 투영이 깨지는 문제가 있었다), 방향 값만 서버로 전달한다.
-void UA1Ability_RangedWeaponAttack::UpdateAimDirectionLocal()
-{
-	APawn* AvatarPawn = Cast<APawn>(GetAvatarActorFromActorInfo());
-	APlayerController* PC = Cast<APlayerController>(GetControllerFromActorInfo());
-	if (AvatarPawn == nullptr || PC == nullptr)
-	{
-		return;
-	}
-
-	FVector CursorWorldLocation;
-	FVector CursorWorldDirection;
-	if (PC->DeprojectMousePositionToWorld(CursorWorldLocation, CursorWorldDirection) == false)
-	{
-		return;
-	}
-
-	if (FMath::IsNearlyZero(CursorWorldDirection.Z))
-	{
-		return;
-	}
-
-	const float PlaneZ = AvatarPawn->GetActorLocation().Z;
-	const float T = (PlaneZ - CursorWorldLocation.Z) / CursorWorldDirection.Z;
-	if (T <= 0.f)
-	{
-		return;
-	}
-
-	const FVector AimPoint = CursorWorldLocation + CursorWorldDirection * T;
-	FVector AimDirection = AimPoint - AvatarPawn->GetActorLocation();
-	AimDirection.Z = 0.f;
-
-	if (AimDirection.IsNearlyZero())
-	{
-		return;
-	}
-
-	UpdateAimDirectionServer(AimDirection.GetSafeNormal());
-}
-
-void UA1Ability_RangedWeaponAttack::UpdateAimDirectionServer_Implementation(FVector_NetQuantizeNormal InAimDirection)
-{
-	ServerAimDirection = InAimDirection;
-}
-
-void UA1Ability_RangedWeaponAttack::SetOrientRotationToMovementLocal(bool bNewOrient) const
-{
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	if (!Character)
-	{
-		return;
-	}
-
-	UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement();
-	if (!MovementComp)
-	{
-		return;
-	}
-
-	MovementComp->bOrientRotationToMovement = bNewOrient;
 }
 
 void UA1Ability_RangedWeaponAttack::ShowChargeWidgetLocal(float MaxChargeDuration)
@@ -422,6 +469,17 @@ void UA1Ability_RangedWeaponAttack::ShowChargeWidgetLocal(float MaxChargeDuratio
 	else
 	{
 		UE_LOG(A1Ability_RangedWeaponAttackLog, Warning, TEXT("ShowChargeWidgetLocal: HUD에서 UA1RangedChargeWidget을 찾을 수 없습니다"));
+	}
+}
+
+void UA1Ability_RangedWeaponAttack::PauseChargeWidgetLocal()
+{
+	if (bChargeWidgetVisible)
+	{
+		if (UA1RangedChargeWidget* Widget = FindChargeWidgetLocal())
+		{
+			Widget->PauseCharge();
+		}
 	}
 }
 
@@ -444,8 +502,6 @@ UA1RangedChargeWidget* UA1Ability_RangedWeaponAttack::FindChargeWidgetLocal() co
 		return nullptr;
 	}
 
-	// UA1Ability_Interact_Hold::FindHoldWidgetLocal과 동일한 이유로, Layout 자신의 WidgetTree가 아니라
-	// UI.Layer.Game에 Push된 위젯(W_GameLayout)의 "현재 활성 위젯" 트리 안에서 찾아야 한다.
 	UCommonActivatableWidgetContainerBase* GameLayer = Layout->GetLayerContainer(CommonUIExtensionTags::UI_Layer_Game);
 	UCommonActivatableWidget* ActiveGameWidget = GameLayer ? GameLayer->GetActiveWidget() : nullptr;
 	if (ActiveGameWidget == nullptr)

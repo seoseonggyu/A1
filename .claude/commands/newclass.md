@@ -13,7 +13,7 @@ argument-hint: <클래스명> <베이스클래스> [배치 경로]
 - 파일명 = 클래스명(접두사 제외). 게임 모듈 클래스는 `A1` 접두사 (`AA1Foo`, `UA1Foo`)
 - 헤더: `#pragma once` → 엔진/외부 include → 전방 선언 → **`"<파일명>.generated.h"` 는 마지막**
 - API 매크로: `A1_API` / `COMMONGAME_API` / `COMMONUIEXTENSION_API`
-- 클래스 위에 역할·동작 방식을 설명하는 한국어 `/** */` 블록 주석
+- 클래스 위에 역할·동작 방식을 설명하는 한국어 `/** */` 블록 주석, 주석은 핵심만 간결하게 작성. 3줄을 넘기지 않는다.
 - 전용 로그 카테고리: 헤더 `DECLARE_LOG_CATEGORY_EXTERN(<클래스명>Log, Log, All);` / cpp `DEFINE_LOG_CATEGORY(<클래스명>Log);`
 - 멤버 포인터는 `TObjectPtr<T>`, 생성자는 `const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()` 시그니처
 - 복제 프로퍼티가 있으면 `GetLifetimeReplicatedProps` 오버라이드까지 함께 작성
