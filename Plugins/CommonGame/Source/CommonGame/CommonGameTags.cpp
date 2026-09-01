@@ -10,6 +10,8 @@ namespace CommonGameTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Native_Move, "Input.Native.Move", "이동 입력");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Native_Look, "Input.Native.Look", "시점 입력");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Native_Confirm, "Input.Native.Confirm", "확정 입력 (ASC->LocalInputConfirm)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Native_Cancel, "Input.Native.Cancel", "취소 입력 (ASC->LocalInputCancel)");
 
 	//-----------------------------------------------------------------------------
 	// Input.Ability - Ability 입력 태그

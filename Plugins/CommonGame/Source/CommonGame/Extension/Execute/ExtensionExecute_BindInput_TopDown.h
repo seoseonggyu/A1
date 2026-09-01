@@ -29,6 +29,12 @@ private:
 	/** 이동 입력 처리 */
 	void Input_Move(const FInputActionValue& InputActionValue) const;
 
+	/** 확정 입력 처리 - ASC->LocalInputConfirm()으로 라우팅 (UAbilityTask_WaitConfirmCancel::OnConfirm 트리거) */
+	void Input_Confirm() const;
+
+	/** 취소 입력 처리 - ASC->LocalInputCancel()으로 라우팅 (UAbilityTask_WaitConfirmCancel::OnCancel 트리거) */
+	void Input_Cancel() const;
+
 	/** Ability 입력 Start 처리 - ASC로 라우팅 */
 	void Input_AbilityStarted(FGameplayTag InputTag) const;
 	

@@ -16,6 +16,12 @@ namespace CommonGameTags
 	/** 시점 입력 */
 	COMMONGAME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Native_Look);
 
+	/** 확정 입력. ASC->LocalInputConfirm()으로 라우팅되어 UAbilityTask_WaitConfirmCancel의 OnConfirm을 트리거한다. */
+	COMMONGAME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Native_Confirm);
+
+	/** 취소 입력. ASC->LocalInputCancel()으로 라우팅되어 UAbilityTask_WaitConfirmCancel의 OnCancel을 트리거한다. */
+	COMMONGAME_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Native_Cancel);
+
 	//-----------------------------------------------------------------------------
 	// Input.Ability - Ability 입력 태그
 	//-----------------------------------------------------------------------------

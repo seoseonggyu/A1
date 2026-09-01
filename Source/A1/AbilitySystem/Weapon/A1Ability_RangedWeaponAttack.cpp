@@ -13,10 +13,8 @@
 #include "AbilitySystem/CommonAbilitySystemComponent.h"
 #include "AbilitySystem/Tasks/A1AbilityTask_WaitForTick.h"
 #include "Actors/A1Projectile.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "CommonUIExtensionTags.h"
 #include "DrawDebugHelpers.h"
-#include "Equipment/EquipmentComponent.h"
 #include "TimerManager.h"
 #include "Game/CommonCharacter.h"
 #include "GameFramework/Character.h"
@@ -164,9 +162,10 @@ void UA1Ability_RangedWeaponAttack::UpdateAimRotationLocal(float DeltaTime)
 		LocalAimDirection = TargetRotation.Vector();
 
 #if ENABLE_DRAW_DEBUG
-		// 디버그: 소유 클라 화면에서 캐릭터 -> 실제 커서 히트 위치까지 매 프레임 그려서, 로컬에서
-		// 계산한 조준 방향 자체가 커서를 제대로 향하는지 확인한다(서버 스폰 방향과 비교용).
-		DrawDebugLine(GetWorld(), CharacterLocation, CursorLocation, FColor::Green, false, -1.f, 0, 2.f);
+		
+		static constexpr float SpawnHeightOffset = 50.f;
+		const FVector SpawnLocation = CharacterLocation + FVector::UpVector * SpawnHeightOffset;
+		DrawDebugLine(GetWorld(), SpawnLocation, CursorLocation, FColor::Green, false, -1.f, 0, 2.f);
 #endif
 	}
 	else if (HasAuthority(&CurrentActivationInfo))
@@ -243,11 +242,21 @@ void UA1Ability_RangedWeaponAttack::PlayFireMontage()
 
 void UA1Ability_RangedWeaponAttack::OnFireEventReceived(FGameplayEventData Payload)
 {
-	// 팔을 내리는 이 순간의 조준 방향을 서버에 마지막으로 최신화하고, 회전도 여기서 확정해 멈춘다.
-	SyncAimDirectionToServerLocal();
+	// 회전은 여기서 확정해 멈춘다(팔을 내리는 순간의 포즈 고정).
 	StopAimTickLocal();
 
-	SpawnProjectileAuth();
+	if (IsLocallyControlled())
+	{
+		if (AA1PlayerController* PlayerController = Cast<AA1PlayerController>(GetCommonPlayerControllerFromActorInfo()))
+		{
+			FireProjectileServer(PlayerController->GetCachedCursorLocation());
+		}
+	}
+}
+
+void UA1Ability_RangedWeaponAttack::FireProjectileServer_Implementation(FVector_NetQuantize CursorLocation)
+{
+	SpawnProjectileAuth(CursorLocation);
 }
 
 void UA1Ability_RangedWeaponAttack::OnMontageFinished()
@@ -258,7 +267,7 @@ void UA1Ability_RangedWeaponAttack::OnMontageFinished()
 	}
 }
 
-void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
+void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth(const FVector& CursorLocation)
 {
 	if (HasAuthority(&CurrentActivationInfo) == false)
 	{
@@ -284,31 +293,24 @@ void UA1Ability_RangedWeaponAttack::SpawnProjectileAuth()
 		return;
 	}
 
-	FVector SpawnLocation = AvatarPawn->GetActorLocation();
-	const FRotator SpawnRotation = ServerAimDirection.Rotation();
+	// TODO: 무기 소켓 대신 일단 캐릭터 위치 기준으로 스폰한다. 캐릭터 원점이 바닥(발밑)에 걸려있을
+	// 수 있어 살짝 위로 띄운다.
+	static constexpr float SpawnHeightOffset = 50.f;
+	const FVector SpawnLocation = AvatarPawn->GetActorLocation() + FVector::UpVector * SpawnHeightOffset;
 
-	UEquipmentComponent* EquipmentComp = UEquipmentComponent::FindEquipmentComponent(AvatarPawn);
-	AActor* WeaponActor = EquipmentComp ? EquipmentComp->GetEquipmentInstance(A1GameplayTags::Equipment_Slot_Weapon) : nullptr;
-	if (WeaponActor != nullptr)
-	{
-		const FName SocketName = WeaponInstance->GetProjectileSocketName();
-		if (USkeletalMeshComponent* WeaponMesh = WeaponActor->FindComponentByClass<USkeletalMeshComponent>())
-		{
-			if (WeaponMesh->DoesSocketExist(SocketName))
-			{
-				SpawnLocation = WeaponMesh->GetSocketLocation(SocketName);
-			}
-		}
-	}
+	// 방향 벡터가 아니라 커서의 실제 월드 위치를 받았으므로, 실제 발사 지점(SpawnLocation) 기준으로
+	// 직접 방향을 계산한다. 탑다운이라 피치/롤은 0으로 고정(수평 발사).
+	FRotator SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, CursorLocation);
+	SpawnRotation.Pitch = 0.f;
+	SpawnRotation.Roll = 0.f;
 
 	const FTransform SpawnTransform(SpawnRotation, SpawnLocation);
 
 #if ENABLE_DRAW_DEBUG
-	// 디버그: 발사 방향이 실제 커서 쪽을 향하는지 눈으로 확인한다. 서버는 클라의 원본 커서 히트
-	// 위치를 모르고 정규화된 방향(ServerAimDirection)만 갖고 있으므로, SpawnLocation에서 그 방향으로
-	// 임의 거리(3000)만큼 뻗은 지점을 끝점으로 삼는다. (서버 프로세스에서만 렌더링됨: 데디케이티드
-	// 서버는 화면이 없어 안 보이므로, PIE에서 Listen Server로 띄워야 확인 가능하다)
-	DrawDebugLine(GetWorld(), SpawnLocation, SpawnLocation + ServerAimDirection * 3000.f, FColor::Red, false, 3.f, 0, 3.f);
+	// 디버그: 실제로 받은 커서 위치까지 직접 선을 그어, 발사 방향이 커서 쪽을 향하는지 눈으로 확인한다.
+	// (서버 프로세스에서만 렌더링됨: 데디케이티드 서버는 화면이 없어 안 보이므로, PIE에서
+	// Listen Server로 띄워야 확인 가능하다)
+	DrawDebugLine(GetWorld(), SpawnLocation, CursorLocation, FColor::Red, false, 3.f, 0, 3.f);
 #endif
 
 	// 충전 비율(TickCharge가 갱신해온 ChargeAlpha)만큼 0%~100% 충전 값 사이를 보간한다. 데미지는 항상 정수로 반올림.

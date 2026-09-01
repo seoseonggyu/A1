@@ -50,9 +50,15 @@ private:
 	void UpdateAimDirectionServer(FVector_NetQuantizeNormal AimDirection);
 
 	/**
-	 * TickCharge/OnFireEventReceived에서 공통으로 호출. 소유 클라(호스트 포함)면 항상 최신 조준
-	 * 방향을 서버로 보낸다. 호스트/스탠드얼론처럼 이미 권한이 있는 쪽에서 호출해도, Server RPC는
-	 * 네트워크를 타지 않고 그 자리에서 바로 실행되므로 안전하다 — HasAuthority로 걸러내면 안 된다.
+	 * TickCharge(10Hz)와 OnFireEventReceived(최종 보정)에서 호출. 소유 클라(호스트 포함)면
+	 * 항상 최신 조준 방향을 서버로 보낸다. 호스트/스탠드얼론처럼 이미 권한이 있는 쪽에서 호출해도,
+	 * Server RPC는 네트워크를 타지 않고 그 자리에서 바로 실행되므로 안전하다 — HasAuthority로
+	 * 걸러내면 안 된다.
+	 *
+	 * 매 프레임이 아니라 10Hz인 이유: 네트워크 부하를 낮게 유지하기 위함(화면 회전 자체는
+	 * OnAimTick에서 매 프레임 부드럽게 처리되므로 전송 주기와 무관하게 부드럽다). 대신 클라의
+	 * 로컬 Fire 이벤트와 서버의 Fire 이벤트가 입력 릴리즈 복제 지연만큼 서로 다른 시점에 발생해서,
+	 * 그 사이 마우스를 움직이면 서버가 약간 오래된 방향을 쓸 수 있다는 트레이드오프가 있다.
 	 */
 	void SyncAimDirectionToServerLocal();
 
@@ -62,12 +68,24 @@ private:
 	UFUNCTION()
 	void OnFireEventReceived(FGameplayEventData Payload);
 
+	/**
+	 * 소유 클라 → 서버. Fire 이벤트(팔을 내리는 순간) 시점에, 그 순간의 커서 월드 위치를 그대로
+	 * 실어 발사를 요청한다. 방향 벡터가 아니라 위치 자체를 보내는 이유는, 서버가 실제 발사 지점
+	 * (SpawnProjectileAuth의 SpawnLocation)을 기준으로 직접 방향을 계산하게 하기 위함이다 —
+	 * SpawnLocation이 캐릭터 위치와 다르더라도(추후 무기 소켓으로 바뀌어도) 항상 정확하다.
+	 * 서버 자신의 몽타주 타이밍(입력 릴리즈 복제 지연만큼 클라와 어긋날 수 있음)에 기대지 않고
+	 * 이 RPC가 도착하는 즉시 스폰하므로, 주기적 동기화(SyncAimDirectionToServerLocal)의 지연과도
+	 * 무관하다. 발사당 1회뿐이라 Reliable로 보낸다.
+	 */
+	UFUNCTION(Server, Reliable)
+	void FireProjectileServer(FVector_NetQuantize CursorLocation);
+
 	UFUNCTION()
 	void OnMontageFinished();
-	
+
 	void PlayFireMontage();
-	
-	void SpawnProjectileAuth();
+
+	void SpawnProjectileAuth(const FVector& CursorLocation);
 
 	URangedWeaponInstance* GetRangedWeaponInstance() const;
 

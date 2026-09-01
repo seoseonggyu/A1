@@ -16,11 +16,13 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Equipment/EquipmentComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Input/CommonEnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "Physics/A1CollisionChannels.h"
+#include "Player/A1CharacterMovementComponent.h"
 #include "TimerManager.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(A1Character)
@@ -28,7 +30,7 @@
 DEFINE_LOG_CATEGORY(A1CharacterLog);
 
 AA1Character::AA1Character(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UA1CharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	FRotator initRotator = FRotator(0.0f, -90.0f, 0.0f);
 

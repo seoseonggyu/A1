@@ -45,6 +45,11 @@ AA1Projectile::AA1Projectile(const FObjectInitializer& ObjectInitializer)
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = false;
 	ProjectileMovementComponent->ProjectileGravityScale = 0.f;
+
+	// Init()에서 Velocity를 GetActorForwardVector() * Speed(월드 스페이스)로 직접 설정하는데,
+	// 기본값(true)이면 컴포넌트 초기화 시 이 값을 로컬 스페이스로 착각해 액터 회전만큼 한 번 더
+	// 돌려버려(이중 회전) 엉뚱한 방향으로 날아간다. 이미 월드 스페이스로 계산해서 넣어주므로 꺼둔다.
+	ProjectileMovementComponent->bInitialVelocityInLocalSpace = false;
 }
 
 void AA1Projectile::Init(UAbilitySystemComponent* InSourceASC, TSubclassOf<UGameplayEffect> InDamageEffectClass, float InDamage, float InSpeed, float InScale)

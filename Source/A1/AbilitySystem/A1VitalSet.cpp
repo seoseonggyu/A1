@@ -89,6 +89,7 @@ void UA1VitalSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MaxMana, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, Stamina, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MaxStamina, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UA1VitalSet, MoveSpeedMultiplier, Params);
 }
 
 void UA1VitalSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -168,6 +169,11 @@ void UA1VitalSet::ClampAttribute(const FGameplayAttribute& Attribute, float& New
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxStamina());
 	}
+	else if (Attribute == GetMoveSpeedMultiplierAttribute())
+	{
+		// 슬로우가 여러 겹 겹쳐도 이동이 완전히 멈추거나 역방향으로 뒤집히지 않도록 하한을 둔다.
+		NewValue = FMath::Clamp(NewValue, 0.1f, 2.f);
+	}
 }
 
 void UA1VitalSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
@@ -221,4 +227,9 @@ void UA1VitalSet::OnRep_Stamina(const FGameplayAttributeData& OldValue)
 void UA1VitalSet::OnRep_MaxStamina(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, MaxStamina, OldValue);
+}
+
+void UA1VitalSet::OnRep_MoveSpeedMultiplier(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UA1VitalSet, MoveSpeedMultiplier, OldValue);
 }

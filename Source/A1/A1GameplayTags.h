@@ -41,6 +41,7 @@ namespace A1GameplayTags
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack_Skill_1);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack_Skill_2);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Attack_Skill_3);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_Widget_Inventory);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Primary);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Ability_QuickBar_Secondary);
@@ -60,6 +61,7 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_3);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_1);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_2);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Skill_3);
 
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint_Check);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint_Active);
@@ -87,6 +89,7 @@ namespace A1GameplayTags
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_StaminaRegen_Blocked);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Interacting);
 	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Death);
+	A1_API  UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Slow);
 
 	
 	//-----------------------------------------------------------------------------
@@ -120,6 +123,7 @@ namespace A1GameplayTags
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_1);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_2);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_3);
 
 	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage
@@ -127,6 +131,7 @@ namespace A1GameplayTags
 
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_BaseDamage);
 	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_StaminaCost);
+	A1_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_SlowAmount);
 
 	//-----------------------------------------------------------------------------
 	// GameplayCue

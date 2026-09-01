@@ -51,7 +51,25 @@ void FExtensionExecute_BindInput_TopDown::OnActivate(AActor* Owner) const
 	{
 		BindingHandles.Add(MoveHandle);
 	}
-	
+
+	// 확정/취소 입력 바인딩. UAbilityTask_WaitConfirmCancel을 쓰는 모든 어빌리티가 공유하는
+	// 범용 경로이며, 해당 태스크가 없을 때는 ASC 내부에서 조용히 무시된다.
+	if (uint32 ConfirmHandle = InputComponent->BindNativeActionInstanceLambda(
+		CommonGameTags::Input_Native_Confirm,
+		ETriggerEvent::Started,
+		[this](const FInputActionInstance&) { Input_Confirm(); }))
+	{
+		BindingHandles.Add(ConfirmHandle);
+	}
+
+	if (uint32 CancelHandle = InputComponent->BindNativeActionInstanceLambda(
+		CommonGameTags::Input_Native_Cancel,
+		ETriggerEvent::Started,
+		[this](const FInputActionInstance&) { Input_Cancel(); }))
+	{
+		BindingHandles.Add(CancelHandle);
+	}
+
 	// Ability 입력 바인딩 - ASC로 라우팅
 	for (const FInputActionAndTag& Mapping : AbilityInputActions)
 	{
@@ -136,6 +154,40 @@ void FExtensionExecute_BindInput_TopDown::Input_Move(const FInputActionValue& In
 	{
 		FVector Right = FRotationMatrix(MovementRotation).GetUnitAxis(EAxis::Y);
 		Pawn->AddMovementInput(Right, Value.Y);
+	}
+}
+
+void FExtensionExecute_BindInput_TopDown::Input_Confirm() const
+{
+	APawn* Pawn = WeakPawn.Get();
+	if (!Pawn)
+	{
+		return;
+	}
+
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
+	{
+		if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
+		{
+			ASC->LocalInputConfirm();
+		}
+	}
+}
+
+void FExtensionExecute_BindInput_TopDown::Input_Cancel() const
+{
+	APawn* Pawn = WeakPawn.Get();
+	if (!Pawn)
+	{
+		return;
+	}
+
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Pawn))
+	{
+		if (UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
+		{
+			ASC->LocalInputCancel();
+		}
 	}
 }
 

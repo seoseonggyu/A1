@@ -38,6 +38,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack, "Input.Ability.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack_Skill_1, "Input.Ability.Attack.Skill.1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack_Skill_2, "Input.Ability.Attack.Skill.2");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Attack_Skill_3, "Input.Ability.Attack.Skill.3");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_Widget_Inventory, "Input.Ability.Widget.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Primary, "Input.Ability.QuickBar.Primary");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Ability_QuickBar_Secondary, "Input.Ability.QuickBar.Secondary");
@@ -57,6 +58,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_3, "Ability.Attack.3");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_1, "Ability.Attack.Skill.1");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_2, "Ability.Attack.Skill.2");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Skill_3, "Ability.Attack.Skill.3");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint_Check, "Ability.Sprint.Check");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Sprint_Active, "Ability.Sprint.Active");
@@ -85,6 +87,7 @@ namespace A1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Status_StaminaRegen_Blocked, "Status.StaminaRegen.Blocked");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Interacting, "Status.Interacting");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Death, "Status.Death");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Slow, "Status.Slow");
 
 	
 	//-----------------------------------------------------------------------------
@@ -118,6 +121,7 @@ namespace A1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_1, "Cooldown.Skill.1");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_2, "Cooldown.Skill.2");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_3, "Cooldown.Skill.3");
 
 	//-----------------------------------------------------------------------------
 	// SetByCaller_BaseDamage
@@ -128,6 +132,9 @@ namespace A1GameplayTags
 
 	/** 스태미나 소비 값 (SetByCaller) */
 	A1_API UE_DEFINE_GAMEPLAY_TAG(SetByCaller_StaminaCost, "SetByCaller.StaminaCost");
+
+	/** 이동속도 감소량 (SetByCaller). 항상 음수로 전달해 MoveSpeedMultiplier를 깎는다. */
+	A1_API UE_DEFINE_GAMEPLAY_TAG(SetByCaller_SlowAmount, "SetByCaller.SlowAmount");
 
 	//-----------------------------------------------------------------------------
 	// GameplayCue

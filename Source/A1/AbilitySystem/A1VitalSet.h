@@ -52,6 +52,9 @@ protected:
 	UFUNCTION()
 	void OnRep_MaxStamina(const FGameplayAttributeData& OldValue);
 
+	UFUNCTION()
+	void OnRep_MoveSpeedMultiplier(const FGameplayAttributeData& OldValue);
+
 	UPROPERTY()
 	TObjectPtr<class UCharacterViewModel> CachedViewModel;
 
@@ -81,8 +84,17 @@ public:
 	FGameplayAttributeData MaxStamina = 150.f;
 	ATTRIBUTE_ACCESSORS(UA1VitalSet, MaxStamina)
 
+	/**
+	 * CharacterMovementComponent::GetMaxSpeed()에 곱해지는 이동속도 배율. 기본값 1(정상 속도).
+	 * Duration GameplayEffect의 Additive Modifier(SetByCaller.SlowAmount, 음수)로만 깎으면,
+	 * 효과가 만료될 때 GAS가 자동으로 원래 값(1)으로 되돌려주므로 별도 복구 로직이 필요 없다.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", ReplicatedUsing = OnRep_MoveSpeedMultiplier)
+	FGameplayAttributeData MoveSpeedMultiplier = 1.f;
+	ATTRIBUTE_ACCESSORS(UA1VitalSet, MoveSpeedMultiplier)
+
 	//-----------------------------------------------------------------------------
-	// Meta Attributes (�������� ����, ����)
+	// Meta Attributes
 	//-----------------------------------------------------------------------------
 		
 	UPROPERTY(BlueprintReadOnly, Category = "Damage")

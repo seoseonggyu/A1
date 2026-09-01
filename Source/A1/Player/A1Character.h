@@ -32,6 +32,7 @@ class A1_API AA1Character : public ACommonCharacter, public IA1Interactable
 	GENERATED_BODY()
 
 public:
+	/** GetCharacterMovement()의 실제 타입을 UA1CharacterMovementComponent로 교체한다(슬로우 등 이동속도 배율 적용). */
 	AA1Character(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void BeginPlay() override;
